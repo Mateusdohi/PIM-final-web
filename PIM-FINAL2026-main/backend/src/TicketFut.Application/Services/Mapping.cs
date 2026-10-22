@@ -24,5 +24,6 @@ internal static class Mapping
     public static TicketDto ToDto(Ticket t) => new(
         t.Id, t.MatchId, $"{Teams.DisplayName(t.Match.HomeTeam)} vs {Teams.DisplayName(t.Match.AwayTeam)}",
         t.Sector.ToString(), t.Code, t.Amount,
-        DateTime.SpecifyKind(t.Match.KickoffAt, DateTimeKind.Utc), DateTime.SpecifyKind(t.IssuedAt, DateTimeKind.Utc));
+               DateTime.SpecifyKind(t.Match.KickoffAt, DateTimeKind.Utc), DateTime.SpecifyKind(t.IssuedAt, DateTimeKind.Utc),
+        t.SeatRow, t.SeatNumber);
 }
