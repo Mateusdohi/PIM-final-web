@@ -97,3 +97,10 @@ public class FacePolicy
     public int MaxFaceAttemptsPerIntent { get; set; } = 5;
     public int MaxImageBytes { get; set; } = 5 * 1024 * 1024;
 }
+
+// [PIM-WEB Cartão 7] Portão da fila virtual: com a fila ligada, só compra quem foi liberado para a partida.
+public interface IQueueGate
+{
+    bool Enabled { get; }
+    bool IsAdmitted(Guid userId, int matchId);
+}

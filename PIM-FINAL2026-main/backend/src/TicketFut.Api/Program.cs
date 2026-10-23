@@ -1,9 +1,11 @@
 using System.Text;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using TicketFut.Api.Middleware;
+using TicketFut.Api.Queue;
 using TicketFut.Application.Abstractions;
 using TicketFut.Application.Services;
 using TicketFut.Infrastructure;
@@ -44,8 +46,29 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             // [PIM-WEB Cartão 3] Diz ao ASP.NET onde estão o papel e o id do usuário no token (necessário porque MapInboundClaims = false).
             RoleClaimType = "role", NameClaimType = "sub",
         };
+        // [PIM-WEB Cartão 7] WebSocket não envia cabeçalhos: no SignalR o token chega na query string (só nas rotas /hubs).
+        o.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = ctx =>
+            {
+                var token = ctx.Request.Query["access_token"];
+                if (!string.IsNullOrEmpty(token) && ctx.HttpContext.Request.Path.StartsWithSegments("/hubs"))
+                    ctx.Token = token;
+                return Task.CompletedTask;
+            },
+        };
     });
 builder.Services.AddAuthorization();
+
+// ---- Fila virtual (SignalR) ----
+// [PIM-WEB Cartão 7] Fila virtual em tempo real para jogos muito disputados. Desligada por padrão (Queue:Enabled = false).
+var queueOptions = config.GetSection("Queue").Get<QueueOptions>() ?? new QueueOptions();
+builder.Services.AddSingleton(queueOptions);
+builder.Services.AddSingleton<QueueService>();
+builder.Services.AddSingleton<IQueueGate>(sp => sp.GetRequiredService<QueueService>());
+builder.Services.AddSingleton<IUserIdProvider, SubUserIdProvider>();
+builder.Services.AddSignalR();
+builder.Services.AddHostedService<QueueWorker>();
 
 // ---- Rate limiting (anti força-bruta em login e verificação facial) ----
 builder.Services.AddRateLimiter(o =>
@@ -70,7 +93,7 @@ builder.Services.AddRateLimiter(o =>
 var allowedOrigins = config.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
 builder.Services.AddCors(o => o.AddPolicy("web", p => p
     .WithOrigins(allowedOrigins)
-    .WithHeaders("Authorization", "Content-Type")
+    .WithHeaders("Authorization", "Content-Type", "x-requested-with", "x-signalr-user-agent")   // os dois últimos são do SignalR
     .WithMethods("GET", "POST", "PUT", "DELETE")));
 
 builder.Services.AddControllers();
@@ -151,5 +174,7 @@ app.UseAuthentication();
 app.UseRateLimiter();           // depois do auth: a política "face" particiona por usuário
 app.UseAuthorization();
 app.MapControllers();
+// [PIM-WEB Cartão 7] Endereço do hub da fila virtual (WebSocket).
+app.MapHub<QueueHub>("/hubs/queue");
 app.MapHealthChecks("/health");
 app.Run();
