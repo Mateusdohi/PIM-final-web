@@ -11,6 +11,7 @@ public class User
     public string PasswordHash { get; set; } = "";
     public string Team { get; set; } = Rules.Teams.Default;   // slug: palmeiras, sao_paulo...
     public MemberPlan Plan { get; set; } = MemberPlan.None;
+    // [PIM-WEB Cartão 3] Papel do usuário no sistema (padrão: User). Vai dentro do token JWT.
     public string Role { get; set; } = Rules.Roles.User;
     public string? MemberCode { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

@@ -46,6 +46,7 @@ public static class DbSeeder
             {
                 Name = "Admin", Email = "admin@ticketfut.com", Cpf = "52998224725", Team = Domain.Rules.Teams.Default,
                 PasswordHash = hasher.Hash("Admin@1234"),
+                                // [PIM-WEB Cartão 3] O administrador de desenvolvimento nasce com o papel Admin.
                                 Role = Domain.Rules.Roles.Admin,
             });
             await db.SaveChangesAsync();

@@ -12,7 +12,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration config)
     {
-                if (config.GetValue<bool>("Database:UseInMemory"))
+        // [PIM-WEB Demonstração] Com Database:UseInMemory=true a API roda com banco em memória (sem SQL Server). O padrão continua sendo o SQL Server.
+        if (config.GetValue<bool>("Database:UseInMemory"))
             services.AddDbContext<AppDbContext>(o => o.UseInMemoryDatabase("ticketfut-demo"));   // só para demonstração
         else
             services.AddDbContext<AppDbContext>(o => o.UseSqlServer(config.GetConnectionString("Default")));

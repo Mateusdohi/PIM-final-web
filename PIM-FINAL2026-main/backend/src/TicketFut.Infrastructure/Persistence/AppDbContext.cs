@@ -26,6 +26,7 @@ public class AppDbContext : DbContext
             e.Property(x => x.Email).HasMaxLength(254).IsRequired();
             e.Property(x => x.PasswordHash).HasMaxLength(512).IsRequired();
             e.Property(x => x.Team).HasMaxLength(30).IsRequired();
+            // [PIM-WEB Cartão 3] Coluna Role na tabela Users.
             e.Property(x => x.Role).HasMaxLength(20).IsRequired();
             e.Property(x => x.MemberCode).HasMaxLength(6);
             e.Property(x => x.Plan).HasConversion<int>();
@@ -79,6 +80,7 @@ public class AppDbContext : DbContext
             e.Property(x => x.Status).HasConversion<string>().HasMaxLength(10);
             e.HasOne(x => x.Match).WithMany().HasForeignKey(x => x.MatchId).OnDelete(DeleteBehavior.Restrict);
             e.HasIndex(x => x.UserId);
+                        // [PIM-WEB Cartão 4] Índice único filtrado: o banco recusa a segunda compra ativa do mesmo assento (garantia final contra venda dupla).
                         // 1 assento = no máximo 1 compra ativa (reservada ou paga) por partida
             e.HasIndex(x => new { x.MatchId, x.Sector, x.SeatRow, x.SeatNumber })
                 .IsUnique()
@@ -94,6 +96,7 @@ public class AppDbContext : DbContext
             e.HasIndex(x => x.Code).IsUnique();
             e.HasIndex(x => x.PaymentIntentId).IsUnique();   // 1 ingresso por pagamento (idempotência)
             e.HasIndex(x => x.UserId);
+            // [PIM-WEB Cartão 4] Mesma garantia nos ingressos: um assento só pode ter um ingresso por partida.
             e.HasIndex(x => new { x.MatchId, x.Sector, x.SeatRow, x.SeatNumber })
                 .IsUnique()
                 .HasFilter("[SeatRow] IS NOT NULL");

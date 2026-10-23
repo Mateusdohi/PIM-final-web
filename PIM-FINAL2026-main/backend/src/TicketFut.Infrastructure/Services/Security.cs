@@ -45,6 +45,7 @@ public class TokenService : ITokenService
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                        // [PIM-WEB Cartão 3] Papel do usuário (User ou Admin) dentro do token, para a API separar o que cada um pode acessar.
                         new Claim("role", user.Role),
         };
         var token = new JwtSecurityToken(_opt.Issuer, _opt.Audience, claims,

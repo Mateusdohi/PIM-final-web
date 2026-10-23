@@ -23,6 +23,7 @@ public class PaymentService
     private readonly IUnitOfWork _uow;
     private readonly IClock _clock;
     private readonly FacePolicy _policy;
+    // [PIM-WEB Cartão 5] Usado para conferir a senha na confirmação pela web.
     private readonly IPasswordHasher _hasher;
 
     public PaymentService(IUserRepository users, IMatchRepository matches, IPaymentRepository payments,
@@ -61,6 +62,7 @@ public class PaymentService
                 throw AppException.Validation("member_code_invalid", "Código de sócio incorreto. Verifique o código recebido no seu cadastro.");
         }
 
+        // [PIM-WEB Cartão 4] Reserva de assento: precisa existir no mapa e estar livre (nem vendido, nem reservado por outra pessoa).
         // Assento (opcional): o app mobile continua comprando só por setor.
         if (req.SeatRow.HasValue != req.SeatNumber.HasValue)
             throw AppException.Validation("invalid_seat", "Informe a fileira e o número do assento.");
@@ -88,6 +90,7 @@ public class PaymentService
         };
         await _payments.AddIntentAsync(intent, ct);
                try { await _uow.SaveChangesAsync(ct); }
+        // [PIM-WEB Cartão 4] Se duas pessoas reservarem ao mesmo tempo, o índice único do banco recusa a segunda, que recebe 409 seat_taken.
         catch (AppException ex) when (ex.Code == "conflict" && req.SeatRow.HasValue)
         {
             throw AppException.Conflict("seat_taken", "Esse assento acabou de ser reservado por outra pessoa. Escolha outro.");
@@ -151,12 +154,14 @@ public class PaymentService
             throw AppException.Forbidden("face_mismatch", "Não foi possível confirmar sua identidade. Tente novamente.");
         }
 
-                return await ChargeAndIssueAsync(intent, cardToken, now, ct);}
+        return await ChargeAndIssueAsync(intent, cardToken, now, ct);
+    }
 
     /// <summary>
     /// Confirmação para a WEB (sem biometria): o usuário digita a senha de novo (reautenticação), além do nonce
     /// da intenção. Mesmas travas da confirmação por selfie: expiração, limite de tentativas e gateway.
     /// </summary>
+    // [PIM-WEB Cartão 5] Pagamento pela web: reautentica com a senha (a biometria é do app mobile). Mantém nonce, expiração de 10 min e limite de tentativas.
     public async Task<ConfirmResponse> ConfirmWithPasswordAsync(Guid userId, Guid intentId, string nonce, string password, string? cardToken, CancellationToken ct)
     {
         var now = _clock.UtcNow;
@@ -189,6 +194,7 @@ public class PaymentService
         await _uow.SaveChangesAsync(ct);
 
         var user = await _users.GetByIdAsync(userId, ct) ?? throw AppException.Unauthorized();
+        // [PIM-WEB Cartão 5] Senha errada devolve 403 (e não 401), para o site não achar que o login expirou.
         if (!_hasher.Verify(user.PasswordHash, password))
             throw AppException.Forbidden("invalid_password", "Senha incorreta.");
 
@@ -196,6 +202,7 @@ public class PaymentService
     }
 
     /// <summary>Cobra no gateway e emite o ingresso. Usado pelos fluxos com selfie (mobile) e com senha (web).</summary>
+    // [PIM-WEB Cartão 5] Cobrança e emissão do ingresso, compartilhadas pelo fluxo com selfie (mobile) e pelo fluxo com senha (web).
     private async Task<ConfirmResponse> ChargeAndIssueAsync(PaymentIntent intent, string? cardToken, DateTime now, CancellationToken ct)
     {
         var charge = await _gateway.ChargeAsync(new ChargeRequest(

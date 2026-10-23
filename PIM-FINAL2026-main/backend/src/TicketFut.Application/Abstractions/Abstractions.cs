@@ -43,6 +43,7 @@ public interface IPaymentRepository
     Task AddTicketAsync(Ticket ticket, CancellationToken ct = default);
     Task<List<Ticket>> ListTicketsAsync(Guid userId, CancellationToken ct = default);
         Task AddFaceLogAsync(FaceVerificationLog log, CancellationToken ct = default);
+    // [PIM-WEB Cartão 4] Consultas de assentos: lista os ocupados, confere se um assento está tomado e libera reservas vencidas.
     Task<List<TakenSeat>> ListTakenSeatsAsync(int matchId, Sector sector, DateTime now, CancellationToken ct = default);
     Task<bool> IsSeatTakenAsync(int matchId, Sector sector, int row, int number, DateTime now, CancellationToken ct = default);
     Task ExpireStaleSeatIntentsAsync(int matchId, Sector sector, int row, int number, DateTime now, CancellationToken ct = default);
