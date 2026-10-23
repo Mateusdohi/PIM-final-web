@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teste da fila virtual</title>
+<!-- [PIM-WEB Cartão 7] Página de teste da fila virtual (SignalR). Abra com o Go Live em DUAS abas para ver a fila andando. -->
+<style>
+  body { font-family: Arial, sans-serif; max-width: 720px; margin: 24px auto; padding: 0 12px; background: #111; color: #eee; }
+  h1 { font-size: 20px; }
+  section { margin: 12px 0; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  input, select, button { padding: 8px; border-radius: 6px; border: 1px solid #555; background: #222; color: #eee; }
+  button { cursor: pointer; background: #1b5e20; border-color: #2e7d32; }
+  button.sec { background: #333; border-color: #555; }
+  .st { padding: 16px; border-radius: 8px; font-size: 18px; background: #222; margin: 12px 0; }
+  .st.wait { background: #5d4037; }
+  .st.ok { background: #1b5e20; }
+  .st.off { background: #7f1d1d; }
+  pre { background: #000; padding: 10px; border-radius: 6px; min-height: 120px; max-height: 280px; overflow: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<h1>Fila virtual (teste)</h1>
+
+<section>
+  <label>API <input id="api" value="http://localhost:5080" size="24"></label>
+  <button id="btnCad">1. Criar usuário de teste</button>
+  <span id="quem">não logado</span>
+</section>
+<section>
+  <label>Partida <select id="match"></select></label>
+  <button id="btnEntrar">2. Entrar na fila</button>
+  <button id="btnSair" class="sec">Sair da fila</button>
+  <button id="btnReservar" class="sec">Tentar reservar assento 1/1</button>
+</section>
+
+<div id="status" class="st">Sem estado ainda.</div>
+<pre id="log"></pre>
+
+<script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8.0.7/dist/browser/signalr.min.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+let token = sessionStorage.getItem('tk') || '';
+let conn = null, expiresAt = null, admitted = false;
+const api = () => $('api').value.replace(/\/$/, '');
+const log = t => { $('log').textContent = new Date().toLocaleTimeString() + '  ' + t + '\n' + $('log').textContent; };
+
+// CPF válido aleatório (só para criar usuários de teste)
+function cpfValido() {
+  const d = Array.from({ length: 9 }, () => Math.floor(Math.random() * 10));
+  if (new Set(d).size === 1) return cpfValido();
+  for (const n of [9, 10]) {
+    let s = 0;
+    for (let i = 0; i < n; i++) s += d[i] * (n + 1 - i);
+    const r = (s * 10) % 11;
+    d.push(r === 10 ? 0 : r);
+  }
+  return d.join('');
+}
+
+async function req(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers.Authorization = 'Bearer ' + token;
+  const r = await fetch(api() + path, { ...opts, headers });
+  let body = null;
+  try { body = await r.json(); } catch (e) { /* resposta sem corpo */ }
+  return { status: r.status, body };
+}
+
+async function carregarPartidas() {
+  const r = await req('/api/matches');
+  if (r.status !== 200) return log('Partidas: HTTP ' + r.status);
+  $('match').innerHTML = r.body.map(m => `<option value="${m.id}">${m.id} - ${m.homeName} x ${m.awayName}</option>`).join('');
+}
+
+async function cadastrar() {
+  const n = Math.floor(Math.random() * 9000 + 1000);
+  const email = `fila${n}@teste.com`;
+  const r = await req('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ name: 'Teste ' + n, cpf: cpfValido(), email, password: 'Teste1234', team: 'Palmeiras' }),
+  });
+  if (r.status >= 300) return log('Cadastro falhou: HTTP ' + r.status + ' ' + JSON.stringify(r.body));
+  token = r.body.accessToken;
+  sessionStorage.setItem('tk', token);
+  $('quem').textContent = email;
+  log('Usuário criado: ' + email);
+  await carregarPartidas();
+}
+
+function mostrar(s) {
+  const el = $('status');
+  admitted = s.status === 'admitted';
+  expiresAt = s.expiresAt ? new Date(s.expiresAt) : null;
+  if (s.status === 'waiting') { el.className = 'st wait'; el.textContent = `Na fila: posição ${s.position} de ${s.total}`; }
+  else if (s.status === 'admitted') { el.className = 'st ok'; atualizarContagem(); }
+  else if (s.status === 'expired') { el.className = 'st off'; el.textContent = 'Seu tempo para comprar acabou. Entre na fila de novo.'; }
+  else { el.className = 'st'; el.textContent = 'Você não está na fila.'; }
+}
+
+function atualizarContagem() {
+  if (!admitted || !expiresAt) return;
+  const seg = Math.max(0, Math.round((expiresAt - Date.now()) / 1000));
+  $('status').textContent = `Liberado! Você tem ${Math.floor(seg / 60)}:${String(seg % 60).padStart(2, '0')} para comprar.`;
+}
+setInterval(atualizarContagem, 500);
+
+async function entrar() {
+  if (!token) return log('Crie um usuário primeiro.');
+  try {
+    if (!conn) {
+      conn = new signalR.HubConnectionBuilder()
+        .withUrl(api() + '/hubs/queue', { accessTokenFactory: () => token })
+        .withAutomaticReconnect()
+        .build();
+      conn.on('QueueUpdated', (matchId, s) => { log(`Evento: partida ${matchId} -> ${s.status} (posição ${s.position})`); mostrar(s); });
+      await conn.start();
+      log('Conectado ao hub da fila.');
+    }
+    const s = await conn.invoke('Join', Number($('match').value));
+    log('Entrou: ' + s.status + ' (posição ' + s.position + ')');
+    mostrar(s);
+  } catch (e) { log('Erro: ' + e); }
+}
+
+async function sair() {
+  if (!conn) return;
+  await conn.invoke('Leave', Number($('match').value));
+  log('Saiu da fila.');
+  mostrar({ status: 'none', position: 0, total: 0 });
+}
+
+async function reservar() {
+  const r = await req('/api/payments/intents', {
+    method: 'POST',
+    body: JSON.stringify({ matchId: Number($('match').value), sector: 'Norte', method: 'Pix', seatRow: 1, seatNumber: 1 }),
+  });
+  log('Reservar assento 1/1 -> HTTP ' + r.status + ' ' + JSON.stringify(r.body).slice(0, 140));
+}
+
+$('btnCad').onclick = cadastrar;
+$('btnEntrar').onclick = entrar;
+$('btnSair').onclick = sair;
+$('btnReservar').onclick = reservar;
+if (token) carregarPartidas();
+</script>
+</body>
+</html>

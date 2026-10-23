@@ -25,13 +25,15 @@ public class PaymentService
     private readonly FacePolicy _policy;
     // [PIM-WEB Cartão 5] Usado para conferir a senha na confirmação pela web.
     private readonly IPasswordHasher _hasher;
+    // [PIM-WEB Cartão 7] Consulta a fila virtual antes de criar a compra.
+    private readonly IQueueGate _queue;
 
     public PaymentService(IUserRepository users, IMatchRepository matches, IPaymentRepository payments,
         IFaceTemplateRepository faces, IFaceRecognitionClient faceClient, IEmbeddingProtector protector,
-        IPaymentGateway gateway, IUnitOfWork uow, IClock clock, FacePolicy policy, IPasswordHasher hasher)
+        IPaymentGateway gateway, IUnitOfWork uow, IClock clock, FacePolicy policy, IPasswordHasher hasher, IQueueGate queue)
     {
         _users = users; _matches = matches; _payments = payments; _faces = faces; _faceClient = faceClient;
-        _protector = protector; _gateway = gateway; _uow = uow; _clock = clock; _policy = policy; _hasher = hasher;
+        _protector = protector; _gateway = gateway; _uow = uow; _clock = clock; _policy = policy; _hasher = hasher; _queue = queue;
     }
 
     /// <summary>Passo 1 do checkout: valida regras (setor, sócio), calcula o valor e emite o nonce.</summary>
@@ -39,6 +41,9 @@ public class PaymentService
     {
         var user = await _users.GetByIdAsync(userId, ct) ?? throw AppException.NotFound("Usuário não encontrado.");
         var match = await _matches.GetAsync(req.MatchId, ct) ?? throw AppException.NotFound("Partida não encontrada.");
+        // [PIM-WEB Cartão 7] Fila virtual: com a fila ligada, só compra quem foi liberado para esta partida (403 queue_required).
+        if (!_queue.IsAdmitted(userId, req.MatchId))
+            throw AppException.Forbidden("queue_required", "Entre na fila virtual e aguarde sua vez para comprar.");
         var now = _clock.UtcNow;
 
         if (match.IsFinished(now) || match.KickoffAt <= now)
