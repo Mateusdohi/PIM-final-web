@@ -13,6 +13,7 @@ public class MatchService
     private readonly IPaymentRepository _payments;
     private readonly IClock _clock;
 
+    // [PIM-WEB Cartão 4] Recebe também o repositório de pagamentos, para saber quais assentos estão ocupados.
     public MatchService(IMatchRepository matches, IUserRepository users, IPaymentRepository payments, IClock clock)
     {
         _matches = matches; _users = users; _payments = payments; _clock = clock;
@@ -61,9 +62,11 @@ public class MatchService
         var isAway = user.Team != Teams.Default && match.AwayTeam == user.Team;
         return Enum.GetValues<Sector>()
             .Select(s => new SectorDto(s.ToString(), SectorRules.IsAllowed(s, isAway), SectorRules.BlockReason(s, isAway)))
-            .ToList();}
+            .ToList();
+    }
     
     /// <summary>Mapa de assentos de um setor: devolve só os ocupados; os demais estão livres.</summary>
+    // [PIM-WEB Cartão 4] GET /api/matches/{id}/seats?sector=Norte: mapa de assentos do setor, respeitando a regra do setor do time visitante.
     public async Task<SeatMapDto> SeatsAsync(Guid userId, int matchId, string? sectorName, CancellationToken ct)
     {
         var user = await _users.GetByIdAsync(userId, ct) ?? throw AppException.NotFound("Usuário não encontrado.");

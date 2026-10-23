@@ -47,6 +47,7 @@ public class AuthService
         if (await _users.CpfExistsAsync(cpf, ct))
             throw AppException.Conflict("cpf_taken", "Este CPF já está cadastrado. Faça login ou use outros dados.");
 
+        // [PIM-WEB Cartão 2] A senha nunca é guardada em texto puro: só o hash (PBKDF2 com salt aleatório, do ASP.NET Identity).
         var user = new User { Name = name, Email = email, Cpf = cpf, Team = team, PasswordHash = _hasher.Hash(req.Password) };
         await _users.AddAsync(user, ct);
         var response = await IssueTokensAsync(user, hasFace: false, ct);
@@ -56,12 +57,14 @@ public class AuthService
 
     public async Task<AuthResponse> LoginAsync(LoginRequest req, CancellationToken ct)
 {
+    // [PIM-WEB Cartão 2] Login: limita o tamanho da senha antes de qualquer cálculo pesado.
     var password = req.Password ?? "";
     if (password.Length > 128) throw AppException.Unauthorized("E-mail ou senha incorretos.");
 
     var user = await _users.GetByEmailAsync((req.Email ?? "").Trim().ToLowerInvariant(), ct);
     if (user is null)
     {
+        // [PIM-WEB Cartão 2] E-mail inexistente: calcula um hash mesmo assim, para o tempo de resposta ser igual ao de um e-mail válido (não dá para descobrir e-mails cadastrados medindo o tempo).
         _hasher.Hash(password);   // gasta o mesmo tempo de uma verificação real
         throw AppException.Unauthorized("E-mail ou senha incorretos.");
     }
@@ -145,6 +148,7 @@ public class AuthService
         try { return new MailAddress(email).Address == email; } catch { return false; }
     }
 
-   private static bool IsStrongPassword(string? p) =>
-    p is { Length: >= 8 and <= 128 } && p.Any(char.IsLetter) && p.Any(char.IsDigit);
-    }
+    // [PIM-WEB Cartão 2] Regra de senha: de 8 a 128 caracteres, com pelo menos uma letra e um número. O máximo impede enviar textos enormes para sobrecarregar o servidor.
+    private static bool IsStrongPassword(string? p) =>
+        p is { Length: >= 8 and <= 128 } && p.Any(char.IsLetter) && p.Any(char.IsDigit);
+}

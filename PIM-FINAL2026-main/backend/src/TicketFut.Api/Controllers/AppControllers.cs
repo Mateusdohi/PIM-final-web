@@ -40,6 +40,7 @@ public class MatchesController : ControllerBase
         Ok(await _svc.SectorsAsync(User.GetUserId(), id, ct));
         
     /// <param name="sector">Norte | Sul | Oeste | Leste</param>
+    // [PIM-WEB Cartão 4] Mapa de assentos de um setor da partida.
     [HttpGet("{id:int}/seats")]
     public async Task<ActionResult<SeatMapDto>> Seats(int id, [FromQuery] string? sector, CancellationToken ct) =>
         Ok(await _svc.SeatsAsync(User.GetUserId(), id, sector, ct));
@@ -66,6 +67,7 @@ public class PaymentsController : ControllerBase
     }
     
     /// <summary>Confirmação para a WEB (sem biometria). JSON: nonce, password (reautenticação) e cardToken (opcional para Pix).</summary>
+    // [PIM-WEB Cartão 5] Confirmação de pagamento para a web (sem biometria), com limite de requisições por usuário.
     [HttpPost("intents/{id:guid}/confirm-web"), EnableRateLimiting("face")]
     public async Task<ActionResult<ConfirmResponse>> ConfirmWeb(Guid id, ConfirmWebRequest req, CancellationToken ct) =>
         Ok(await _svc.ConfirmWithPasswordAsync(User.GetUserId(), id, req.Nonce, req.Password, req.CardToken, ct));

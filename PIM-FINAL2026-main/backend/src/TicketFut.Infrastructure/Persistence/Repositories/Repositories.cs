@@ -12,6 +12,7 @@ public class UnitOfWork : IUnitOfWork
         public async Task SaveChangesAsync(CancellationToken ct = default)
     {
         try { await _db.SaveChangesAsync(ct); }
+        // [PIM-WEB Cartão 4] Violação de índice único (SQL Server 2601/2627) vira erro 409 em vez de 500.
         catch (DbUpdateException ex) when (ex.InnerException is Microsoft.Data.SqlClient.SqlException { Number: 2601 or 2627 })
         {
             // violação de índice único (duas pessoas ao mesmo tempo): vira 409 em vez de 500
@@ -116,6 +117,7 @@ public class PaymentRepository : IPaymentRepository
         public async Task AddFaceLogAsync(FaceVerificationLog log, CancellationToken ct = default) =>
         await _db.FaceVerificationLogs.AddAsync(log, ct);
 
+    // [PIM-WEB Cartão 4] Assentos vendidos (ingressos) e reservados (compras em andamento que ainda não expiraram).
     public async Task<List<TakenSeat>> ListTakenSeatsAsync(int matchId, Sector sector, DateTime now, CancellationToken ct = default)
     {
         var sold = await _db.Tickets.AsNoTracking()
@@ -133,6 +135,7 @@ public class PaymentRepository : IPaymentRepository
         return result;
     }
 
+    // [PIM-WEB Cartão 4] Assento tomado = existe ingresso dele, ou compra paga, ou reserva ainda válida.
     public async Task<bool> IsSeatTakenAsync(int matchId, Sector sector, int row, int number, DateTime now, CancellationToken ct = default)
     {
         var sold = await _db.Tickets.AnyAsync(t =>
@@ -143,6 +146,7 @@ public class PaymentRepository : IPaymentRepository
             && (i.Status == PaymentStatus.Paid || (i.Status == PaymentStatus.Pending && i.ExpiresAt > now)), ct);
     }
 
+    // [PIM-WEB Cartão 4] Reservas vencidas (10 min) são marcadas como Expired para liberar o assento.
     public async Task ExpireStaleSeatIntentsAsync(int matchId, Sector sector, int row, int number, DateTime now, CancellationToken ct = default)
     {
         var stale = await _db.PaymentIntents

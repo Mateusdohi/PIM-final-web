@@ -29,6 +29,7 @@ builder.Services.AddScoped<MatchService>();
 builder.Services.AddScoped<PaymentService>();
 
 // ---- Auth (JWT) ----
+// [PIM-WEB Cartão 6] CSRF não se aplica: o token JWT vai no cabeçalho Authorization (nunca em cookie), que o navegador não envia sozinho para outros sites.
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(o =>
     {
@@ -39,7 +40,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true, ValidAudience = config["Jwt:Audience"],
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-                        ValidateLifetime = true, ClockSkew = TimeSpan.FromSeconds(30),
+            ValidateLifetime = true, ClockSkew = TimeSpan.FromSeconds(30),
+            // [PIM-WEB Cartão 3] Diz ao ASP.NET onde estão o papel e o id do usuário no token (necessário porque MapInboundClaims = false).
             RoleClaimType = "role", NameClaimType = "sub",
         };
     });
@@ -49,7 +51,8 @@ builder.Services.AddAuthorization();
 builder.Services.AddRateLimiter(o =>
 {
     o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-        // limite geral por IP (todas as rotas), além das políticas específicas abaixo
+    // limite geral por IP (todas as rotas), além das políticas específicas abaixo
+    // [PIM-WEB Cartão 6] Limite geral: 120 requisições por minuto por IP em todas as rotas.
     o.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx =>
         RateLimitPartition.GetFixedWindowLimiter(
             ctx.Connection.RemoteIpAddress?.ToString() ?? "anon",
@@ -63,6 +66,7 @@ builder.Services.AddRateLimiter(o =>
 });
 
 // ---- CORS: só os sites listados em Cors:AllowedOrigins podem chamar a API pelo navegador ----
+// [PIM-WEB Cartão 6] CORS: só os sites listados em Cors:AllowedOrigins podem chamar a API pelo navegador.
 var allowedOrigins = config.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
 builder.Services.AddCors(o => o.AddPolicy("web", p => p
     .WithOrigins(allowedOrigins)
@@ -71,6 +75,7 @@ builder.Services.AddCors(o => o.AddPolicy("web", p => p
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+// [PIM-WEB Cartão 3] Botão Authorize no Swagger: permite testar os endpoints protegidos colando o accessToken.
 builder.Services.AddSwaggerGen(c =>
 {
     c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
@@ -112,6 +117,7 @@ if (config.GetValue<bool>("Database:AutoCreate"))
     await DbSeeder.SeedAsync(db, hasher, seedDevAdmin: app.Environment.IsDevelopment());
 }
 
+// [PIM-WEB Cartão 6] Cabeçalhos que protegem o navegador do usuário: sem sniffing de tipo, sem iframe, sem cache de dados pessoais.
 // ---- Cabeçalhos de segurança (valem para todas as respostas) ----
 app.Use(async (ctx, next) =>
 {
@@ -136,6 +142,7 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
+    // [PIM-WEB Cartão 6] HTTPS: HSTS e redirecionamento ficam ativos fora do ambiente de desenvolvimento.
     app.UseHsts();              // o navegador passa a exigir HTTPS neste domínio
     app.UseHttpsRedirection();
 }

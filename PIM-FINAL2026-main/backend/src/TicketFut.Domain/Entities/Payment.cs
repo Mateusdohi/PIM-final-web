@@ -8,6 +8,7 @@ public class PaymentIntent
     public Guid UserId { get; set; }
     public int MatchId { get; set; }
     public Sector Sector { get; set; }
+    // [PIM-WEB Cartão 4] Assento escolhido (fileira e número). Fica vazio quando a compra é só por setor, como no app mobile.
     public int? SeatRow { get; set; }
     public int? SeatNumber { get; set; }
     public PaymentMethod Method { get; set; }
@@ -32,6 +33,7 @@ public class Ticket
     public Guid UserId { get; set; }
     public int MatchId { get; set; }
     public Sector Sector { get; set; }
+    // [PIM-WEB Cartão 4] Assento do ingresso (fileira e número). Vazio quando a compra foi só por setor.
     public int? SeatRow { get; set; }
     public int? SeatNumber { get; set; }
     public string Code { get; set; } = "";
