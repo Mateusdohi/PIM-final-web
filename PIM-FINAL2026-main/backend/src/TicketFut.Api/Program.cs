@@ -49,6 +49,11 @@ builder.Services.AddAuthorization();
 builder.Services.AddRateLimiter(o =>
 {
     o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+        // limite geral por IP (todas as rotas), além das políticas específicas abaixo
+    o.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            ctx.Connection.RemoteIpAddress?.ToString() ?? "anon",
+            _ => new FixedWindowRateLimiterOptions { PermitLimit = 120, Window = TimeSpan.FromMinutes(1) }));
     o.AddPolicy("auth", ctx => RateLimitPartition.GetFixedWindowLimiter(
         ctx.Connection.RemoteIpAddress?.ToString() ?? "anon",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) }));
@@ -56,6 +61,13 @@ builder.Services.AddRateLimiter(o =>
         ctx.User.FindFirst("sub")?.Value ?? ctx.Connection.RemoteIpAddress?.ToString() ?? "anon",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) }));
 });
+
+// ---- CORS: só os sites listados em Cors:AllowedOrigins podem chamar a API pelo navegador ----
+var allowedOrigins = config.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+builder.Services.AddCors(o => o.AddPolicy("web", p => p
+    .WithOrigins(allowedOrigins)
+    .WithHeaders("Authorization", "Content-Type")
+    .WithMethods("GET", "POST", "PUT", "DELETE")));
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -100,6 +112,22 @@ if (config.GetValue<bool>("Database:AutoCreate"))
     await DbSeeder.SeedAsync(db, hasher, seedDevAdmin: app.Environment.IsDevelopment());
 }
 
+// ---- Cabeçalhos de segurança (valem para todas as respostas) ----
+app.Use(async (ctx, next) =>
+{
+    var h = ctx.Response.Headers;
+    h["X-Content-Type-Options"] = "nosniff";
+    h["X-Frame-Options"] = "DENY";
+    h["Referrer-Policy"] = "no-referrer";
+    h["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+    if (ctx.Request.Path.StartsWithSegments("/api"))
+    {
+        h["Cache-Control"] = "no-store";   // respostas com token ou dados pessoais não ficam em cache
+        h["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'";
+    }
+    await next();
+});
+
 app.UseMiddleware<ExceptionMiddleware>();
 if (app.Environment.IsDevelopment())
 {
@@ -108,10 +136,12 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
+    app.UseHsts();              // o navegador passa a exigir HTTPS neste domínio
     app.UseHttpsRedirection();
 }
+app.UseCors("web");             // antes da autenticação: o preflight (OPTIONS) não leva token
 app.UseAuthentication();
-app.UseRateLimiter();   // depois do auth: a política "face" particiona por usuário
+app.UseRateLimiter();           // depois do auth: a política "face" particiona por usuário
 app.UseAuthorization();
 app.MapControllers();
 app.MapHealthChecks("/health");

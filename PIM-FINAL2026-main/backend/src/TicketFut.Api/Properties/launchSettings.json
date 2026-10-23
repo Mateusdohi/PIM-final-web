@@ -6,6 +6,13 @@
       "launchUrl": "swagger",
       "applicationUrl": "http://localhost:5080",
       "environmentVariables": { "ASPNETCORE_ENVIRONMENT": "Development" }
+    },
+    "TicketFut.Api (https)": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "applicationUrl": "https://localhost:7080;http://localhost:5080",
+      "environmentVariables": { "ASPNETCORE_ENVIRONMENT": "Development" }
     }
   }
 }
