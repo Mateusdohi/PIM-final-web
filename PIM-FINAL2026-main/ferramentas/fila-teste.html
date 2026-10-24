@@ -110,7 +110,7 @@ async function entrar() {
   try {
     if (!conn) {
       conn = new signalR.HubConnectionBuilder()
-        .withUrl(api() + '/hubs/queue', { accessTokenFactory: () => token })
+        .withUrl(api() + '/hubs/queue', { accessTokenFactory: () => token, withCredentials: false }) // [PIM-WEB Cartão 7]
         .withAutomaticReconnect()
         .build();
       conn.on('QueueUpdated', (matchId, s) => { log(`Evento: partida ${matchId} -> ${s.status} (posição ${s.position})`); mostrar(s); });
