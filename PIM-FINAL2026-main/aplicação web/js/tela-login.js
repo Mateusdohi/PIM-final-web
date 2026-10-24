@@ -1,24 +1,24 @@
 // ===========================
 // TELA 1: LOGIN
+// [PIM-WEB Cartão 8] Login e assinatura de sócio pela API. Sem localStorage.
 // ===========================
-function fazerLogin() {
+
+// [PIM-WEB Cartão 8] Login pela API (POST /api/auth/login). Senha não é guardada.
+async function fazerLogin() {
   const email = document.getElementById('login-email').value.trim();
-  const senha = document.getElementById('login-senha').value.trim();
+  const senha = document.getElementById('login-senha').value; // sem trim: não altera a senha
   if (!email || !senha) { mostrarToast('Preencha e-mail e senha.', 'warning'); return; }
 
-  const usuarios = carregarUsuariosDB();
-  const usuario  = usuarios.find(u => u.email === email && u.senha === senha);
-
-  if (usuario) {
-    estado.usuarioLogado = usuario;
-    estado.timeDoUsuario = usuario.time || 'default';
-    aplicarTema(estado.timeDoUsuario);
+  try {
+    const resp = await Api.login(email, senha);
+    iniciarSessao(resp);
+    document.getElementById('login-senha').value = '';
     mostrarSplashTime(estado.timeDoUsuario, () => {
       carregarPartidas();
       irPara('screen-partidas');
     });
-  } else {
-    mostrarToast('E-mail ou senha incorretos.', 'error');
+  } catch (e) {
+    mostrarToast(e instanceof ApiErro ? e.message : 'Erro inesperado.', 'error');
   }
 }
 
@@ -78,46 +78,46 @@ function selecionarMetodoAdesaoLogin(metodo, btn) {
   }
 }
 
-function confirmarSocioLogin() {
+// [PIM-WEB Cartão 8] Assinatura: login -> POST /api/membership/subscribe com token do cartão.
+async function confirmarSocioLogin() {
   const email = document.getElementById('login-email').value.trim();
-  const senha = document.getElementById('login-senha').value.trim();
+  const senha = document.getElementById('login-senha').value;
 
   if (!email || !senha) { mostrarToast('Preencha seu e-mail e senha acima antes de assinar o plano.', 'warning'); return; }
   if (!planoLoginSelecionado) { mostrarToast('Selecione um plano de sócio.', 'warning'); return; }
 
-  const usuarios = carregarUsuariosDB();
-  const usuario  = usuarios.find(u => u.email === email && u.senha === senha);
-  if (!usuario) { mostrarToast('E-mail ou senha incorretos. Verifique seus dados acima.', 'error'); return; }
-
-  if (usuario.plano > 0) {
-    mostrarToast(`Você já é sócio!\nSeu código: ${usuario.codigoSocio}\nPlano atual: ${usuario.plano}% de desconto.`, 'info');
-    return;
-  }
-
-  const metodo = estado.metodoPagamentoAdesao;
-  if (metodo !== 'pix') {
+  // [PIM-WEB Cartão 8] Método e token do cartão (número e CVV nunca vão à API).
+  const metodoUi = estado.metodoPagamentoAdesao;
+  const metodo = { credito: 'Credit', debito: 'Debit', pix: 'Pix' }[metodoUi];
+  let cardToken = null;
+  if (metodo !== 'pix' && metodo !== 'Pix') {
     const numeroEl = document.querySelector('#login-campos-cartao-adesao .input-field');
-    if (!numeroEl || !numeroEl.value.trim()) { mostrarToast('Preencha o número do cartão.', 'warning'); return; }
+    try { cardToken = gerarTokenCartao(numeroEl ? numeroEl.value : ''); }
+    catch (e) { mostrarToast(e.message, 'warning'); return; }
   }
 
-  const codigo = gerarCodigoSocio();
-  usuario.plano       = planoLoginSelecionado;
-  usuario.codigoSocio = codigo;
-  salvarUsuarioDB(usuario);
+  try {
+    const auth = await Api.login(email, senha);
+    iniciarSessao(auth);
+    document.getElementById('login-senha').value = '';
+    document.querySelectorAll('#login-campos-cartao-adesao input').forEach(i => i.value = '');
 
-  estado.usuarioLogado = usuario;
-  estado.timeDoUsuario = usuario.time || 'default';
-  aplicarTema(estado.timeDoUsuario);
+    const sub = await Api.assinar(planoLoginSelecionado, metodo, cardToken);
+    estado.usuarioLogado = usuarioDaApi(sub.user);
 
-  mostrarToast(`Parabéns! Você agora é sócio!\n🎫 SEU CÓDIGO: ${codigo}\nGuarde este código para usar nos ingressos.`, 'success');
+    mostrarToast(`Parabéns! Você agora é sócio!\n🎫 SEU CÓDIGO: ${sub.memberCode}\nGuarde este código para usar nos ingressos.`, 'success');
 
-  document.getElementById('login-socio-painel').classList.remove('aberto');
-  document.getElementById('btn-toggle-socio-login').textContent = 'QUERO SER SÓCIO';
+    document.getElementById('login-socio-painel').classList.remove('aberto');
+    document.getElementById('btn-toggle-socio-login').textContent = 'QUERO SER SÓCIO';
 
-  setTimeout(() => {
-    mostrarSplashTime(estado.timeDoUsuario, () => {
-      carregarPartidas();
-      irPara('screen-partidas');
-    });
-  }, 1500);
+    setTimeout(() => {
+      mostrarSplashTime(estado.timeDoUsuario, () => {
+        carregarPartidas();
+        irPara('screen-partidas');
+      });
+    }, 1500);
+    } catch (e) {
+    // already_member (409) cai aqui com a mensagem da API, que inclui o código de sócio.
+    mostrarToast(e instanceof ApiErro ? e.message : 'Erro inesperado.', e && e.status === 409 ? 'info' : 'error');
+  }
 }

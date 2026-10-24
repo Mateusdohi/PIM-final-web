@@ -1,5 +1,6 @@
 // ===========================
 // TELA 2: CADASTRO
+// [PIM-WEB Cartão 8] Cadastro pela API. Sem localStorage e sem envio para localhost:5114.
 // ===========================
 const TIME_CLASSES = {
   "palmeiras":   "time-palmeiras",
@@ -58,169 +59,83 @@ document.getElementById('cad-time').addEventListener('change', function () {
 });
 
 // ============================================================
-// FUNÇÃO PRINCIPAL DE CADASTRO
-// A função é async para poder checar duplicatas no SQL
-// antes de avançar. Toda saída antecipada usa "return"
-// garantindo que o usuário NUNCA avança sem estar liberado.
+// [PIM-WEB Cartão 8] CADASTRO PELA API
+// Fluxo: POST /api/auth/register -> POST /api/auth/login -> (se plano) POST /api/membership/subscribe.
+// Número e CVV do cartão nunca saem do navegador: só o token do gateway simulado vai à API.
 // ============================================================
 async function finalizarCadastro() {
   const nome  = document.getElementById('cad-nome').value.trim();
   const cpf   = document.getElementById('cad-cpf').value.trim();
   const email = document.getElementById('cad-email').value.trim();
-  const senha = document.getElementById('cad-senha').value.trim();
+  const senha = document.getElementById('cad-senha').value; // sem trim: não altera a senha
   const time  = document.getElementById('cad-time').value;
   const plano = parseInt(document.getElementById('cad-plano').value) || 0;
 
-  // ── PASSO 1: Campos obrigatórios ──────────────────────────
   if (!nome || !cpf || !email || !senha || !time) {
     mostrarToast('Preencha todos os campos obrigatórios.', 'warning');
-    return; // PARA — não avança
+    return;
   }
 
-  // ── PASSO 2: Duplicatas no localStorage ──────────────────
-  const usuarios   = carregarUsuariosDB();
-  const cpfExiste  = usuarios.find(u => u.cpf === cpf);
-  const emailExiste = usuarios.find(u => u.email.toLowerCase() === email.toLowerCase());
-
-  if (cpfExiste) {
-    mostrarToast('Este CPF já está cadastrado.\nFaça login ou use outros dados.', 'error');
-    return; // PARA — não avança
-  }
-  if (emailExiste) {
-    mostrarToast('Este e-mail já está cadastrado.\nFaça login ou use outros dados.', 'error');
-    return; // PARA — não avança
+  // [PIM-WEB Cartão 8] Validação de conforto (a API valida de novo): 8 a 128 caracteres, letra e número.
+  if (senha.length < 8 || senha.length > 128 || !/[A-Za-z]/.test(senha) || !/\d/.test(senha)) {
+    mostrarToast('A senha deve ter de 8 a 128 caracteres, com letra e número.', 'warning');
+    return;
   }
 
-  // ── PASSO 3: Duplicatas no banco SQL (se API online) ─────
-  // Garante que cadastros feitos em outros dispositivos
-  // também sejam detectados antes de avançar.
-  const bloqueado = await _verificarDuplicataNoSQL(cpf, email);
-  if (bloqueado) {
-    return; // PARA — toast já exibido dentro da função
+  // [PIM-WEB Cartão 8] Se escolheu plano, define método e gera o token ANTES de criar a conta.
+  let metodo = null, cardToken = null;
+  if (plano > 0) {
+    const pixAberto = !document.getElementById('cad-bloco-pix').classList.contains('hidden');
+    const numCred   = document.getElementById('cad-credito-numero').value;
+    const numDeb    = document.getElementById('cad-debito-numero').value;
+    try {
+      if (pixAberto)            { metodo = 'Pix'; }
+      else if (numCred.trim())  { metodo = 'Credit'; cardToken = gerarTokenCartao(numCred); }
+      else if (numDeb.trim())   { metodo = 'Debit';  cardToken = gerarTokenCartao(numDeb); }
+      else { mostrarToast('Informe o cartão ou escolha PIX para o plano de sócio.', 'warning'); return; }
+    } catch (e) {
+      mostrarToast(e.message, 'warning');
+      return;
+    }
   }
 
-  // ─── Liberado para cadastrar ──────────────────────────────
-
-  const timeNorm = normalizarTime(time);
-  const cartaoCredito = {
-    numero:   document.getElementById('cad-credito-numero')?.value.trim()   || '',
-    validade: document.getElementById('cad-credito-validade')?.value.trim() || '',
-    cvv:      document.getElementById('cad-credito-cvv')?.value.trim()      || '',
-  };
-  const cartaoDebito = {
-    numero:   document.getElementById('cad-debito-numero')?.value.trim()    || '',
-    validade: document.getElementById('cad-debito-validade')?.value.trim()  || '',
-    cvv:      document.getElementById('cad-debito-cvv')?.value.trim()       || '',
-  };
-
-  let codigoSocio = null;
-  if (plano > 0) codigoSocio = gerarCodigoSocio();
-
-  const novoUsuario = {
-    nome, cpf, email, senha, plano,
-    time: timeNorm,
-    cartaoCredito,
-    cartaoDebito,
-    codigoSocio,
-  };
-
-  // Salva localmente (garante funcionamento do site)
-  salvarUsuarioDB(novoUsuario);
-
-  // Seta o estado da sessão
-  estado.usuarioLogado = novoUsuario;
-  estado.timeDoUsuario = timeNorm;
-  aplicarTema(timeNorm);
-
-  // Sincroniza com SQL em segundo plano (não bloqueia o fluxo)
-  _sincronizarComBancoSQL(novoUsuario);
-
-  // Exibe mensagem de sucesso e navega
-  if (codigoSocio) {
-    mostrarToast(`Cadastro realizado!\n🎫 SEU CÓDIGO DE SÓCIO: ${codigoSocio}\nAnote este código para usar nos ingressos.`, 'success');
-  }
-
-  setTimeout(() => {
-    mostrarSplashTime(timeNorm, () => {
-      carregarPartidas();
-      irPara('screen-partidas');
-    });
-  }, codigoSocio ? 1800 : 300);
-}
-
-// ============================================================
-// CHECA DUPLICATAS NO SQL ANTES DE AVANÇAR
-// Retorna true  → bloqueado (duplicata encontrada)
-// Retorna false → liberado  (ou API offline, usa só localStorage)
-// ============================================================
-async function _verificarDuplicataNoSQL(cpf, email) {
   try {
-    const resposta = await fetch('http://localhost:5114/api/clientes', {
-      method:  'GET',
-      headers: { 'Content-Type': 'application/json' },
-    });
+    // 1) Cria a conta (o hash da senha é feito no servidor).
+    await Api.registrar(nome, cpf, email, senha, time);
 
-    if (!resposta.ok) return false; // erro na API → não bloqueia
+    // 2) Login para obter o token.
+    const auth = await Api.login(email, senha);
+    iniciarSessao(auth);
 
-    const clientes = await resposta.json();
+    // Limpa dados sensíveis dos campos.
+    ['cad-senha','cad-credito-numero','cad-credito-validade','cad-credito-cvv',
+     'cad-debito-numero','cad-debito-validade','cad-debito-cvv'
+    ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
 
-    const cpfNoSQL    = clientes.find(c => c.Cpf === cpf);
-    const emailNoSQL  = clientes.find(c => c.Email?.toLowerCase() === email.toLowerCase());
-
-    if (cpfNoSQL) {
-      mostrarToast('Este CPF já está cadastrado no sistema.\nFaça login ou use outros dados.', 'error');
-      return true; // BLOQUEIA
+    // 3) Plano de sócio (opcional). Falha aqui não desfaz a conta.
+    let codigoSocio = null;
+    if (plano > 0) {
+      try {
+        const sub = await Api.assinar(plano, metodo, cardToken);
+        estado.usuarioLogado = usuarioDaApi(sub.user);
+        codigoSocio = sub.memberCode;
+      } catch (e) {
+        mostrarToast('Conta criada, mas o plano não foi assinado:\n' + e.message, 'warning');
+      }
     }
-    if (emailNoSQL) {
-      mostrarToast('Este e-mail já está cadastrado no sistema.\nFaça login ou use outros dados.', 'error');
-      return true; // BLOQUEIA
+
+    if (codigoSocio) {
+      mostrarToast(`Cadastro realizado!\n🎫 SEU CÓDIGO DE SÓCIO: ${codigoSocio}\nAnote este código para usar nos ingressos.`, 'success');
     }
 
-    return false; // Tudo ok
+    setTimeout(() => {
+      mostrarSplashTime(estado.timeDoUsuario, () => {
+        carregarPartidas();
+        irPara('screen-partidas');
+      });
+    }, codigoSocio ? 1800 : 300);
 
-  } catch (erro) {
-    // API offline → checagem local já foi feita, libera
-    console.warn('[SQL] API offline na verificação. Checagem local aplicada.', erro.message);
-    return false;
-  }
-}
-
-// ============================================================
-// SINCRONIZA COM SQL EM SEGUNDO PLANO (silencioso)
-// Envia todos os dados incluindo cartões.
-// ============================================================
-async function _sincronizarComBancoSQL(usuario) {
-  try {
-    const mapaPlano = { 0: '0', 5: 'Bronze', 10: 'Prata', 20: 'Ouro' };
-
-    const dadosParaBanco = {
-      Nome:  usuario.nome,
-      Cpf:   usuario.cpf,
-      Email: usuario.email,
-      Senha: usuario.senha,
-      Plano: mapaPlano[usuario.plano] ?? '0',
-      Time:  usuario.time,
-      NumeroCredito:   usuario.cartaoCredito?.numero   || '',
-      ValidadeCredito: usuario.cartaoCredito?.validade || '',
-      CvvCredito:      usuario.cartaoCredito?.cvv      || '',
-      NumeroDebito:    usuario.cartaoDebito?.numero    || '',
-      ValidadeDebito:  usuario.cartaoDebito?.validade  || '',
-      CvvDebito:       usuario.cartaoDebito?.cvv       || '',
-    };
-
-    const resposta = await fetch('http://localhost:5114/api/clientes', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(dadosParaBanco),
-    });
-
-    if (resposta.ok) {
-      console.log('[SQL] Cadastro sincronizado com sucesso.');
-    } else {
-      const resultado = await resposta.json();
-      console.warn('[SQL] Erro ao sincronizar:', resultado?.erro || 'Erro desconhecido');
-    }
-  } catch (erro) {
-    console.warn('[SQL] API offline. Dados salvos apenas localmente.', erro.message);
+  } catch (e) {
+    mostrarToast(e instanceof ApiErro ? e.message : 'Erro inesperado.', 'error');
   }
 }
