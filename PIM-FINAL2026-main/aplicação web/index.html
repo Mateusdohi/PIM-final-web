@@ -160,7 +160,21 @@
       <button class="btn-sair" onclick="irPara('screen-partidas')">VOLTAR</button>
     </div>
   </div>
-
+  <!-- [PIM-WEB Cartão 9] TELA DE ASSENTOS: grade vinda de GET /api/matches/{id}/seats. Fica entre o mapa de setores e o pagamento. -->
+  <div class="screen" id="screen-assentos">
+    <div class="card card-assentos">
+      <h1 class="title">ESCOLHA SEU <span class="highlight-green">ASSENTO</span></h1>
+      <p id="assentos-info" class="assentos-info"></p>
+      <div class="assentos-legenda">
+        <span><i class="leg leg-livre"></i>LIVRE</span>
+        <span><i class="leg leg-ocupado"></i>OCUPADO</span>
+        <span><i class="leg leg-sel"></i>SEU ASSENTO</span>
+      </div>
+      <div id="assentos-grade" class="assentos-grade"></div>
+      <button class="btn-primary" onclick="confirmarAssento()">CONFIRMAR ASSENTO</button>
+      <button class="btn-sair" onclick="irPara('screen-mapa')">VOLTAR</button>
+    </div>
+  </div>
   <!-- TELA 5: PAGAMENTO -->
   <div class="screen" id="screen-pagamento">
     <div class="card">
@@ -249,8 +263,10 @@
   <script src="js/tela-cadastro.js"></script>
   <!-- 7. Tela 3: Partidas -->
   <script src="js/tela-partidas.js"></script>
-  <!-- 8. Tela 4: Mapa da Arena -->
+    <!-- 8. Tela 4: Mapa da Arena -->
   <script src="js/tela-mapa.js"></script>
+  <!-- [PIM-WEB Cartão 9] Tela de assentos -->
+  <script src="js/tela-assentos.js"></script>
   <!-- 9. Tela 5: Pagamento -->
   <script src="js/tela-pagamento.js"></script>
 
