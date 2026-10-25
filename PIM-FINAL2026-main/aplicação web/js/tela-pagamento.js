@@ -64,7 +64,10 @@ async function confirmarCompra() {
     // 1) Cria a intent. O servidor calcula o preço e reserva por 10 minutos.
     const intent = await apiFetch('/api/payments/intents', {
       metodo: 'POST',
-      corpo: { matchId: partida.id, sector: setor, method: metodo, memberCode },
+           // [PIM-WEB Cartão 9] Envia o assento escolhido. Motivo: o servidor trava o assento contra venda dupla.
+      corpo: { matchId: partida.id, sector: setor, method: metodo, memberCode,
+               seatRow: estado.assentoSelecionado?.row ?? null,
+               seatNumber: estado.assentoSelecionado?.number ?? null },
     });
     intentAtual = intent;
 
@@ -84,6 +87,13 @@ async function confirmarCompra() {
     mostrarTelaConfirmacao();
   } catch (e) {
     // [PIM-WEB Cartão 8] Erros da API (seat_taken, queue_required, payment_declined, 401) aparecem como toast.
+       // [PIM-WEB Cartão 9] Assento tomado por outra pessoa: avisa e volta à grade já atualizada.
+    // Motivo: o mapa que o usuário viu pode estar desatualizado.
+    if (e instanceof ApiErro && e.code === 'seat_taken') {
+      mostrarToast('Esse assento acabou de ser reservado. Escolha outro.', 'warning');
+      abrirAssentos(estado.setorSelecionado);
+      return;
+    }
     mostrarToast(e instanceof ApiErro ? e.message : 'Erro inesperado.', 'error');
   }
 }
