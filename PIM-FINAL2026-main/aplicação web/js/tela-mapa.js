@@ -1,5 +1,7 @@
 // ===========================
 // TELA 4: MAPA DA ARENA
+// [PIM-WEB Cartão 8] Mapa continua por setor (assentos individuais são o Cartão 9).
+// Só ajustes de segurança nesta etapa.
 // ===========================
 function atualizarMapaArena() {
   const ehVisitante = estado.ehVisitante;
@@ -29,8 +31,16 @@ function atualizarMapaArena() {
 }
 
 function escolherSetor(setor) {
+  // [PIM-WEB Cartão 8] Sem token, não segue. Motivo: o pagamento exige login na API.
+  if (!temToken()) {
+    mostrarToast('Sua sessão expirou. Entre de novo.', 'warning');
+    irPara('screen-login', false);
+    return;
+  }
+
   estado.setorSelecionado = setor;
   const partida    = estado.partidaSelecionada;
+  // [PIM-WEB Cartão 8] Valor só para exibição. O servidor recalcula o preço no pagamento.
   const precoFinal = calcularPreco(partida.preco);
 
   document.getElementById('resumo-partida').innerHTML =
@@ -45,9 +55,8 @@ function escolherSetor(setor) {
     const input = document.getElementById('input-codigo-socio');
     if (input) {
       input.value = '';
-      input.placeholder = estado.usuarioLogado?.codigoSocio
-        ? `CÓDIGO: ex. ${estado.usuarioLogado.codigoSocio}`
-        : 'SEU CÓDIGO DE SÓCIO';
+      // [PIM-WEB Cartão 8] Placeholder fixo. Motivo: antes mostrava o código real do sócio na tela.
+      input.placeholder = 'SEU CÓDIGO DE SÓCIO';
     }
   }
 
