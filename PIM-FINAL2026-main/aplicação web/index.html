@@ -234,11 +234,9 @@
     new window.VLibras.Widget('https://vlibras.gov.br/app');
   </script>
 
-  <!-- SCRIPTS ORGANIZADOS -->
-  <!-- 1. Banco de dados (localStorage) -->
-  <script src="js/db.js"></script>
-  <!-- [PIM-WEB Cartão 8] 1b. Cliente da API (fetch, token em memória, erros). db.js sai no fim do cartão. -->
-  <script src="js/api.js"></script>
+   <!-- [PIM-WEB Cartão 8] db.js removido. Motivo: guardava senha em texto puro e cartão no localStorage. -->
+  <!-- 1. Cliente da API (fetch, token em memória, erros) -->
+    <script src="js/api.js"></script>
   <!-- 2. Dados estáticos (partidas, logos, temas, notícias) -->
   <script src="js/dados.js"></script>
   <!-- 3. Estado global, navegação e utilitários -->
