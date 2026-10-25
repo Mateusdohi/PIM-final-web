@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using TicketFut.Api.Middleware;
+using TicketFut.Api.Chat; // [PIM-WEB Cartão 10] Serviço do chatbot
 using TicketFut.Api.Queue;
 using TicketFut.Application.Abstractions;
 using TicketFut.Application.Services;
@@ -29,7 +30,8 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<MembershipService>();
 builder.Services.AddScoped<MatchService>();
 builder.Services.AddScoped<PaymentService>();
-
+// [PIM-WEB Cartão 10] Chatbot (modo simulado). Singleton porque não guarda estado.
+builder.Services.AddSingleton<ChatService>();
 // ---- Auth (JWT) ----
 // [PIM-WEB Cartão 6] CSRF não se aplica: o token JWT vai no cabeçalho Authorization (nunca em cookie), que o navegador não envia sozinho para outros sites.
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -86,6 +88,10 @@ builder.Services.AddRateLimiter(o =>
     o.AddPolicy("face", ctx => RateLimitPartition.GetFixedWindowLimiter(
         ctx.User.FindFirst("sub")?.Value ?? ctx.Connection.RemoteIpAddress?.ToString() ?? "anon",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) }));
+            // [PIM-WEB Cartão 10] Chat: 15 mensagens por minuto por usuário. Motivo: limita abuso e custo de um provedor real.
+    o.AddPolicy("chat", ctx => RateLimitPartition.GetFixedWindowLimiter(
+        ctx.User.FindFirst("sub")?.Value ?? ctx.Connection.RemoteIpAddress?.ToString() ?? "anon",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 15, Window = TimeSpan.FromMinutes(1) }));
 });
 
 // ---- CORS: só os sites listados em Cors:AllowedOrigins podem chamar a API pelo navegador ----

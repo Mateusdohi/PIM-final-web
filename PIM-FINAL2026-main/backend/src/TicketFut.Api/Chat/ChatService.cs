@@ -1,0 +1,38 @@
+namespace TicketFut.Api.Chat;
+
+// [PIM-WEB Cartão 10] Assistente de dúvidas comuns. Modo "Simulado": responde por palavras-chave, sem IA externa e sem chave.
+// Motivo: demonstra a arquitetura (endpoint protegido, limites, papel fixo) sem custo.
+// Um provedor real entraria no lugar do método Responder().
+public class ChatService
+{
+    // [PIM-WEB Cartão 10] Limite de tamanho. Motivo: evita abuso e custo se um provedor real for ligado.
+    public const int MaxLength = 500;
+
+    private static readonly (string[] Chaves, string Resposta)[] Regras =
+    {
+        (new[] { "assento", "cadeira", "fileira", "lugar" },
+         "Depois de escolher partida e setor, o mapa mostra os assentos. Cinza é ocupado; clique em um livre e confirme. A reserva dura 10 minutos."),
+        (new[] { "plano", "socio", "sócio", "desconto", "bronze", "prata", "ouro" },
+         "Há três planos de sócio: Bronze (5% de desconto), Prata (10%) e Ouro (20%). Assine em QUERO SER SÓCIO, na tela de login. Na compra, informe seu código de sócio."),
+        (new[] { "pagamento", "pagar", "cartao", "cartão", "pix", "credito", "crédito", "debito", "débito" },
+         "Aceitamos crédito, débito e PIX. Na confirmação, o site pede sua senha novamente. O número do cartão não é enviado ao servidor."),
+        (new[] { "fila", "espera" },
+         "Em jogos muito procurados pode haver fila virtual. Você entra na fila e é liberado por tempo limitado para comprar."),
+        (new[] { "leste", "visitante" },
+         "O setor Leste é exclusivo da torcida visitante. Os demais setores são da torcida mandante."),
+        (new[] { "ingresso", "comprar", "compra" },
+         "Escolha a partida, o setor e o assento, depois confirme o pagamento. O ingresso é emitido ao final."),
+        (new[] { "senha", "login", "entrar", "cadastro" },
+         "Para entrar, use e-mail e senha. A senha tem de 8 a 128 caracteres, com letra e número."),
+    };
+
+    public string Responder(string mensagem)
+    {
+        var texto = mensagem.ToLowerInvariant();
+        foreach (var (chaves, resposta) in Regras)
+            if (chaves.Any(c => texto.Contains(c))) return resposta;
+
+        // [PIM-WEB Cartão 10] Resposta padrão. Motivo: o papel fixo limita o assunto ao TicketFut.
+        return "Só consigo ajudar com dúvidas sobre o TicketFut: ingressos, assentos, planos de sócio, pagamento e fila.";
+    }
+}
