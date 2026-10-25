@@ -235,6 +235,16 @@
       <button class="btn-sair" onclick="sair()">SAIR</button>
     </div>
   </div>
+  <!-- [PIM-WEB Cartão 10] Chat de dúvidas. Botão flutuante; só funciona logado (a API exige token). -->
+  <button id="chat-toggle" class="chat-toggle" onclick="alternarChat()" aria-label="Abrir chat">💬</button>
+  <div id="chat-painel" class="chat-painel">
+    <div class="chat-topo">ASSISTENTE TICKETFUT <button onclick="alternarChat()" aria-label="Fechar chat">✕</button></div>
+    <div id="chat-msgs" class="chat-msgs"></div>
+    <div class="chat-entrada">
+      <input type="text" id="chat-input" maxlength="500" placeholder="Digite sua dúvida..." onkeydown="if(event.key==='Enter')enviarChat()" />
+      <button onclick="enviarChat()">ENVIAR</button>
+    </div>
+  </div>
 
   <!-- WIDGET VLIBRAS -->
   <div vw class="enabled">
@@ -269,7 +279,8 @@
   <script src="js/tela-assentos.js"></script>
   <!-- 9. Tela 5: Pagamento -->
   <script src="js/tela-pagamento.js"></script>
-
+  <!-- [PIM-WEB Cartão 10] Chat -->
+  <script src="js/chat.js"></script>
   <!-- Inicialização -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
