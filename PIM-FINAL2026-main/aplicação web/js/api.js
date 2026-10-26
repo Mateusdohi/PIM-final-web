@@ -55,7 +55,10 @@ const Api = {
              apiFetch('/api/auth/register', { metodo: 'POST', corpo: { name, cpf, email, password, team } }),
   assinar:   (plan, method, cardToken) =>
              apiFetch('/api/membership/subscribe', { metodo: 'POST', corpo: { plan, method, cardToken } }),
+  // [PIM-WEB Admin] Lista de ingressos da área admin. O servidor responde 403 se o role não for Admin.
+  adminIngressos: () => apiFetch('/api/admin/tickets'),
 };
+
 // [PIM-WEB Cartão 8] Converte "sao_paulo" (API) em "sao paulo" (chave de temas/logos do front).
 function timeDaApi(slug) { return (slug || 'default').replace(/_/g, ' '); }
 

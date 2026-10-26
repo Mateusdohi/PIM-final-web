@@ -26,6 +26,11 @@ public record IntentDto(Guid IntentId, string Nonce, decimal Amount, decimal Ori
 
 // [PIM-WEB Cartão 4] O ingresso passa a informar o assento (quando houver).
 public record TicketDto(Guid Id, int MatchId, string MatchName, string Sector, string Code, decimal Amount, DateTime KickoffAt, DateTime IssuedAt, int? SeatRow = null, int? SeatNumber = null);
+
+
+// [PIM-WEB Admin] DTO da área admin. Não inclui e-mail nem CPF, para expor só o necessário.
+public record AdminTicketDto(Guid Id, Guid UserId, int MatchId, string MatchName, string Sector, string Code, decimal Amount, DateTime IssuedAt, int? SeatRow = null, int? SeatNumber = null);
+
 public record ConfirmResponse(TicketDto Ticket, string? PixPayload);
 // [PIM-WEB Cartão 5] Confirmação pela web: nonce da compra, senha (reautenticação) e token do cartão. O número do cartão nunca chega ao servidor.
 public record ConfirmWebRequest(string Nonce, string Password, string? CardToken);

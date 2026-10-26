@@ -114,6 +114,11 @@ public class PaymentRepository : IPaymentRepository
         _db.Tickets.AsNoTracking().Include(t => t.Match).Where(t => t.UserId == userId)
             .OrderByDescending(t => t.IssuedAt).ToListAsync(ct);
 
+                // [PIM-WEB Admin] Todos os ingressos, mais recentes primeiro. Take(500) evita resposta gigante.
+    public Task<List<Ticket>> ListAllTicketsAsync(CancellationToken ct = default) =>
+        _db.Tickets.AsNoTracking().Include(t => t.Match)
+            .OrderByDescending(t => t.IssuedAt).Take(500).ToListAsync(ct);
+
         public async Task AddFaceLogAsync(FaceVerificationLog log, CancellationToken ct = default) =>
         await _db.FaceVerificationLogs.AddAsync(log, ct);
 
