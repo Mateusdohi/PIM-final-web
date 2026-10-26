@@ -27,4 +27,11 @@ internal static class Mapping
         DateTime.SpecifyKind(t.Match.KickoffAt, DateTimeKind.Utc), DateTime.SpecifyKind(t.IssuedAt, DateTimeKind.Utc),
         // [PIM-WEB Cartão 4] Assento do ingresso vai para a resposta da API.
         t.SeatRow, t.SeatNumber);
+        
+    // [PIM-WEB Admin] Converte ingresso para o DTO admin. Sem e-mail nem CPF.
+    public static AdminTicketDto ToAdminDto(Ticket t) => new(
+        t.Id, t.UserId, t.MatchId, $"{Teams.DisplayName(t.Match.HomeTeam)} vs {Teams.DisplayName(t.Match.AwayTeam)}",
+        t.Sector.ToString(), t.Code, t.Amount,
+        DateTime.SpecifyKind(t.IssuedAt, DateTimeKind.Utc),
+        t.SeatRow, t.SeatNumber);
 }

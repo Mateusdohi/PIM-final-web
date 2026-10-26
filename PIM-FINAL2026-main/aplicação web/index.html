@@ -12,8 +12,6 @@
     <img src="./CHAMPIONS_CARD.png" alt="Champions Card" class="logo-champions">
   </div>
 
-  <div class="particle" id="particle"></div>
-
   <!-- TELA 1: LOGIN -->
   <div class="screen active" id="screen-login">
     <div class="card card-login">
@@ -127,6 +125,8 @@
       <div class="partidas-coluna">
         <h1 class="title">PARTIDAS <span class="highlight-green">DISPONÍVEIS</span></h1>
         <div id="lista-partidas" class="lista-partidas"></div>
+        <!-- [PIM-WEB Admin] Botão só aparece para role Admin. Esconder não protege: o servidor confere o role. -->
+        <button id="btn-area-admin" class="btn-primary" style="display:none;" onclick="abrirAreaAdmin()">ÁREA ADMIN</button>
         <button class="btn-sair" onclick="sair()">SAIR</button>
       </div>
       <div class="noticias-coluna">
@@ -235,6 +235,32 @@
       <button class="btn-sair" onclick="sair()">SAIR</button>
     </div>
   </div>
+
+  <!-- [PIM-WEB Admin] Tela da área administrativa: tabela de ingressos vendidos. -->
+  <div class="screen" id="screen-admin">
+    <div class="card">
+      <h1 class="title">ÁREA <span class="highlight-green">ADMIN</span></h1>
+      <p id="admin-resumo"></p>
+      <div style="overflow-x:auto;width:100%;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:6px;">DATA</th>
+              <th style="text-align:left;padding:6px;">PARTIDA</th>
+              <th style="text-align:left;padding:6px;">SETOR</th>
+              <th style="text-align:left;padding:6px;">ASSENTO</th>
+              <th style="text-align:left;padding:6px;">VALOR</th>
+              <th style="text-align:left;padding:6px;">CÓDIGO</th>
+              <th style="text-align:left;padding:6px;">USUÁRIO</th>
+            </tr>
+          </thead>
+          <tbody id="admin-tabela-corpo"></tbody>
+        </table>
+      </div>
+      <button class="btn-sair" onclick="irPara('screen-partidas')">VOLTAR</button>
+    </div>
+  </div>
+
   <!-- [PIM-WEB Cartão 10] Chat de dúvidas. Botão flutuante; só funciona logado (a API exige token). -->
   <button id="chat-toggle" class="chat-toggle" onclick="alternarChat()" aria-label="Abrir chat">💬</button>
   <div id="chat-painel" class="chat-painel">
@@ -281,6 +307,8 @@
   <script src="js/tela-pagamento.js"></script>
   <!-- [PIM-WEB Cartão 10] Chat -->
   <script src="js/chat.js"></script>
+  <!-- [PIM-WEB Admin] Área admin -->
+  <script src="js/tela-admin.js"></script>
   <!-- Inicialização -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {

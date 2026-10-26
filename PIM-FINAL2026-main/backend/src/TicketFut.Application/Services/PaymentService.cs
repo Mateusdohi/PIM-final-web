@@ -237,6 +237,10 @@ public class PaymentService
     public async Task<List<TicketDto>> ListTicketsAsync(Guid userId, CancellationToken ct) =>
         (await _payments.ListTicketsAsync(userId, ct)).Select(Mapping.ToDto).ToList();
 
+            // [PIM-WEB Admin] Lista todos os ingressos para a área admin (o controller exige role Admin).
+    public async Task<List<AdminTicketDto>> ListAllTicketsAsync(CancellationToken ct) =>
+        (await _payments.ListAllTicketsAsync(ct)).Select(Mapping.ToAdminDto).ToList();
+
     private static bool FixedTimeEquals(string a, string b) =>
         CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(a), Encoding.UTF8.GetBytes(b ?? ""));
 }
