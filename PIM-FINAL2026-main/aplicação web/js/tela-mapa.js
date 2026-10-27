@@ -3,27 +3,46 @@
 // [PIM-WEB Cartão 8] Mapa continua por setor.
 // [PIM-WEB Cartão 9] Setor abre a escolha de assento (tela-assentos.js); o pagamento recebe o assento.
 // ===========================
+
+// [PIM-WEB Visual] Mapa em SVG: cada setor é um <g id="mapa-..."> e a regra de bloqueio é a mesma de antes.
+// Motivo: só mudou o desenho; quem pode ou não escolher cada setor continua sendo decidido aqui.
 function atualizarMapaArena() {
   const ehVisitante = estado.ehVisitante;
-  const setores = {
-    'Norte': document.querySelector('.setor-norte'),
-    'Sul':   document.querySelector('.setor-sul'),
-    'Oeste': document.querySelectorAll('.setor-lado')[0],
-    'Leste': document.querySelectorAll('.setor-lado')[1],
-  };
-  Object.entries(setores).forEach(([nome, el]) => {
+  ['Norte', 'Sul', 'Oeste', 'Leste'].forEach(nome => {
+    const el = document.getElementById('mapa-' + nome.toLowerCase());
     if (!el) return;
     const bloqueado = ehVisitante ? nome !== 'Leste' : nome === 'Leste';
+    let acao;
     if (bloqueado) {
-      el.classList.add('setor-bloqueado');
-      el.onclick = ehVisitante
+      el.classList.add('mp-bloqueado');
+      el.setAttribute('aria-disabled', 'true');
+      acao = ehVisitante
         ? () => mostrarToast('Seu time é o visitante nesta partida.\nApenas o setor LESTE está disponível para torcedores visitantes.', 'warning')
         : () => mostrarToast('O setor LESTE é exclusivo para a torcida visitante.', 'warning');
     } else {
-      el.classList.remove('setor-bloqueado');
-      el.onclick = () => escolherSetor(nome);
+      el.classList.remove('mp-bloqueado');
+      el.removeAttribute('aria-disabled');
+      acao = () => escolherSetor(nome);
+    }
+    el.onclick = acao;
+    // [PIM-WEB Visual] Teclado: Enter ou espaço fazem o mesmo que o clique.
+    el.onkeydown = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); acao(); }
+    };
+
+    // [PIM-WEB Visual] Legenda com o estado real do setor (textContent: sem innerHTML).
+    const li = document.getElementById('mp-leg-' + nome.toLowerCase());
+    if (li) {
+      li.classList.toggle('mp-leg-bloqueado', bloqueado);
+      const small = li.querySelector('small');
+      if (small) {
+        small.textContent = !bloqueado
+          ? 'Disponível'
+          : (nome === 'Leste' ? 'Exclusivo torcida visitante' : 'Indisponível para o seu time');
+      }
     }
   });
+
   const aviso = document.getElementById('aviso-visitante');
   const avisoMandante = document.getElementById('aviso-mandante');
   if (aviso) aviso.style.display = ehVisitante ? 'block' : 'none';

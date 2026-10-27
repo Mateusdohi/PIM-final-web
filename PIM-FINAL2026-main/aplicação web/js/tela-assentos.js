@@ -1,7 +1,12 @@
 // ===========================
 // TELA DE ASSENTOS
 // [PIM-WEB Cartão 9] Mapa interativo. Lê GET /api/matches/{id}/seats?sector=... e desenha a grade no formato do setor.
+// [PIM-WEB Visual] O servidor manda o tamanho de cada fileira (rowSizes). O site desenha exatamente essas cadeiras.
 // ===========================
+
+// [PIM-WEB Visual] Medidas de uma cadeira: 22px de largura + 4px de espaço = 26px. Altura 24px + 4px = 28px.
+const ASSENTO_PASSO_X = 26;
+const ASSENTO_PASSO_Y = 28;
 
 // [PIM-WEB Cartão 9] Abre a tela e carrega a grade. Motivo: o setor escolhido agora leva a um assento.
 function abrirAssentos(setor) {
@@ -55,7 +60,18 @@ async function carregarAssentos() {
       b.title = `Fileira ${r}, cadeira ${n}`;
       b.addEventListener('click', () => selecionarAssento(r, n, b));
     }
+    b.setAttribute('aria-label', b.title); // [PIM-WEB Visual] Leitor de tela lê fileira e cadeira.
     return b;
+  };
+
+  // [PIM-WEB Visual] Tamanho de cada fileira vindo do servidor. Sem rowSizes (API antiga), todas ficam cheias.
+  const tamanhos = Array.isArray(mapa.rowSizes) && mapa.rowSizes.length === mapa.rows
+    ? mapa.rowSizes
+    : Array(mapa.rows).fill(mapa.seatsPerRow);
+  // Cadeiras visíveis da fileira r: de margem+1 até seatsPerRow-margem (a mesma regra do servidor).
+  const faixaDaFileira = (r) => {
+    const margem = Math.floor((mapa.seatsPerRow - tamanhos[r - 1]) / 2);
+    return { de: margem + 1, ate: mapa.seatsPerRow - margem };
   };
 
   // [PIM-WEB Cartão 9] Rótulo do gramado. Motivo: orienta o torcedor (fileira 1 é a mais próxima do campo).
@@ -73,19 +89,18 @@ async function carregarAssentos() {
     // [PIM-WEB Cartão 9] Norte e Sul: fileiras horizontais. Norte: fileira 1 embaixo. Sul: fileira 1 em cima.
     if (setor === 'Norte') ordem.reverse();
     if (setor === 'Sul') grade.appendChild(campo);
+    // [PIM-WEB Visual] Largura fixa para todas as fileiras. Motivo: o rótulo fica alinhado à esquerda e as cadeiras centralizadas.
+    const larguraFileira = (mapa.seatsPerRow * ASSENTO_PASSO_X + 60) + 'px';
     ordem.forEach(r => {
       const linha = document.createElement('div');
       linha.className = 'assentos-fileira';
-              // [PIM-WEB Cartão 9] Trapézio por quantidade de cadeiras. Motivo: assentos ficam do mesmo tamanho.
-      // Fileira 1 (perto do campo) mostra todas; a mais longe perde 8 (4 de cada ponta), sempre centralizada.
-      const distancia = (r - 1) / (mapa.rows - 1);
-      const visiveis = mapa.seatsPerRow - 2 * Math.round(4 * distancia);
-      const inicio = (mapa.seatsPerRow - visiveis) / 2 + 1;
+      linha.style.width = larguraFileira;
       const rotulo = document.createElement('span');
       rotulo.className = 'assentos-rotulo';
       rotulo.textContent = r;
       linha.appendChild(rotulo);
-             for (let n = inicio; n < inicio + visiveis; n++) linha.appendChild(criarAssento(r, n));
+      const f = faixaDaFileira(r);
+      for (let n = f.de; n <= f.ate; n++) linha.appendChild(criarAssento(r, n));
       grade.appendChild(linha);
     });
     if (setor === 'Norte') grade.appendChild(campo);
@@ -97,7 +112,13 @@ async function carregarAssentos() {
     ordem.forEach(r => {
       const coluna = document.createElement('div');
       coluna.className = 'assentos-coluna';
-      for (let n = 1; n <= mapa.seatsPerRow; n++) coluna.appendChild(criarAssento(r, n));
+      // [PIM-WEB Visual] Altura fixa com as cadeiras centralizadas. Motivo: forma o "D" do desenho e alinha os rótulos embaixo.
+      const pecas = document.createElement('div');
+      pecas.className = 'assentos-pecas';
+      pecas.style.minHeight = (mapa.seatsPerRow * ASSENTO_PASSO_Y) + 'px';
+      const f = faixaDaFileira(r);
+      for (let n = f.de; n <= f.ate; n++) pecas.appendChild(criarAssento(r, n));
+      coluna.appendChild(pecas);
       const rotulo = document.createElement('span');
       rotulo.className = 'assentos-rotulo';
       rotulo.style.textAlign = 'center';
@@ -106,9 +127,13 @@ async function carregarAssentos() {
       coluna.appendChild(rotulo);
       faixa.appendChild(coluna);
     });
-    if (setor === 'Leste') grade.appendChild(campo);
-    grade.appendChild(faixa);
-    if (setor === 'Oeste') grade.appendChild(campo);
+    // [PIM-WEB Visual] Gramado ao lado, como no mapa: à direita no Oeste, à esquerda no Leste.
+    campo.classList.add('assentos-campo-v');
+    const caixa = document.createElement('div');
+    caixa.className = 'assentos-lateral';
+    if (setor === 'Leste') { caixa.appendChild(campo); caixa.appendChild(faixa); }
+    else                   { caixa.appendChild(faixa); caixa.appendChild(campo); }
+    grade.appendChild(caixa);
   }
 }
 

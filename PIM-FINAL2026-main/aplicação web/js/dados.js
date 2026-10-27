@@ -28,13 +28,13 @@ const LOGOS_BASE64 = {
 };
 
 
-// Fundos por time para os escudos
+// [PIM-WEB Visual] Todos os escudos com fundo branco, a pedido.
 const LOGO_BGS = {
-  "flamengo":    "#1a0000",
-  "palmeiras":   "#0a1a0a",
-  "corinthians": "#111111",
-  "sao paulo":   "#111111",
-  "santos":      "#0a0a12",
+  "flamengo":    "#ffffff",
+  "palmeiras":   "#ffffff",
+  "corinthians": "#ffffff",
+  "sao paulo":   "#ffffff",
+  "santos":      "#ffffff",
 };
 
 function logoHtml(time, size = 20) {

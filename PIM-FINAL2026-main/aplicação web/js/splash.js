@@ -1,5 +1,6 @@
 // ===========================
 // TELA DE CARREGAMENTO DO TIME (#4)
+// [PIM-WEB Visual] Visual claro, sem brilho. Frases e subtítulos por time continuam os mesmos.
 // ===========================
 const SPLASH_TIMES = {
   "palmeiras": {
@@ -48,45 +49,48 @@ function mostrarSplashTime(time, callback) {
 
   const splash = document.createElement('div');
   splash.id = 'splash-time';
-  splash.style.cssText = `
-    position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;
-    background:${cfg.bg};
-    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;
-    opacity:0;transition:opacity 0.5s ease;
-  `;
+  splash.className = 'rd-splash';
 
-  const logo = LOGOS_BASE64[time] ? logoHtmlBig(time, 90) : '';
+  // [PIM-WEB Visual] Escudo do time (se houver). O estilo fica em redesign.css.
+  const logo = LOGOS_BASE64[time] ? logoHtmlBig(time, 84) : '';
 
   splash.innerHTML = `
-    <style>
-      @keyframes splashPulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.08);} }
-      @keyframes splashFraseIn { from{opacity:0;transform:translateY(12px);} to{opacity:1;transform:translateY(0);} }
-      .splash-frase { animation: splashFraseIn 0.6s ease forwards; }
-    </style>
-    ${logo}
-    <p style="font-size:0.78rem;letter-spacing:4px;color:${cfg.cor2};opacity:0.7;">${cfg.subtitulo}</p>
-    <div id="splash-frase-container" style="text-align:center;"></div>
-    <div style="display:flex;gap:6px;margin-top:8px;">
-      <div style="width:6px;height:6px;border-radius:50%;background:${cfg.cor1};animation:splashPulse 0.8s ease-in-out infinite;"></div>
-      <div style="width:6px;height:6px;border-radius:50%;background:${cfg.cor1};animation:splashPulse 0.8s ease-in-out 0.2s infinite;"></div>
-      <div style="width:6px;height:6px;border-radius:50%;background:${cfg.cor1};animation:splashPulse 0.8s ease-in-out 0.4s infinite;"></div>
+    <div class="rd-splash-marca">
+      <img src="./CHAMPIONS_CARD.png" alt="" class="rd-splash-marca-img">
+      <span>CHAMPIONS<br>CARD</span>
     </div>
+    <div class="rd-splash-centro">
+      ${logo ? `<div class="rd-splash-escudo">${logo}</div>` : ''}
+      <p class="rd-splash-ola"></p>
+      <p class="rd-splash-sub"></p>
+      <div id="splash-frase-container" class="rd-splash-frase"></div>
+    </div>
+    <div class="rd-splash-barra"><span></span></div>
   `;
+
+  // [PIM-WEB Visual] Nome e subtítulo via textContent (sem innerHTML).
+  const nome = (estado.usuarioLogado?.nome || '').split(' ')[0];
+  splash.querySelector('.rd-splash-ola').textContent = nome ? `Olá, ${nome}` : '';
+  splash.querySelector('.rd-splash-sub').textContent = cfg.subtitulo;
+
   document.body.appendChild(splash);
-  requestAnimationFrame(() => { splash.style.opacity = '1'; });
+  requestAnimationFrame(() => { splash.classList.add('rd-splash-visivel'); });
 
   const fraseContainer = splash.querySelector('#splash-frase-container');
   let idx = 0;
   function mostrarFrase() {
-    fraseContainer.innerHTML = `<p class="splash-frase" style="font-size:1.5rem;font-weight:900;letter-spacing:3px;color:${cfg.cor1};text-shadow:0 0 20px ${cfg.cor1}88;text-align:center;padding:0 24px;">${cfg.frases[idx]}</p>`;
+    const p = document.createElement('p');
+    p.textContent = cfg.frases[idx];
+    fraseContainer.textContent = '';
+    fraseContainer.appendChild(p);
     idx = (idx + 1) % cfg.frases.length;
   }
   mostrarFrase();
-  const intervalo = setInterval(mostrarFrase, 900);
+  const intervalo = setInterval(mostrarFrase, 1000);
 
   setTimeout(() => {
     clearInterval(intervalo);
-    splash.style.opacity = '0';
+    splash.classList.remove('rd-splash-visivel');
     setTimeout(() => {
       splash.remove();
       if (callback) callback();
