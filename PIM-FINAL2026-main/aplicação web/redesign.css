@@ -1,0 +1,498 @@
+/* [PIM-WEB Visual] Redesign do login e das partidas. Carregado depois do style.css; só afeta #screen-login e #screen-partidas. */
+
+/* [PIM-WEB Visual] Tema claro só nessas duas telas: redefine as variáveis no escopo e não toca nas outras telas. */
+#screen-login,
+#screen-partidas {
+  --bg-item: #f3f5f8;
+  --bg-input: #ffffff;
+  --color-white: #14213d;
+  --color-muted: #5b6573;
+  --border-default: #d5dbe4;
+  --neon-cyan: #16803f;
+  --neon-green: #16803f;
+  --setor-bg: rgba(22, 128, 63, 0.06);
+  --rd-navy: #0f1f3a;
+  --rd-verde: #16803f;
+  --rd-verde-escuro: #116a34;
+  --rd-verde-claro: #3ecf7a;
+  --rd-fundo: #f4f6f9;
+  --rd-borda: #e3e8ef;
+  padding: 0;
+  align-items: stretch;
+  justify-content: stretch;
+  background: var(--rd-fundo);
+  color: #14213d;
+}
+
+/* [PIM-WEB Visual] A logo fixa do canto some nessas telas porque a marca já está no layout novo. */
+body:has(#screen-login.active) .logo-container,
+body:has(#screen-partidas.active) .logo-container {
+  display: none;
+}
+
+/* ===== LOGIN ===== */
+/* [PIM-WEB Visual] Duas colunas: apresentação à esquerda, formulário à direita. */
+.rd-login {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  width: 100%;
+  min-height: 100vh;
+}
+
+.rd-login-hero {
+  background: var(--rd-navy);
+  color: #fff;
+    padding: 48px 56px 96px; /* [PIM-WEB Visual] espaço no rodapé para o botão do chat não cobrir os benefícios */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+.rd-marca { display: flex; align-items: center; gap: 12px; }
+.rd-marca-img { width: 56px; height: auto; }
+.rd-marca-nome { font-weight: 800; letter-spacing: 1px; font-size: 0.95rem; line-height: 1.15; }
+
+.rd-hero-titulo { font-size: 2.6rem; line-height: 1.1; font-weight: 800; }
+.rd-hero-titulo span { display: block; color: var(--rd-verde-claro); }
+.rd-hero-texto { margin-top: 16px; max-width: 460px; color: #d6deea; line-height: 1.55; font-size: 1.05rem; }
+
+.rd-beneficios { display: flex; gap: 28px; flex-wrap: wrap; }
+.rd-beneficio { display: flex; flex-direction: column; gap: 8px; max-width: 140px; font-size: 0.85rem; color: #d6deea; }
+.rd-beneficio svg {
+  width: 28px; height: 28px; fill: none; stroke: var(--rd-verde-claro);
+  stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+}
+
+.rd-login-form {
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+}
+
+.rd-form-box { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 16px; }
+.rd-form-titulo { font-size: 1.9rem; font-weight: 800; color: #14213d; }
+.rd-form-sub { color: #5b6573; margin-top: -8px; }
+.rd-campo { display: flex; flex-direction: column; gap: 6px; }
+.rd-campo label { font-size: 0.9rem; font-weight: 600; color: #14213d; }
+
+/* [PIM-WEB Visual] Campos, botões e links do login em estilo claro, sem brilho. */
+#screen-login .input-field {
+  font-size: 0.95rem; font-weight: 500; letter-spacing: 0;
+  padding: 13px 14px; border-radius: 8px; color: #14213d;
+}
+#screen-login .input-field::placeholder { color: #8a94a3; letter-spacing: 0; }
+#screen-login .input-field:focus {
+  border-color: var(--rd-verde);
+  box-shadow: 0 0 0 3px rgba(22, 128, 63, 0.15);
+}
+
+#screen-login .btn-primary {
+  background: var(--rd-verde); color: #fff; border-radius: 8px;
+  letter-spacing: 1px; padding: 14px; margin-top: 0;
+}
+#screen-login .btn-primary:hover { background: var(--rd-verde-escuro); transform: none; }
+
+#screen-login .link-text { letter-spacing: 0; font-size: 0.85rem; }
+#screen-login .link-destaque { color: var(--rd-verde); }
+
+#screen-login .socio-toggle-wrap { border-top: 1px solid var(--rd-borda); padding-top: 16px; margin-top: 0; }
+#screen-login .btn-socio-toggle {
+  border: 1.5px solid var(--rd-verde); color: var(--rd-verde); background: #fff;
+  border-radius: 8px; letter-spacing: 1px; padding: 13px;
+}
+#screen-login .btn-socio-toggle:hover { background: rgba(22, 128, 63, 0.07); }
+
+/* [PIM-WEB Visual] Painel de sócio (abre e fecha pelo JS existente) em estilo claro. */
+#screen-login .login-socio-painel { background: #f8faf9; border: 1px solid var(--rd-borda); animation: none; }
+#screen-login .socio-painel-titulo { letter-spacing: 0.5px; font-size: 1.05rem; }
+#screen-login .socio-painel-subtitulo { letter-spacing: 0; }
+#screen-login .plano-nome { color: #14213d !important; letter-spacing: 0.5px; } /* !important: o JS coloca cor inline */
+#screen-login .btn-metodo.active { box-shadow: none; background: rgba(22, 128, 63, 0.08); }
+#screen-login .btn-metodo:hover:not(.active) { background: #e6eaf0; border-color: #aab4c2; }
+#screen-login .btn-confirmar-socio { background: var(--rd-verde); color: #fff; }
+#screen-login .btn-confirmar-socio:hover { background: var(--rd-verde-escuro); }
+
+/* ===== PARTIDAS ===== */
+/* [PIM-WEB Visual] Menu lateral escuro + conteúdo claro. */
+.rd-app {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* padding-bottom grande: evita que o botão do chat (fixo no canto) cubra o rodapé do menu */
+.rd-sidebar {
+  background: var(--rd-navy); color: #fff;
+  padding: 24px 16px 96px;
+  display: flex; flex-direction: column; gap: 24px;
+  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+}
+.rd-sidebar .rd-marca-img { width: 48px; }
+
+.rd-nav { display: flex; flex-direction: column; gap: 6px; }
+.rd-nav-item {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 12px 14px;
+  border: none; border-radius: 10px; background: transparent;
+  color: #d6deea; font: inherit; font-size: 0.92rem; font-weight: 600;
+  text-align: left; cursor: pointer; transition: background 0.2s, color 0.2s;
+}
+.rd-nav-item:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.rd-nav-item.rd-ativo { background: var(--rd-verde); color: #fff; cursor: default; }
+.rd-nav-item:focus-visible,
+.rd-btn-ingresso:focus-visible { outline: 2px solid var(--rd-verde-claro); outline-offset: 2px; }
+
+.rd-sidebar-rodape { margin-top: auto; display: flex; flex-direction: column; gap: 12px; }
+.rd-socio-card {
+  background: rgba(255, 255, 255, 0.07); border-radius: 12px;
+  padding: 14px; font-size: 0.85rem; line-height: 1.45; color: #d6deea;
+}
+.rd-socio-card strong { display: block; color: #fff; font-size: 0.95rem; margin-bottom: 4px; }
+
+.rd-conteudo { padding: 24px 32px 96px; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.rd-topo { display: flex; align-items: center; gap: 14px; }
+.rd-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--rd-navy); color: #fff; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.rd-saudacao { font-size: 1.25rem; font-weight: 800; color: #14213d; }
+.rd-topo p { color: #5b6573; font-size: 0.9rem; }
+
+.rd-grade { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
+.rd-painel { background: #fff; border: 1px solid var(--rd-borda); border-radius: 14px; padding: 20px; }
+.rd-titulo { font-size: 1.1rem; font-weight: 800; color: #14213d; margin-bottom: 14px; }
+.rd-titulo::after { content: ""; display: block; width: 28px; height: 3px; margin-top: 6px; border-radius: 2px; background: var(--rd-verde); }
+
+/* [PIM-WEB Visual] Notícia do time (texto vem de obterNoticiaTime). pre-line respeita as quebras de linha do texto. */
+#screen-partidas .noticia-box {
+  text-align: left; letter-spacing: 0; white-space: pre-line;
+  border-left: 3px solid var(--rd-verde); color: #14213d;
+}
+
+/* [PIM-WEB Visual] Linha de partida: times | data, hora e preço | botão. O clique continua no item inteiro (JS existente). */
+#screen-partidas .partida-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) auto;
+  align-items: center; gap: 16px;
+  background: #fff; border: 1px solid var(--rd-borda); border-left: 1px solid var(--rd-borda);
+  border-radius: 12px; padding: 12px 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+#screen-partidas .partida-item:hover {
+  background: #fff; transform: none;
+  border-color: var(--rd-verde); box-shadow: 0 2px 10px rgba(15, 31, 58, 0.08);
+}
+#screen-partidas .partida-item span { margin-top: 0; }
+
+.rd-times { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 0.85rem; color: #14213d; }
+.rd-times b { font-weight: 700; letter-spacing: 0.3px; }
+.rd-times i { font-style: normal; color: #8a94a3; font-size: 0.75rem; margin: 0 2px; }
+#screen-partidas .time-logo { border-radius: 8px !important; padding: 3px !important; } /* !important: o estilo vem inline do dados.js */
+
+.rd-info { display: flex; flex-direction: column; gap: 4px; font-size: 0.82rem; color: #5b6573; }
+.rd-quando { display: flex; gap: 12px; }
+.rd-preco { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; font-weight: 800; font-size: 1rem; color: #14213d; }
+#screen-partidas .rd-preco .preco-original { color: #8a94a3; font-size: 0.8rem; font-weight: 500; }
+#screen-partidas .rd-preco .preco-desconto { color: var(--rd-verde); font-weight: 800; }
+#screen-partidas .rd-preco .badge-desc { color: #fff; }
+
+.rd-btn-ingresso {
+  background: var(--rd-verde); color: #fff; border: none; border-radius: 999px;
+  padding: 9px 18px; font: inherit; font-size: 0.78rem; font-weight: 700;
+  letter-spacing: 0.6px; text-transform: uppercase; white-space: nowrap;
+  cursor: pointer; transition: background 0.2s;
+}
+.rd-btn-ingresso:hover { background: var(--rd-verde-escuro); }
+
+/* ===== RESPONSIVO ===== */
+/* [PIM-WEB Visual] Tablet e celular: menu vira barra no topo e as colunas empilham. */
+@media (max-width: 900px) {
+  .rd-login { grid-template-columns: 1fr; }
+  .rd-login-hero { padding: 28px 24px; gap: 24px; }
+  .rd-hero-titulo { font-size: 1.9rem; }
+  .rd-beneficios { display: none; }
+  .rd-login-form { padding: 32px 20px; }
+
+  .rd-app { grid-template-columns: 1fr; }
+  .rd-sidebar {
+    position: static; height: auto; overflow: visible;
+    padding: 14px 16px; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 12px;
+  }
+  .rd-nav { flex-direction: row; flex: 1; }
+  .rd-nav-item { width: auto; padding: 10px 12px; }
+  .rd-sidebar-rodape { margin-top: 0; flex-direction: row; }
+  .rd-socio-card { display: none; }
+  .rd-conteudo { padding: 20px 16px 96px; }
+  .rd-grade { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  #screen-partidas .partida-item { grid-template-columns: 1fr; }
+  .rd-btn-ingresso { width: 100%; padding: 12px; }
+}
+/* ===== [PIM-WEB Visual] Demais telas no mesmo tema claro ===== */
+#screen-cadastro, #screen-mapa, #screen-assentos,
+#screen-pagamento, #screen-confirmacao, #screen-admin {
+  --bg-card: #ffffff;
+  --bg-item: #f3f5f8;
+  --bg-input: #ffffff;
+  --color-white: #14213d;
+  --color-muted: #5b6573;
+  --border-default: #d5dbe4;
+  --neon-cyan: #16803f;
+  --neon-green: #16803f;
+  --setor-bg: rgba(22, 128, 63, 0.06);
+  --rd-verde: #16803f;
+  --rd-verde-escuro: #116a34;
+  --rd-borda: #e3e8ef;
+  background: #f4f6f9;
+  color: #14213d;
+}
+
+/* [PIM-WEB Visual] A logo fixa do canto sai de todas as telas: o fundo claro não combina com ela. */
+.logo-container { display: none; }
+
+.screen:not(#screen-login):not(#screen-partidas) .card {
+  border: 1px solid var(--rd-borda);
+  box-shadow: 0 4px 18px rgba(15, 31, 58, 0.08);
+}
+.screen:not(#screen-login):not(#screen-partidas) .input-field {
+  font-weight: 500; letter-spacing: 0; color: #14213d; border-radius: 8px;
+}
+.screen:not(#screen-login):not(#screen-partidas) .input-field::placeholder { color: #8a94a3; letter-spacing: 0; }
+.screen:not(#screen-login):not(#screen-partidas) .input-field:focus {
+  border-color: var(--rd-verde); box-shadow: 0 0 0 3px rgba(22, 128, 63, 0.15);
+}
+.screen:not(#screen-login):not(#screen-partidas) .btn-primary {
+  background: var(--rd-verde); color: #fff; border-radius: 8px; letter-spacing: 1px;
+}
+.screen:not(#screen-login):not(#screen-partidas) .btn-primary:hover { background: var(--rd-verde-escuro); transform: none; }
+.screen:not(#screen-login):not(#screen-partidas) .btn-sair { color: #5b6573; border-top: 1px solid var(--rd-borda); }
+.screen:not(#screen-login):not(#screen-partidas) .btn-sair:hover { color: #14213d; }
+.screen:not(#screen-login):not(#screen-partidas) .btn-metodo.active { box-shadow: none; background: rgba(22, 128, 63, 0.08); }
+.screen:not(#screen-login):not(#screen-partidas) .btn-metodo:hover:not(.active) { background: #e6eaf0; border-color: #aab4c2; }
+
+/* Cadastro: o seletor de time tinha cor fixa por time (branco sumia no fundo claro). */
+#screen-cadastro .select-time { border-color: var(--rd-borda) !important; color: #14213d !important; box-shadow: none !important; }
+#screen-cadastro .select-field option { background: #fff; color: #14213d; }
+
+/* Mapa */
+#screen-mapa .setor:hover, #screen-mapa .setor-norte:hover { color: #fff; box-shadow: none; }
+#screen-mapa .gramado { color: #8a94a3; }
+#screen-mapa .aviso-visitante { background: #fff8e6; border-color: #e0a800; color: #7a5b00; }
+#screen-mapa .aviso-visitante strong { color: inherit; }
+#aviso-mandante { background: #fdecea; }
+
+/* Assentos */
+#screen-assentos .assentos-legenda { color: #5b6573; }
+#screen-assentos .assento.ocupado, #screen-assentos .leg-ocupado { background: #c3cad5; border-color: #c3cad5; }
+#screen-assentos .assentos-campo { color: #8a94a3; border-color: #c3cad5; }
+
+/* Confirmação: o JS pinta o título com a cor do time (branco no Corinthians sumia). */
+#screen-confirmacao .confirm-titulo { color: var(--rd-verde) !important; text-shadow: none !important; }
+#screen-confirmacao .confirm-subtitulo { color: #14213d !important; }
+#screen-confirmacao .confirm-logo-champions {
+  animation: none; filter: none; background: #0f1f3a; border-radius: 50%; padding: 8px; width: 84px; height: 84px;
+}
+
+/* Admin: tabela mais larga; a borda das linhas vinha branca do JS. */
+#screen-admin .card { max-width: 900px; }
+#admin-tabela-corpo td { border-top: 1px solid var(--rd-borda) !important; }
+
+/* [PIM-WEB Visual] Partidas: colunas de largura fixa, iguais em todas as linhas. O layout muda pela largura do painel, não da janela. */
+#screen-partidas .rd-painel { container-type: inline-size; }
+#screen-partidas .time-logo { border: 1px solid var(--rd-borda); }
+#screen-partidas .partida-item { grid-template-columns: minmax(0, 1fr) 140px 170px; }
+.rd-times { flex-wrap: wrap; }
+.rd-times b { white-space: normal; }
+#screen-partidas .rd-btn-ingresso { width: 100%; padding: 10px 12px; }
+
+/* Painel médio: informações descem para baixo dos times e o botão fica à direita. */
+@container (max-width: 720px) {
+  #screen-partidas .partida-item { grid-template-columns: minmax(0, 1fr) 170px; }
+  #screen-partidas .partida-item .rd-times { grid-column: 1; grid-row: 1; }
+  #screen-partidas .partida-item .rd-info { grid-column: 1; grid-row: 2; }
+  #screen-partidas .partida-item .rd-btn-ingresso { grid-column: 2; grid-row: 1 / span 2; }
+}
+
+/* Painel estreito (celular): tudo em uma coluna, botão em largura total. */
+@container (max-width: 460px) {
+  #screen-partidas .partida-item { grid-template-columns: 1fr; }
+  #screen-partidas .partida-item .rd-times,
+  #screen-partidas .partida-item .rd-info,
+  #screen-partidas .partida-item .rd-btn-ingresso { grid-column: auto; grid-row: auto; }
+}
+/* ===== [PIM-WEB Visual] Mapa do estádio em SVG ===== */
+#screen-mapa {
+  position: relative; overflow: hidden;
+  background: linear-gradient(180deg, #f7f9fb, #eef2f6);
+}
+/* Cantos decorativos em verde e azul-marinho, só CSS (sem imagem). */
+#screen-mapa::before {
+  content: ""; position: absolute; top: 0; left: 0; width: 120px; height: 120px;
+  background: #16803f; clip-path: polygon(0 0, 100% 0, 0 100%); z-index: -1;
+}
+#screen-mapa::after {
+  content: ""; position: absolute; right: 0; bottom: 0; width: 160px; height: 160px;
+  background: #0f1f3a; clip-path: polygon(100% 0, 100% 100%, 0 100%); z-index: -1;
+}
+
+#screen-mapa .card-mapa { max-width: 900px; gap: 18px; }
+.mp-titulo { font-size: 1.7rem; font-weight: 800; color: #14213d; }
+.mp-sub { color: #5b6573; margin-top: 4px; }
+
+#screen-mapa .aviso-visitante {
+  background: #eaf6ee; border: 1px solid #b9dcc4; color: #16803f;
+  text-align: left; letter-spacing: 0; font-size: 0.9rem;
+}
+#screen-mapa .aviso-visitante strong { color: #16803f; }
+
+.mp-corpo { display: flex; gap: 24px; align-items: center; }
+.mp-svg { flex: 1 1 auto; min-width: 0; width: 100%; max-width: 560px; height: auto; }
+
+.mp-setor { cursor: pointer; outline: none; }
+.mp-forma { fill: #8fd1a9; stroke: #fff; stroke-width: 2; transition: fill 0.2s; }
+.mp-div { fill: none; stroke: #fff; stroke-width: 1.5; opacity: 0.8; }
+.mp-rotulo { font: 700 13px 'Segoe UI', Tahoma, sans-serif; letter-spacing: 1.5px; fill: #0f3d24; pointer-events: none; }
+.mp-setor:hover .mp-forma, .mp-setor:focus-visible .mp-forma { fill: #16803f; }
+.mp-setor:hover .mp-rotulo, .mp-setor:focus-visible .mp-rotulo { fill: #fff; }
+
+.mp-setor.mp-bloqueado { cursor: not-allowed; }
+.mp-setor.mp-bloqueado .mp-forma,
+.mp-setor.mp-bloqueado:hover .mp-forma { fill: #c9ced9; }
+.mp-setor.mp-bloqueado .mp-rotulo,
+.mp-setor.mp-bloqueado:hover .mp-rotulo { fill: #6b7385; }
+
+.mp-legenda {
+  list-style: none; flex: 0 0 240px; background: #fff;
+  border: 1px solid var(--rd-borda); border-radius: 12px; padding: 14px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.mp-legenda li { display: flex; gap: 10px; align-items: flex-start; }
+.mp-leg-ponto { width: 14px; height: 14px; border-radius: 50%; background: #8fd1a9; margin-top: 3px; flex: none; }
+.mp-legenda li.mp-leg-bloqueado .mp-leg-ponto { background: #aab2c2; }
+.mp-legenda strong { display: block; color: #14213d; }
+.mp-legenda small { color: #5b6573; }
+
+@media (max-width: 760px) {
+  .mp-corpo { flex-direction: column; }
+  .mp-legenda { flex: none; width: 100%; }
+}
+/* ===== [PIM-WEB Visual] Assentos em formato de cadeira ===== */
+#screen-assentos .card-assentos { max-width: 760px; }
+#screen-assentos .assentos-info { color: #5b6573; letter-spacing: 0; }
+
+/* Cadeira desenhada só com CSS: ::before é o encosto e ::after é a base. As cores vêm das variáveis. */
+#screen-assentos .assento {
+  --as-encosto: #d9f0e2;
+  --as-base: #8fd1a9;
+  --as-borda: #16803f;
+  position: relative; width: 22px; height: 24px; padding: 0;
+  border: none; border-radius: 0; background: transparent;
+  cursor: pointer; transition: transform 0.15s;
+}
+#screen-assentos .assento::before {
+  content: ""; position: absolute; left: 3px; right: 3px; top: 0; height: 13px;
+  border: 1.5px solid var(--as-borda); border-radius: 7px 7px 3px 3px;
+  background: var(--as-encosto);
+}
+#screen-assentos .assento::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 10px;
+  border: 1.5px solid var(--as-borda); border-radius: 4px;
+  background: var(--as-base);
+}
+
+#screen-assentos .assento:hover:not(:disabled) {
+  background: transparent; transform: translateY(-2px);
+  --as-encosto: #8fd1a9; --as-base: #16803f;
+}
+#screen-assentos .assento.selecionado,
+#screen-assentos .assento.selecionado:hover:not(:disabled) {
+  background: transparent; transform: none;
+  --as-encosto: #16803f; --as-base: #116a34; --as-borda: #0e5a2c;
+}
+#screen-assentos .assento.ocupado {
+  background: transparent; cursor: not-allowed;
+  --as-encosto: #dde1e8; --as-base: #c3cad5; --as-borda: #aab2c2;
+}
+#screen-assentos .assento:focus-visible { outline: 2px solid #16803f; outline-offset: 2px; }
+
+/* Legenda com as mesmas cores das cadeiras. */
+#screen-assentos .leg { width: 12px; height: 12px; border-radius: 3px; }
+#screen-assentos .leg-livre { background: #8fd1a9; border: 1px solid #16803f; }
+#screen-assentos .leg-sel { background: #16803f; }
+
+/* Setores laterais: colunas centralizadas na vertical (formato de cunha). */
+#screen-assentos .assentos-lado { align-items: flex-start; }
+#screen-assentos .assentos-pecas { display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+/* ===== [PIM-WEB Visual] Alinhamento dos assentos por setor ===== */
+#screen-assentos .assentos-grade { align-items: flex-start; }
+/* Fileira de largura fixa: rótulo preso à esquerda, cadeiras centralizadas. */
+#screen-assentos .assentos-fileira { position: relative; justify-content: center; margin: 0 auto; padding: 0 32px; }
+#screen-assentos .assentos-fileira .assentos-rotulo {
+  position: absolute; left: 0; top: 50%; transform: translateY(-50%); margin: 0;
+}
+#screen-assentos .assentos-campo { align-self: center; }
+
+/* Oeste e Leste: gramado ao lado das colunas. */
+#screen-assentos .assentos-lateral { display: flex; gap: 10px; margin: 0 auto; align-items: stretch; }
+#screen-assentos .assentos-campo-v {
+  writing-mode: vertical-rl; margin: 0; padding: 12px 6px;
+  display: flex; align-items: center; justify-content: center;
+}
+/* [PIM-WEB Visual] Com até 28 cadeiras por fileira, a cadeira fica um pouco menor. */
+#screen-assentos .assento { width: 18px; height: 20px; }
+#screen-assentos .assento::before { left: 2px; right: 2px; height: 11px; border-radius: 6px 6px 2px 2px; }
+#screen-assentos .assento::after { height: 8px; }
+#screen-assentos .assentos-fileira, #screen-assentos .assentos-coluna, #screen-assentos .assentos-pecas { gap: 3px; }
+#screen-assentos .card-assentos { max-width: 860px; }
+/* ===== [PIM-WEB Visual] Tela de carregamento após o login ===== */
+.rd-splash {
+  position: fixed; inset: 0; z-index: 9999;
+  background: #f4f6f9; color: #14213d;
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+  padding: 40px 24px; opacity: 0; transition: opacity 0.5s ease;
+}
+.rd-splash-visivel { opacity: 1; }
+
+.rd-splash-marca {
+  display: flex; align-items: center; gap: 12px;
+  font-weight: 800; letter-spacing: 1px; font-size: 0.9rem; line-height: 1.15; color: #0f1f3a;
+}
+.rd-splash-marca-img { width: 44px; height: auto; }
+
+.rd-splash-centro {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; text-align: center;
+}
+.rd-splash-escudo {
+  width: 112px; height: 112px; border-radius: 50%; background: #fff;
+  border: 1px solid #e3e8ef; box-shadow: 0 4px 18px rgba(15, 31, 58, 0.08);
+  display: flex; align-items: center; justify-content: center; margin-bottom: 8px;
+}
+.rd-splash-escudo img { animation: none !important; }
+.rd-splash-ola { font-size: 1.7rem; font-weight: 800; color: #14213d; }
+.rd-splash-ola:empty { display: none; }
+.rd-splash-sub { font-size: 0.85rem; letter-spacing: 2px; color: #5b6573; font-weight: 600; }
+.rd-splash-frase { min-height: 2.6em; margin-top: 6px; }
+.rd-splash-frase p {
+  font-size: 1.15rem; font-weight: 800; letter-spacing: 1px; color: #16803f;
+  animation: rdFraseEntra 0.5s ease;
+}
+@keyframes rdFraseEntra {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.rd-splash-barra { width: min(320px, 80%); height: 4px; border-radius: 2px; background: #e3e8ef; overflow: hidden; }
+.rd-splash-barra span { display: block; height: 100%; width: 0; background: #16803f; animation: rdBarra 3s linear forwards; }
+@keyframes rdBarra { to { width: 100%; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .rd-splash-frase p { animation: none; }
+}

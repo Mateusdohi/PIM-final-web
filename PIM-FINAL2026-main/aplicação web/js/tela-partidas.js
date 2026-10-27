@@ -29,6 +29,13 @@ async function carregarPartidas() {
   lista.innerHTML = '<p style="color:#888;text-align:center;padding:20px;">CARREGANDO...</p>';
   if (noticia) noticia.textContent = obterNoticiaTime();
 
+  // [PIM-WEB Visual] Saudação e inicial do avatar com o nome real do usuário. textContent: sem innerHTML.
+  const nomeUsuario = estado.usuarioLogado?.nome || '';
+  const elNome   = document.getElementById('rd-usuario-nome');
+  const elAvatar = document.getElementById('rd-avatar');
+  if (elNome)   elNome.textContent   = nomeUsuario.split(' ')[0];
+  if (elAvatar) elAvatar.textContent = nomeUsuario.charAt(0).toUpperCase();
+
   let partidas;
   try {
     partidas = (await apiFetch('/api/matches')).map(partidaDaApi);
@@ -57,16 +64,22 @@ async function carregarPartidas() {
     item.className = 'partida-item';
 
     const [t1, t2] = p.times;
-    const logo1 = logoHtml(t1, 18);
-    const logo2 = logoHtml(t2, 18);
+    // [PIM-WEB Visual] Escudos maiores (32px) para o layout novo.
+    const logo1 = logoHtml(t1, 32);
+    const logo2 = logoHtml(t2, 32);
 
     const precoHtml = plano > 0
       ? `<span class="preco-original">R$ ${p.preco.toFixed(2).replace('.', ',')}</span> <span class="preco-desconto">R$ ${precoFinal.toFixed(2).replace('.', ',')} <span class="badge-desc">-${plano}%</span></span>`
       : `R$ ${precoFinal.toFixed(2).replace('.', ',')}`;
 
+    // [PIM-WEB Visual] Nova estrutura da linha. O botão é só visual: o clique sobe para o item, que chama selecionarPartida(p).
     item.innerHTML = `
-      <p>${logo1}${t1.toUpperCase()} vs ${logo2}${t2.toUpperCase()}</p>
-      <span>📅 ${p.data} &nbsp;⏰ ${p.hora} &nbsp;·&nbsp; ${precoHtml}</span>
+      <div class="rd-times">${logo1}<b>${t1.toUpperCase()}</b><i>vs</i>${logo2}<b>${t2.toUpperCase()}</b></div>
+      <div class="rd-info">
+        <div class="rd-quando"><span class="rd-data">${p.data}</span><span class="rd-hora">${p.hora}</span></div>
+        <div class="rd-preco">${precoHtml}</div>
+      </div>
+      <button type="button" class="rd-btn-ingresso">Ver ingressos &rarr;</button>
     `;
     item.addEventListener('click', () => selecionarPartida(p));
     lista.appendChild(item);

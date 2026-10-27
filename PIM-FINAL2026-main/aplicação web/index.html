@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Champions Card</title>
   <link rel="stylesheet" href="style.css" />
+  <!-- [PIM-WEB Visual] Visual novo do login e das partidas. Para desfazer, apague esta linha. -->
+  <link rel="stylesheet" href="redesign.css" />
 </head>
 <body>
 
@@ -12,54 +14,95 @@
     <img src="./CHAMPIONS_CARD.png" alt="Champions Card" class="logo-champions">
   </div>
 
-  <!-- TELA 1: LOGIN -->
+  <!-- [PIM-WEB Visual] TELA 1: LOGIN. Duas colunas. Ids e onclick preservados (fazerLogin, irPara, toggleOpcaoSocioLogin, etc.). -->
   <div class="screen active" id="screen-login">
-    <div class="card card-login">
-      <h1 class="title">CHAMPIONS <span class="highlight">CARD</span></h1>
-      <input type="email" id="login-email" class="input-field" placeholder="E-MAIL" />
-      <input type="password" id="login-senha" class="input-field" placeholder="SENHA" />
-      <button class="btn-primary" onclick="fazerLogin()">FAZER LOGIN</button>
-      <p class="link-text">NÃO TENHO LOGIN: <a href="javascript:void(0)" class="link-destaque" onclick="irPara('screen-cadastro')">FAZER CADASTRO</a></p>
+    <div class="rd-login">
 
-      <!-- BOTÃO TOGGLE SÓCIO -->
-      <div class="socio-toggle-wrap">
-        <button id="btn-toggle-socio-login" class="btn-socio-toggle" onclick="toggleOpcaoSocioLogin()">
-          QUERO SER SÓCIO
-        </button>
-      </div>
+      <section class="rd-login-hero">
+        <div class="rd-marca">
+          <img src="./CHAMPIONS_CARD.png" alt="" class="rd-marca-img">
+          <span class="rd-marca-nome">CHAMPIONS<br>CARD</span>
+        </div>
 
-      <!-- PAINEL SÓCIO (expandível) -->
-      <div id="login-socio-painel" class="login-socio-painel">
-        <p class="socio-painel-titulo">🎫 ESCOLHA SEU PLANO</p>
-        <p class="socio-painel-subtitulo">Selecione o plano e pague para se tornar sócio</p>
+        <div>
+          <h2 class="rd-hero-titulo">Viva os melhores <span>momentos</span></h2>
+          <p class="rd-hero-texto">Compre ingressos dos jogos do seu time, escolha seu assento e ganhe desconto como sócio.</p>
+        </div>
 
-        <div id="login-planos-socio" class="login-planos-socio"></div>
+        <div class="rd-beneficios">
+          <div class="rd-beneficio">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1"/></svg>
+            <span>Descontos para sócios</span>
+          </div>
+          <div class="rd-beneficio">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9a2 2 0 0 0 0 6v3h18v-3a2 2 0 0 1 0-6V6H3z"/><path d="M12 6v12"/></svg>
+            <span>Escolha do assento</span>
+          </div>
+          <div class="rd-beneficio">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+            <span>Compra segura</span>
+          </div>
+        </div>
+      </section>
 
-        <div id="login-socio-pagamento" class="login-socio-pagamento hidden">
-          <div class="metodos-pagamento" id="login-metodos-adesao">
-            <button class="btn-metodo active" onclick="selecionarMetodoAdesaoLogin('credito', this)">CRÉDITO</button>
-            <button class="btn-metodo" onclick="selecionarMetodoAdesaoLogin('debito', this)">DÉBITO</button>
-            <button class="btn-metodo" onclick="selecionarMetodoAdesaoLogin('pix', this)">PIX</button>
+      <section class="rd-login-form">
+        <div class="rd-form-box">
+          <h1 class="rd-form-titulo">Fazer login</h1>
+          <p class="rd-form-sub">Acesse sua conta para continuar</p>
+
+          <div class="rd-campo">
+            <label for="login-email">E-mail</label>
+            <input type="email" id="login-email" class="input-field" placeholder="seu@email.com" />
+          </div>
+          <div class="rd-campo">
+            <label for="login-senha">Senha</label>
+            <input type="password" id="login-senha" class="input-field" placeholder="Sua senha" />
           </div>
 
-          <div id="login-campos-cartao-adesao" style="display:flex;flex-direction:column;gap:10px;">
-            <input type="text" class="input-field" placeholder="NÚMERO DO CARTÃO" maxlength="19" />
-            <div class="inline-inputs">
-              <input type="text" class="input-field" placeholder="MM/AA" maxlength="5" />
-              <input type="text" class="input-field" placeholder="CVV" maxlength="4" />
+          <button class="btn-primary" onclick="fazerLogin()">FAZER LOGIN</button>
+          <p class="link-text">Não tenho login: <a href="javascript:void(0)" class="link-destaque" onclick="irPara('screen-cadastro')">FAZER CADASTRO</a></p>
+
+          <!-- BOTÃO TOGGLE SÓCIO -->
+          <div class="socio-toggle-wrap">
+            <button id="btn-toggle-socio-login" class="btn-socio-toggle" onclick="toggleOpcaoSocioLogin()">
+              QUERO SER SÓCIO
+            </button>
+          </div>
+
+          <!-- PAINEL SÓCIO (expandível) -->
+          <div id="login-socio-painel" class="login-socio-painel">
+            <p class="socio-painel-titulo">🎫 ESCOLHA SEU PLANO</p>
+            <p class="socio-painel-subtitulo">Selecione o plano e pague para se tornar sócio</p>
+
+            <div id="login-planos-socio" class="login-planos-socio"></div>
+
+            <div id="login-socio-pagamento" class="login-socio-pagamento hidden">
+              <div class="metodos-pagamento" id="login-metodos-adesao">
+                <button class="btn-metodo active" onclick="selecionarMetodoAdesaoLogin('credito', this)">CRÉDITO</button>
+                <button class="btn-metodo" onclick="selecionarMetodoAdesaoLogin('debito', this)">DÉBITO</button>
+                <button class="btn-metodo" onclick="selecionarMetodoAdesaoLogin('pix', this)">PIX</button>
+              </div>
+
+              <div id="login-campos-cartao-adesao" style="display:flex;flex-direction:column;gap:10px;">
+                <input type="text" class="input-field" placeholder="NÚMERO DO CARTÃO" maxlength="19" />
+                <div class="inline-inputs">
+                  <input type="text" class="input-field" placeholder="MM/AA" maxlength="5" />
+                  <input type="text" class="input-field" placeholder="CVV" maxlength="4" />
+                </div>
+              </div>
+
+              <div id="login-pix-adesao" class="pix-container hidden">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=ingressos@ticketfut.com.br" alt="QR Code PIX" class="qrcode"/>
+                <p class="pix-chave">CHAVE PIX: ingressos@ticketfut.com.br</p>
+              </div>
+
+              <button class="btn-primary btn-confirmar-socio" onclick="confirmarSocioLogin()">
+                CONFIRMAR E ASSINAR
+              </button>
             </div>
           </div>
-
-          <div id="login-pix-adesao" class="pix-container hidden">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=ingressos@ticketfut.com.br" alt="QR Code PIX" class="qrcode"/>
-            <p class="pix-chave">CHAVE PIX: ingressos@ticketfut.com.br</p>
-          </div>
-
-          <button class="btn-primary btn-confirmar-socio" onclick="confirmarSocioLogin()">
-            CONFIRMAR E ASSINAR
-          </button>
         </div>
-      </div>
+      </section>
 
     </div>
   </div>
@@ -119,44 +162,119 @@
     </div>
   </div>
 
-  <!-- TELA 3: PARTIDAS -->
+  <!-- [PIM-WEB Visual] TELA 3: PARTIDAS. Menu lateral + conteúdo. Ids preservados: lista-partidas, noticia-time, btn-area-admin. -->
   <div class="screen" id="screen-partidas">
-    <div class="card-partidas">
-      <div class="partidas-coluna">
-        <h1 class="title">PARTIDAS <span class="highlight-green">DISPONÍVEIS</span></h1>
-        <div id="lista-partidas" class="lista-partidas"></div>
-        <!-- [PIM-WEB Admin] Botão só aparece para role Admin. Esconder não protege: o servidor confere o role. -->
-        <button id="btn-area-admin" class="btn-primary" style="display:none;" onclick="abrirAreaAdmin()">ÁREA ADMIN</button>
-        <button class="btn-sair" onclick="sair()">SAIR</button>
+    <div class="rd-app">
+
+      <aside class="rd-sidebar">
+        <div class="rd-marca">
+          <img src="./CHAMPIONS_CARD.png" alt="" class="rd-marca-img">
+          <span class="rd-marca-nome">CHAMPIONS<br>CARD</span>
+        </div>
+
+        <nav class="rd-nav">
+          <div class="rd-nav-item rd-ativo">Partidas Disponíveis</div>
+          <!-- [PIM-WEB Admin] Botão só aparece para role Admin. Esconder não protege: o servidor confere o role. -->
+          <button id="btn-area-admin" class="rd-nav-item" style="display:none;" onclick="abrirAreaAdmin()">Área Admin</button>
+        </nav>
+
+        <div class="rd-sidebar-rodape">
+          <!-- [PIM-WEB Visual] Só informativo (valores reais dos planos). A assinatura continua na tela de login. -->
+          <div class="rd-socio-card">
+            <strong>Seja sócio</strong>
+            Descontos de 5%, 10% ou 20% nos ingressos.
+          </div>
+          <button class="rd-nav-item" onclick="sair()">Sair</button>
+        </div>
+      </aside>
+
+      <div class="rd-conteudo">
+        <header class="rd-topo">
+          <span id="rd-avatar" class="rd-avatar"></span>
+          <div>
+            <h1 class="rd-saudacao">Olá, <span id="rd-usuario-nome"></span></h1>
+            <p>Aqui estão as partidas disponíveis para você.</p>
+          </div>
+        </header>
+
+        <div class="rd-grade">
+          <section class="rd-painel">
+            <h2 class="rd-titulo">Partidas Disponíveis</h2>
+            <div id="lista-partidas" class="lista-partidas"></div>
+          </section>
+
+          <aside class="rd-painel">
+            <h2 class="rd-titulo">Notícias do Time</h2>
+            <div id="noticia-time" class="noticia-box"></div>
+          </aside>
+        </div>
       </div>
-      <div class="noticias-coluna">
-        <h2 class="title-noticias">NOTÍCIAS DO TIME</h2>
-        <div id="noticia-time" class="noticia-box"></div>
-      </div>
+
     </div>
   </div>
 
-  <!-- TELA 4: MAPA DA ARENA -->
+    <!-- [PIM-WEB Visual] TELA 4: MAPA DO ESTÁDIO. Desenho em SVG. Ids preservados: aviso-visitante, aviso-mandante. Os setores usam mapa-norte/sul/oeste/leste. -->
   <div class="screen" id="screen-mapa">
-    <div class="card">
-      <h1 class="title">MAPA DA <span class="highlight-green">ARENA</span></h1>
+    <div class="card card-mapa">
+      <header class="mp-topo">
+        <h1 class="mp-titulo">Mapa do Estádio</h1>
+        <p class="mp-sub">Selecione o setor desejado para escolher seu assento.</p>
+      </header>
 
       <div id="aviso-visitante" class="aviso-visitante" style="display:none;">
-        ⚠️ Seu time é o <strong>visitante</strong>. Apenas o setor <strong>LESTE</strong> está disponível.
+        Seu time é o <strong>visitante</strong>. Apenas o setor <strong>LESTE</strong> está disponível.
       </div>
-      <div id="aviso-mandante" class="aviso-visitante" style="display:none;border-color:#e53935;color:#e53935;">
-        🚫 O setor <strong>LESTE</strong> é exclusivo para a <strong>torcida visitante</strong>.
+      <div id="aviso-mandante" class="aviso-visitante" style="display:none;">
+        O setor <strong>LESTE</strong> é exclusivo para a <strong>torcida visitante</strong>.
       </div>
 
-      <div class="arena-map">
-        <div class="setor setor-norte" onclick="escolherSetor('Norte')">NORTE</div>
-        <div class="arena-meio">
-          <div class="setor setor-lado" onclick="escolherSetor('Oeste')">OESTE</div>
-          <div class="gramado">GRAMADO</div>
-          <div class="setor setor-lado">LESTE</div>
-        </div>
-        <div class="setor setor-sul" onclick="escolherSetor('Sul')">SUL</div>
+      <div class="mp-corpo">
+        <svg id="mapa-svg" class="mp-svg" viewBox="0 0 640 440" role="group" aria-label="Mapa do estádio com os setores">
+          <!-- Pista e gramado -->
+          <rect x="185" y="135" width="270" height="170" rx="16" fill="#fff" stroke="#e3e8ef"/>
+          <rect x="200" y="150" width="240" height="140" rx="6" fill="#5f9f5a"/>
+          <g fill="none" stroke="#fff" stroke-width="1.5" opacity="0.85">
+            <rect x="206" y="156" width="228" height="128"/>
+            <line x1="320" y1="156" x2="320" y2="284"/>
+            <circle cx="320" cy="220" r="22"/>
+            <rect x="206" y="190" width="30" height="60"/>
+            <rect x="404" y="190" width="30" height="60"/>
+          </g>
+
+          <g id="mapa-norte" class="mp-setor" data-setor="Norte" role="button" tabindex="0" aria-label="Setor Norte">
+            <path class="mp-forma" d="M170 48 L470 48 Q505 48 522 82 L462 120 L178 120 L118 82 Q135 48 170 48 Z"/>
+            <path class="mp-div" d="M230 48V120M320 48V120M410 48V120"/>
+            <text class="mp-rotulo" x="320" y="88" text-anchor="middle">NORTE</text>
+          </g>
+
+          <g id="mapa-sul" class="mp-setor" data-setor="Sul" role="button" tabindex="0" aria-label="Setor Sul">
+            <path class="mp-forma" d="M170 392 L470 392 Q505 392 522 358 L462 320 L178 320 L118 358 Q135 392 170 392 Z"/>
+            <path class="mp-div" d="M230 392V320M320 392V320M410 392V320"/>
+            <text class="mp-rotulo" x="320" y="361" text-anchor="middle">SUL</text>
+          </g>
+
+          <g id="mapa-oeste" class="mp-setor" data-setor="Oeste" role="button" tabindex="0" aria-label="Setor Oeste">
+            <path class="mp-forma" d="M104 102 L164 140 L164 300 L104 338 Q62 300 62 220 Q62 140 104 102 Z"/>
+            <path class="mp-div" d="M70 170H164M64 220H164M70 270H164"/>
+            <text class="mp-rotulo" x="113" y="225" text-anchor="middle">OESTE</text>
+          </g>
+
+          <g id="mapa-leste" class="mp-setor" data-setor="Leste" role="button" tabindex="0" aria-label="Setor Leste">
+            <path class="mp-forma" d="M536 102 L476 140 L476 300 L536 338 Q578 300 578 220 Q578 140 536 102 Z"/>
+            <path class="mp-div" d="M570 170H476M576 220H476M570 270H476"/>
+            <text class="mp-rotulo" x="527" y="225" text-anchor="middle">LESTE</text>
+          </g>
+        </svg>
+
+        <!-- [PIM-WEB Visual] Legenda: o texto de cada linha é preenchido pelo JS, conforme o estado real do setor. -->
+        <ul class="mp-legenda" id="mp-legenda">
+          <li id="mp-leg-oeste"><span class="mp-leg-ponto"></span><div><strong>Oeste</strong><small>Disponível</small></div></li>
+          <li id="mp-leg-norte"><span class="mp-leg-ponto"></span><div><strong>Norte</strong><small>Disponível</small></div></li>
+          <li id="mp-leg-sul"><span class="mp-leg-ponto"></span><div><strong>Sul</strong><small>Disponível</small></div></li>
+          <li id="mp-leg-leste"><span class="mp-leg-ponto"></span><div><strong>Leste</strong><small>Disponível</small></div></li>
+        </ul>
       </div>
+
       <button class="btn-sair" onclick="irPara('screen-partidas')">VOLTAR</button>
     </div>
   </div>
