@@ -75,7 +75,8 @@ public class PaymentService
         {
             var row = req.SeatRow.Value;
             var number = req.SeatNumber!.Value;
-            if (!SeatLayout.IsValid(row, number))
+                      // [PIM-WEB Visual] Valida pelo desenho do setor (cada fileira tem seu tamanho).
+            if (!SeatLayout.IsValid(sector, row, number))
                 throw AppException.Validation("invalid_seat", "Esse assento não existe no setor.");
 
             // libera reservas antigas (expiradas) desse assento antes de checar

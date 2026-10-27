@@ -78,9 +78,11 @@ public class MatchService
         var reason = SectorRules.BlockReason(sector, isAway);
         var taken = await _payments.ListTakenSeatsAsync(matchId, sector, _clock.UtcNow, ct);
 
+             // [PIM-WEB Visual] Devolve também as cadeiras de cada fileira, para o site desenhar o formato do setor.
         return new SeatMapDto(
             sector.ToString(), SeatLayout.Rows, SeatLayout.SeatsPerRow, reason is null, reason,
-            taken.Select(t => new SeatDto(t.Row, t.Number, t.Sold ? "sold" : "held")).ToList());
+            taken.Select(t => new SeatDto(t.Row, t.Number, t.Sold ? "sold" : "held")).ToList(),
+            SeatLayout.RowSizes(sector).ToList());
     }
     }
 

@@ -19,8 +19,8 @@ public record MatchDto(
 public record SectorDto(string Sector, bool Available, string? Reason);
 // [PIM-WEB Cartão 4] Mapa de assentos: só os OCUPADOS são devolvidos (sold = vendido, held = reservado por 10 min). O resto está livre.
 public record SeatDto(int Row, int Number, string Status);
-public record SeatMapDto(string Sector, int Rows, int SeatsPerRow, bool Available, string? Reason, List<SeatDto> Taken);
-// [PIM-WEB Cartão 4] SeatRow e SeatNumber são opcionais: o app mobile continua comprando só por setor.
+// [PIM-WEB Visual] RowSizes: cadeiras de cada fileira (fileira 1 primeiro). Campo novo e opcional: o app mobile ignora.
+public record SeatMapDto(string Sector, int Rows, int SeatsPerRow, bool Available, string? Reason, List<SeatDto> Taken, List<int>? RowSizes = null);// [PIM-WEB Cartão 4] SeatRow e SeatNumber são opcionais: o app mobile continua comprando só por setor.
 public record CreateIntentRequest(int MatchId, string Sector, string Method, string? MemberCode, int? SeatRow = null, int? SeatNumber = null);
 public record IntentDto(Guid IntentId, string Nonce, decimal Amount, decimal OriginalAmount, int DiscountPercent, DateTime ExpiresAt, string Method);
 
