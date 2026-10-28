@@ -8,7 +8,8 @@ namespace TicketFut.Api.Controllers;
 // [PIM-WEB Cartão 10] Chat protegido: exige login e tem limite por usuário.
 // Motivo: só quem está logado usa, e ninguém abusa.
 public record ChatRequest(string? Message);
-public record ChatResponse(string Reply);
+// [PIM-WEB Chat] Suggestions: botões de dúvidas que o site mostra abaixo da resposta. Campo novo e opcional.
+public record ChatResponse(string Reply, List<string>? Suggestions = null);
 
 [ApiController, Authorize, Route("api/chat")]
 public class ChatController : ControllerBase
@@ -27,6 +28,7 @@ public class ChatController : ControllerBase
         if (msg.Length > ChatService.MaxLength)
             return BadRequest(new { code = "message_too_long", message = $"A mensagem pode ter até {ChatService.MaxLength} caracteres." });
 
-        return Ok(new ChatResponse(_chat.Responder(msg)));
+           var r = _chat.Responder(msg);
+        return Ok(new ChatResponse(r.Reply, r.Suggestions));
     }
 }

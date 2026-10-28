@@ -543,3 +543,37 @@ body:has(#screen-partidas.active) .logo-container {
   cursor: not-allowed; --as-encosto: #fde8a8; --as-base: #f2c94c; --as-borda: #b8860b;
 }
 #screen-assentos .leg-carrinho { background: #f2c94c; border: 1px solid #b8860b; }
+/* ===== [PIM-WEB Visual] Chat no tema claro ===== */
+.chat-toggle {
+  background: #16803f; border: none; color: #fff;
+  box-shadow: 0 4px 14px rgba(15, 31, 58, 0.25);
+}
+.chat-toggle:hover { background: #116a34; }
+.chat-painel {
+  background: #fff; border: 1px solid #e3e8ef; border-radius: 14px;
+  box-shadow: 0 8px 28px rgba(15, 31, 58, 0.18);
+}
+.chat-topo {
+  background: #0f1f3a; color: #fff; letter-spacing: 1px; border-bottom: none;
+}
+.chat-topo button { color: #d6deea; }
+.chat-topo button:hover { color: #fff; }
+.chat-msgs { background: #f4f6f9; }
+.chat-msg.bot { background: #fff; border: 1px solid #e3e8ef; color: #14213d; }
+.chat-msg.eu { background: #16803f; border: none; color: #fff; }
+.chat-entrada { background: #fff; border-top: 1px solid #e3e8ef; }
+.chat-entrada input {
+  background: #fff; border: 1px solid #d5dbe4; color: #14213d; border-radius: 8px;
+}
+.chat-entrada input:focus { outline: none; border-color: #16803f; box-shadow: 0 0 0 3px rgba(22, 128, 63, 0.15); }
+.chat-entrada button { background: #16803f; color: #fff; border-radius: 8px; }
+.chat-entrada button:hover { background: #116a34; }
+/* ===== [PIM-WEB Chat] Botões de dúvidas ===== */
+.chat-sugestoes { display: flex; flex-wrap: wrap; gap: 6px; align-self: flex-start; max-width: 100%; }
+.chat-sugestao {
+  background: #fff; color: #16803f; border: 1.5px solid #16803f; border-radius: 999px;
+  padding: 6px 12px; font: inherit; font-size: 0.78rem; font-weight: 600; cursor: pointer;
+  text-align: left; transition: background 0.15s, color 0.15s;
+}
+.chat-sugestao:hover { background: #16803f; color: #fff; }
+.chat-sugestao:focus-visible { outline: 2px solid #0f1f3a; outline-offset: 2px; }
