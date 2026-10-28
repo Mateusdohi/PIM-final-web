@@ -51,7 +51,15 @@ async function carregarAssentos() {
     b.className = 'assento';
     b.dataset.row = r;
     b.dataset.number = n;
-    const status = ocupados.get(`${r}-${n}`);
+        const status = ocupados.get(`${r}-${n}`);
+    // [PIM-WEB Carrinho] Cadeira já está no carrinho: marca e bloqueia. Motivo: evita item duplicado.
+    if (!status && itemNoCarrinho(partida.id, setor, r, n)) {
+      b.classList.add('no-carrinho');
+      b.disabled = true;
+      b.title = `Fileira ${r}, cadeira ${n} (no seu carrinho)`;
+      b.setAttribute('aria-label', b.title);
+      return b;
+    }
     if (status) {
       b.classList.add('ocupado');
       b.disabled = true;

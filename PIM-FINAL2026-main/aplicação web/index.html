@@ -174,6 +174,8 @@
 
         <nav class="rd-nav">
           <div class="rd-nav-item rd-ativo">Partidas Disponíveis</div>
+                    <!-- [PIM-WEB Carrinho] Atalho para o carrinho, com o número de itens. -->
+          <button class="rd-nav-item" onclick="abrirCarrinho()">Carrinho <span class="car-contador rd-contador">0</span></button>
           <!-- [PIM-WEB Admin] Botão só aparece para role Admin. Esconder não protege: o servidor confere o role. -->
           <button id="btn-area-admin" class="rd-nav-item" style="display:none;" onclick="abrirAreaAdmin()">Área Admin</button>
         </nav>
@@ -287,9 +289,13 @@
         <span><i class="leg leg-livre"></i>LIVRE</span>
         <span><i class="leg leg-ocupado"></i>OCUPADO</span>
         <span><i class="leg leg-sel"></i>SEU ASSENTO</span>
+                <span><i class="leg leg-carrinho"></i>NO CARRINHO</span>
       </div>
       <div id="assentos-grade" class="assentos-grade"></div>
       <button class="btn-primary" onclick="confirmarAssento()">CONFIRMAR ASSENTO</button>
+            <!-- [PIM-WEB Carrinho] Compra direta continua acima. Estes dois botões usam o carrinho. -->
+      <button class="btn-secundario" onclick="adicionarAoCarrinhoAtual()">ADICIONAR AO CARRINHO</button>
+      <button class="btn-secundario" onclick="abrirCarrinho()">VER CARRINHO (<span class="car-contador">0</span>)</button>
       <button class="btn-sair" onclick="irPara('screen-mapa')">VOLTAR</button>
     </div>
   </div>
@@ -354,6 +360,48 @@
     </div>
   </div>
 
+    <!-- [PIM-WEB Carrinho] Tela do carrinho. Lista, total e pagamento único. -->
+  <div class="screen" id="screen-carrinho">
+    <div class="card card-carrinho">
+      <h1 class="title">SEU <span class="highlight-green">CARRINHO</span></h1>
+      <p id="car-vazio" class="car-vazio">Seu carrinho está vazio.</p>
+      <div id="car-lista" class="car-lista"></div>
+      <p id="car-total" class="car-total"></p>
+
+      <div id="car-pagamento" class="car-pagamento" style="display:none;">
+        <div id="car-bloco-socio" class="bloco-codigo-socio" style="display:none;">
+          <p class="label-pagamento" style="margin-bottom:6px;">CÓDIGO DE SÓCIO (obrigatório para desconto)</p>
+          <input type="text" id="car-codigo-socio" class="input-field input-codigo-socio"
+                 placeholder="SEU CÓDIGO DE SÓCIO" maxlength="6"
+                 oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6)" />
+        </div>
+
+        <div class="metodos-pagamento" id="car-metodos">
+          <button class="btn-metodo active" onclick="selecionarMetodoCarrinho('credito', this)">CRÉDITO</button>
+          <button class="btn-metodo" onclick="selecionarMetodoCarrinho('debito', this)">DÉBITO</button>
+          <button class="btn-metodo" onclick="selecionarMetodoCarrinho('pix', this)">PIX</button>
+        </div>
+
+        <div id="car-campos-cartao" style="display:flex;flex-direction:column;gap:12px;">
+          <input type="text" id="car-cartao-numero" class="input-field" placeholder="NÚMERO DO CARTÃO" maxlength="19" />
+          <div class="inline-inputs">
+            <input type="text" id="car-validade" class="input-field" placeholder="MM/AA" maxlength="5" />
+            <input type="text" id="car-cvv" class="input-field" placeholder="CVV" maxlength="4" />
+          </div>
+        </div>
+
+        <div id="car-pix" class="pix-container hidden">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=ingressos@ticketfut.com.br" alt="QR Code PIX" class="qrcode"/>
+          <p class="pix-chave">CHAVE PIX: ingressos@ticketfut.com.br</p>
+        </div>
+
+        <input type="password" id="car-senha" class="input-field" placeholder="SUA SENHA (CONFIRMAÇÃO)" autocomplete="current-password" />
+        <button id="car-finalizar" class="btn-primary" onclick="finalizarCarrinho()">FINALIZAR COMPRA</button>
+      </div>
+
+      <button class="btn-sair" onclick="irPara('screen-partidas')">CONTINUAR COMPRANDO</button>
+    </div>
+  </div>
   <!-- [PIM-WEB Admin] Tela da área administrativa: tabela de ingressos vendidos. -->
   <div class="screen" id="screen-admin">
     <div class="card">
@@ -427,6 +475,8 @@
   <script src="js/chat.js"></script>
   <!-- [PIM-WEB Admin] Área admin -->
   <script src="js/tela-admin.js"></script>
+    <!-- [PIM-WEB Carrinho] Carrinho de compras -->
+  <script src="js/tela-carrinho.js"></script>
   <!-- Inicialização -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {

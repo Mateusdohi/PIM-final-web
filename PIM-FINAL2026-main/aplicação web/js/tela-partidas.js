@@ -95,8 +95,8 @@ function selecionarPartida(partida) {
 
 // [PIM-WEB Cartão 8] Sair apaga o token da memória. Motivo: sem isso a sessão continuava válida após "SAIR".
 function sair() {
-  definirToken(null);
-    limparChat(); // [PIM-WEB Cartão 10] Motivo: não deixar a conversa para o próximo usuário.
+    definirToken(null);
+  limparCarrinho(); // [PIM-WEB Carrinho] Motivo: não deixar os itens para o próximo usuário.
   estado.usuarioLogado      = null;
   estado.timeDoUsuario      = 'default';
   estado.partidaSelecionada = null;

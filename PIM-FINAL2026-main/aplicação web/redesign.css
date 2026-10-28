@@ -496,3 +496,50 @@ body:has(#screen-partidas.active) .logo-container {
 @media (prefers-reduced-motion: reduce) {
   .rd-splash-frase p { animation: none; }
 }
+/* ===== [PIM-WEB Carrinho] ===== */
+#screen-carrinho {
+  --bg-card: #ffffff; --bg-item: #f3f5f8; --bg-input: #ffffff;
+  --color-white: #14213d; --color-muted: #5b6573; --border-default: #d5dbe4;
+  --neon-cyan: #16803f; --neon-green: #16803f; --setor-bg: rgba(22, 128, 63, 0.06);
+  --rd-verde: #16803f; --rd-verde-escuro: #116a34; --rd-borda: #e3e8ef;
+  background: #f4f6f9; color: #14213d;
+}
+#screen-carrinho .card-carrinho { max-width: 720px; }
+
+.car-lista { display: flex; flex-direction: column; gap: 10px; }
+.car-item {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: center;
+  background: #fff; border: 1px solid #e3e8ef; border-radius: 12px; padding: 12px 14px;
+}
+.car-item-nome { font-weight: 700; color: #14213d; }
+.car-item-det { color: #5b6573; font-size: 0.85rem; margin-top: 2px; }
+.car-item-preco { font-weight: 800; color: #14213d; white-space: nowrap; }
+.car-item-erro { grid-column: 1 / -1; color: #b42318; font-size: 0.82rem; }
+.car-remover {
+  background: #fff; border: 1px solid #d5dbe4; border-radius: 8px; padding: 6px 10px;
+  color: #5b6573; font: inherit; font-size: 0.8rem; cursor: pointer;
+}
+.car-remover:hover { border-color: #b42318; color: #b42318; }
+.car-total { text-align: right; font-size: 1.3rem; font-weight: 900; color: #16803f; }
+.car-vazio { text-align: center; color: #5b6573; padding: 16px; }
+.car-pagamento { display: flex; flex-direction: column; gap: 12px; }
+
+/* Contador no menu lateral. */
+.rd-contador {
+  margin-left: auto; min-width: 22px; padding: 1px 7px; border-radius: 999px;
+  background: #3ecf7a; color: #0f1f3a; font-size: 0.75rem; font-weight: 800; text-align: center;
+}
+
+/* Botão secundário (contorno verde) da tela de assentos. */
+.btn-secundario {
+  width: 100%; background: #fff; color: #16803f; border: 1.5px solid #16803f; border-radius: 8px;
+  padding: 12px; font: inherit; font-size: 0.85rem; font-weight: 800; letter-spacing: 1px;
+  text-transform: uppercase; cursor: pointer;
+}
+.btn-secundario:hover { background: rgba(22, 128, 63, 0.07); }
+
+/* Cadeira no carrinho: amarela e bloqueada. */
+#screen-assentos .assento.no-carrinho {
+  cursor: not-allowed; --as-encosto: #fde8a8; --as-base: #f2c94c; --as-borda: #b8860b;
+}
+#screen-assentos .leg-carrinho { background: #f2c94c; border: 1px solid #b8860b; }
