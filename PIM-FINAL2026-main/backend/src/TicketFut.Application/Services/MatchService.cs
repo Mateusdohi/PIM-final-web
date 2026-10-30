@@ -82,7 +82,7 @@ public class MatchService
         return new SeatMapDto(
             sector.ToString(), SeatLayout.Rows, SeatLayout.SeatsPerRow, reason is null, reason,
             taken.Select(t => new SeatDto(t.Row, t.Number, t.Sold ? "sold" : "held")).ToList(),
-            SeatLayout.RowSizes(sector).ToList());
+                        SeatLayout.RowSizes(sector, match.HomeTeam).ToList()); // [PIM-WEB Visual] layout do estádio do mandante
     }
     }
 
