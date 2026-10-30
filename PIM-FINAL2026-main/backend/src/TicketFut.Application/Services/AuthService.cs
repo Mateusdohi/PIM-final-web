@@ -127,6 +127,42 @@ public class AuthService
         return Mapping.ToDto(user, hasFace: true);
     }
 
+    // [PIM-WEB Perfil] Atualiza nome e time do próprio usuário. Mesma validação do cadastro. Não mexe em e-mail, CPF, plano nem papel.
+    public async Task<UserDto> UpdateProfileAsync(Guid userId, UpdateProfileRequest req, CancellationToken ct)
+    {
+        var user = await _users.GetByIdAsync(userId, ct) ?? throw AppException.NotFound("Usuário não encontrado.");
+        var name = (req.Name ?? "").Trim();
+        var team = Teams.Normalize(req.Team);
+
+        if (name.Length < 3 || name.Length > 100) throw AppException.Validation("invalid_name", "Informe seu nome completo (de 3 a 100 caracteres).");
+        if (!Teams.IsValid(team)) throw AppException.Validation("invalid_team", "Time inválido.");
+
+        user.Name = name;
+        user.Team = team;
+        await _uow.SaveChangesAsync(ct);
+        return Mapping.ToDto(user, await _faces.GetByUserAsync(userId, ct) is not null);
+    }
+
+    // [PIM-WEB Perfil] Troca de senha: exige a senha atual, aplica a mesma regra do cadastro e revoga os tokens de renovação.
+    public async Task ChangePasswordAsync(Guid userId, ChangePasswordRequest req, CancellationToken ct)
+    {
+        var current = req.CurrentPassword ?? "";
+        var next = req.NewPassword ?? "";
+        // O limite vem antes de qualquer cálculo de hash, como no login.
+        if (current.Length > 128) throw AppException.Unauthorized("Senha atual incorreta.");
+
+        var user = await _users.GetByIdAsync(userId, ct) ?? throw AppException.NotFound("Usuário não encontrado.");
+        if (!_hasher.Verify(user.PasswordHash, current))
+            throw AppException.Unauthorized("Senha atual incorreta.");
+        if (!IsStrongPassword(next))
+            throw AppException.Validation("weak_password", "A nova senha deve ter de 8 a 128 caracteres, com letras e números.");
+        if (next == current)
+            throw AppException.Validation("same_password", "A nova senha deve ser diferente da atual.");
+
+        user.PasswordHash = _hasher.Hash(next);
+        await _refreshTokens.RevokeAllForUserAsync(userId, _clock.UtcNow, ct);
+        await _uow.SaveChangesAsync(ct);
+    }
     /// <summary>LGPD: o usuário pode apagar o próprio dado biométrico.</summary>
     public async Task DeleteFaceAsync(Guid userId, CancellationToken ct)
     {

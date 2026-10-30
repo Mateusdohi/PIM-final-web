@@ -3,6 +3,9 @@ namespace TicketFut.Application.Contracts;
 public record RegisterRequest(string Name, string Cpf, string Email, string Password, string Team);
 public record LoginRequest(string Email, string Password);
 public record RefreshRequest(string RefreshToken);
+// [PIM-WEB Perfil] Edição do próprio perfil. Só nome e time; e-mail, CPF, plano e papel não mudam por aqui.
+public record UpdateProfileRequest(string Name, string Team);
+public record ChangePasswordRequest(string CurrentPassword, string NewPassword);
 
 // [PIM-WEB Cartão 3] Campo Role acrescentado: o site usa para mostrar ou esconder a área administrativa.
 public record UserDto(Guid Id, string Name, string Email, string Team, int PlanPercent, string PlanName, string? MemberCode, bool HasFace, string Role);

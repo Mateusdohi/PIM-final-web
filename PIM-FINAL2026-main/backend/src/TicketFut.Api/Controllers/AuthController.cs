@@ -37,6 +37,18 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<UserDto>> Me(CancellationToken ct) =>
         Ok(await _auth.GetMeAsync(User.GetUserId(), ct));
 
+    // [PIM-WEB Perfil] Edita nome e time do próprio usuário.
+    [Authorize, HttpPut("me")]
+    public async Task<ActionResult<UserDto>> UpdateMe(UpdateProfileRequest req, CancellationToken ct) =>
+        Ok(await _auth.UpdateProfileAsync(User.GetUserId(), req, ct));
+
+    // [PIM-WEB Perfil] Troca de senha. Mesmo limite do login (10 por minuto por IP): impede tentar a senha atual várias vezes.
+    [Authorize, HttpPost("change-password"), EnableRateLimiting("auth")]
+    public async Task<IActionResult> ChangePassword(ChangePasswordRequest req, CancellationToken ct)
+    {
+        await _auth.ChangePasswordAsync(User.GetUserId(), req, ct);
+        return NoContent();
+    }
     /// <summary>Cadastro facial. multipart/form-data: selfie (arquivo) + consent (true).</summary>
     [Authorize, HttpPost("face/enroll"), EnableRateLimiting("face"), RequestSizeLimit(6 * 1024 * 1024)]
     public async Task<ActionResult<UserDto>> EnrollFace([FromForm] IFormFile selfie, [FromForm] bool consent, CancellationToken ct)
