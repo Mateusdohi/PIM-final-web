@@ -58,12 +58,11 @@ public class PaymentsController : ControllerBase
 
     /// <summary>multipart/form-data: selfie (arquivo), nonce, cardToken (opcional para Pix).</summary>
     [HttpPost("intents/{id:guid}/confirm"), EnableRateLimiting("face"), RequestSizeLimit(6 * 1024 * 1024)]
-    public async Task<ActionResult<ConfirmResponse>> Confirm(Guid id, [FromForm] IFormFile selfie,
-        [FromForm] string nonce, [FromForm] string? cardToken, CancellationToken ct)
+    public async Task<ActionResult<ConfirmResponse>> Confirm(Guid id, [FromForm] ConfirmForm form, CancellationToken ct)
     {
         await using var ms = new MemoryStream();
-        await selfie.CopyToAsync(ms, ct);
-        return Ok(await _svc.ConfirmAsync(User.GetUserId(), id, nonce, ms.ToArray(), cardToken, ct));
+        await form.Selfie.CopyToAsync(ms, ct);
+        return Ok(await _svc.ConfirmAsync(User.GetUserId(), id, form.Nonce, ms.ToArray(), form.CardToken, ct));
     }
     
     /// <summary>Confirmação para a WEB (sem biometria). JSON: nonce, password (reautenticação) e cardToken (opcional para Pix).</summary>

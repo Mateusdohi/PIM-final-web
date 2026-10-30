@@ -51,11 +51,11 @@ public class AuthController : ControllerBase
     }
     /// <summary>Cadastro facial. multipart/form-data: selfie (arquivo) + consent (true).</summary>
     [Authorize, HttpPost("face/enroll"), EnableRateLimiting("face"), RequestSizeLimit(6 * 1024 * 1024)]
-    public async Task<ActionResult<UserDto>> EnrollFace([FromForm] IFormFile selfie, [FromForm] bool consent, CancellationToken ct)
+    public async Task<ActionResult<UserDto>> EnrollFace([FromForm] EnrollFaceForm form, CancellationToken ct)
     {
         await using var ms = new MemoryStream();
-        await selfie.CopyToAsync(ms, ct);
-        return Ok(await _auth.EnrollFaceAsync(User.GetUserId(), ms.ToArray(), consent, ct));
+        await form.Selfie.CopyToAsync(ms, ct);
+        return Ok(await _auth.EnrollFaceAsync(User.GetUserId(), ms.ToArray(), form.Consent, ct));
     }
 
     /// <summary>LGPD: apaga o template facial do usuário.</summary>
