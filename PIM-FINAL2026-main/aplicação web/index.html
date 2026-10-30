@@ -162,33 +162,31 @@
     </div>
   </div>
 
-  <!-- [PIM-WEB Visual] TELA 3: PARTIDAS. Menu lateral + conteúdo. Ids preservados: lista-partidas, noticia-time, btn-area-admin. -->
+    <!-- [PIM-WEB Layout] TELA 3: PARTIDAS. Menu no topo + conteúdo. Ids preservados: lista-partidas, noticia-time, btn-area-admin. -->
   <div class="screen" id="screen-partidas">
     <div class="rd-app">
 
-      <aside class="rd-sidebar">
+      <header class="rd-topbar">
         <div class="rd-marca">
           <img src="./CHAMPIONS_CARD.png" alt="" class="rd-marca-img">
           <span class="rd-marca-nome">CHAMPIONS<br>CARD</span>
         </div>
 
-        <nav class="rd-nav">
+        <nav class="rd-nav" aria-label="Navegação principal">
           <div class="rd-nav-item rd-ativo">Partidas Disponíveis</div>
-                    <!-- [PIM-WEB Carrinho] Atalho para o carrinho, com o número de itens. -->
+          <!-- [PIM-WEB Carrinho] Atalho para o carrinho, com o número de itens. -->
           <button class="rd-nav-item" onclick="abrirCarrinho()">Carrinho <span class="car-contador rd-contador">0</span></button>
+          <!-- [PIM-WEB Quem Somos] Abre a página institucional. -->
+         <button class="rd-nav-item" onclick="abrirQuemSomos()">Quem Somos</button>
+          <button class="rd-nav-item" onclick="abrirPerfil()">Perfil</button>
           <!-- [PIM-WEB Admin] Botão só aparece para role Admin. Esconder não protege: o servidor confere o role. -->
           <button id="btn-area-admin" class="rd-nav-item" style="display:none;" onclick="abrirAreaAdmin()">Área Admin</button>
         </nav>
 
         <div class="rd-sidebar-rodape">
-          <!-- [PIM-WEB Visual] Só informativo (valores reais dos planos). A assinatura continua na tela de login. -->
-          <div class="rd-socio-card">
-            <strong>Seja sócio</strong>
-            Descontos de 5%, 10% ou 20% nos ingressos.
-          </div>
           <button class="rd-nav-item" onclick="sair()">Sair</button>
         </div>
-      </aside>
+      </header>
 
       <div class="rd-conteudo">
         <header class="rd-topo">
@@ -206,8 +204,15 @@
           </section>
 
           <aside class="rd-painel">
-            <h2 class="rd-titulo">Notícias do Time</h2>
+            <h2 class="rd-titulo">Central do Torcedor</h2>
+            <div id="central-torcedor" class="ct"></div>
+            <div id="mural-time" class="mu"></div>
             <div id="noticia-time" class="noticia-box"></div>
+            <!-- [PIM-WEB Layout] Card informativo (estava no menu lateral). Só informa os descontos reais; a assinatura continua na tela de login. -->
+            <div class="rd-socio-card">
+              <strong>Seja sócio</strong>
+              Descontos de 5%, 10% ou 20% nos ingressos.
+            </div>
           </aside>
         </div>
       </div>
@@ -215,12 +220,14 @@
     </div>
   </div>
 
-    <!-- [PIM-WEB Visual] TELA 4: MAPA DO ESTÁDIO. Desenho em SVG. Ids preservados: aviso-visitante, aviso-mandante. Os setores usam mapa-norte/sul/oeste/leste. -->
+     <!-- [PIM-WEB Visual] TELA 4: MAPA DO ESTÁDIO. O desenho muda conforme o time da casa (tela-mapa.js). Ids preservados. -->
   <div class="screen" id="screen-mapa">
     <div class="card card-mapa">
       <header class="mp-topo">
         <h1 class="mp-titulo">Mapa do Estádio</h1>
         <p class="mp-sub">Selecione o setor desejado para escolher seu assento.</p>
+        <!-- [PIM-WEB Estádio] Nome do estádio e link do Google Maps. O JS preenche com os dados da API. -->
+        <p id="mp-estadio" class="mp-estadio"></p>
       </header>
 
       <div id="aviso-visitante" class="aviso-visitante" style="display:none;">
@@ -232,15 +239,18 @@
 
       <div class="mp-corpo">
         <svg id="mapa-svg" class="mp-svg" viewBox="0 0 640 440" role="group" aria-label="Mapa do estádio com os setores">
-          <!-- Pista e gramado -->
-          <rect x="185" y="135" width="270" height="170" rx="16" fill="#fff" stroke="#e3e8ef"/>
-          <rect x="200" y="150" width="240" height="140" rx="6" fill="#5f9f5a"/>
-          <g fill="none" stroke="#fff" stroke-width="1.5" opacity="0.85">
-            <rect x="206" y="156" width="228" height="128"/>
-            <line x1="320" y1="156" x2="320" y2="284"/>
-            <circle cx="320" cy="220" r="22"/>
-            <rect x="206" y="190" width="30" height="60"/>
-            <rect x="404" y="190" width="30" height="60"/>
+          <g id="mapa-campo">
+            <rect id="mapa-pista" x="185" y="135" width="270" height="170" rx="16" fill="#fff" stroke="#e3e8ef"/>
+            <g id="mapa-gramado">
+              <rect x="200" y="150" width="240" height="140" rx="6" fill="#5f9f5a"/>
+              <g fill="none" stroke="#fff" stroke-width="1.5" opacity="0.85">
+                <rect x="206" y="156" width="228" height="128"/>
+                <line x1="320" y1="156" x2="320" y2="284"/>
+                <circle cx="320" cy="220" r="22"/>
+                <rect x="206" y="190" width="30" height="60"/>
+                <rect x="404" y="190" width="30" height="60"/>
+              </g>
+            </g>
           </g>
 
           <g id="mapa-norte" class="mp-setor" data-setor="Norte" role="button" tabindex="0" aria-label="Setor Norte">
@@ -402,6 +412,218 @@
       <button class="btn-sair" onclick="irPara('screen-partidas')">CONTINUAR COMPRANDO</button>
     </div>
   </div>
+      <!-- [PIM-WEB Quem Somos] Página institucional longa, com menu de seções. Textos neutros e editáveis: descrevem só o que o sistema faz hoje. -->
+  <div class="screen" id="screen-quem-somos">
+    <div class="qs-cabecalho">
+      <header class="rd-topbar">
+        <div class="rd-marca">
+          <img src="./CHAMPIONS_CARD.png" alt="" class="rd-marca-img">
+          <span class="rd-marca-nome">CHAMPIONS<br>CARD</span>
+        </div>
+        <nav class="rd-nav" aria-label="Navegação principal">
+          <button class="rd-nav-item" onclick="irPara('screen-partidas')">Partidas Disponíveis</button>
+          <button class="rd-nav-item" onclick="abrirCarrinho()">Carrinho <span class="car-contador rd-contador">0</span></button>
+          <div class="rd-nav-item rd-ativo">Quem Somos</div>
+          <button class="rd-nav-item" onclick="abrirPerfil()">Perfil</button>
+          <!-- Cópia do botão admin: o JS copia a visibilidade do original. O servidor continua conferindo o papel. -->
+          <button id="qs-btn-admin" class="rd-nav-item" style="display:none;" onclick="abrirAreaAdmin()">Área Admin</button>
+        </nav>
+        <div class="rd-sidebar-rodape">
+          <button class="rd-nav-item" onclick="sair()">Sair</button>
+        </div>
+      </header>
+
+      <nav class="qs-subnav" aria-label="Seções desta página">
+        <button type="button" class="qs-subitem qs-ativo" data-alvo="qs-quem">Quem somos</button>
+        <button type="button" class="qs-subitem" data-alvo="qs-fazemos">O que fazemos</button>
+        <button type="button" class="qs-subitem" data-alvo="qs-diferenciais">Diferenciais</button>
+        <button type="button" class="qs-subitem" data-alvo="qs-como">Como funciona</button>
+        <button type="button" class="qs-subitem" data-alvo="qs-planos">Planos de sócio</button>
+        <button type="button" class="qs-subitem" data-alvo="qs-times">Times</button>
+      </nav>
+    </div>
+
+    <main class="qs-miolo">
+
+      <section class="qs-secao" id="qs-quem">
+        <div class="qs-arte" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M3 9a2 2 0 0 0 0 6v3h18v-3a2 2 0 0 1 0-6V6H3z"/><path d="M12 6v12"/></svg>
+        </div>
+        <div class="qs-texto">
+          <p class="qs-rotulo">SOBRE A CHAMPIONS CARD</p>
+          <h2 class="qs-titulo">QUEM SOMOS</h2>
+          <p>A Champions Card é uma plataforma de venda de ingressos de futebol. Ela reúne as partidas disponíveis em um só lugar, para o torcedor consultar e comprar com facilidade.</p>
+          <p>Nossa proposta é simplificar o caminho do torcedor até o estádio: encontrar o jogo, escolher onde sentar e pagar com segurança.</p>
+        </div>
+      </section>
+
+      <section class="qs-secao qs-inverso" id="qs-fazemos">
+        <div class="qs-arte" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="9" ry="6"/><ellipse cx="12" cy="12" rx="5" ry="3"/></svg>
+        </div>
+        <div class="qs-texto">
+          <p class="qs-rotulo">NOSSA PLATAFORMA</p>
+          <h2 class="qs-titulo">O QUE FAZEMOS</h2>
+          <ul class="qs-itens">
+            <li>Mostramos as partidas com data, horário e preço.</li>
+            <li>Você escolhe o setor no mapa do estádio e a cadeira que prefere.</li>
+            <li>Sócios recebem desconto nos ingressos, de 5% a 20%.</li>
+            <li>Você compra até 5 ingressos de uma vez, pelo carrinho.</li>
+            <li>O chat responde dúvidas frequentes sobre ingressos, assentos e pagamento.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="qs-secao" id="qs-diferenciais">
+        <div class="qs-arte" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M7 4h10v7H7z"/><path d="M5 11h14v4H5z"/><path d="M7 15v4M17 15v4"/></svg>
+        </div>
+        <div class="qs-texto">
+          <p class="qs-rotulo">O QUE NOS DIFERENCIA</p>
+          <h2 class="qs-titulo">NOSSOS DIFERENCIAIS</h2>
+          <ul class="qs-itens">
+            <li>Mapa do estádio com setores e cadeiras livres e ocupadas.</li>
+            <li>Escolha da cadeira exata, com fileira e número.</li>
+            <li>Código de sócio conferido a cada compra.</li>
+            <li>Compra confirmada com a sua senha.</li>
+            <li>O número do cartão não é enviado ao servidor: só um código gerado a partir dele.</li>
+            <li>Carrinho com até 5 ingressos por compra.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="qs-cheia" id="qs-como">
+        <p class="qs-rotulo">PASSO A PASSO</p>
+        <h2 class="qs-titulo">COMO FUNCIONA</h2>
+        <div class="qs-grade qs-passos">
+          <div class="qs-passo"><b>1</b><h3>Escolha a partida</h3><p>Veja data, horário e preço de cada jogo.</p></div>
+          <div class="qs-passo"><b>2</b><h3>Escolha o setor</h3><p>Use o mapa do estádio. O Leste é da torcida visitante.</p></div>
+          <div class="qs-passo"><b>3</b><h3>Escolha a cadeira</h3><p>Veja as cadeiras livres e ocupadas e clique na sua.</p></div>
+          <div class="qs-passo"><b>4</b><h3>Confirme o pagamento</h3><p>Pague com crédito, débito ou PIX e confirme com sua senha.</p></div>
+        </div>
+      </section>
+
+      <section class="qs-cheia" id="qs-planos">
+        <p class="qs-rotulo">DESCONTO NOS INGRESSOS</p>
+        <h2 class="qs-titulo">PLANOS DE SÓCIO</h2>
+        <p class="qs-lead">Para assinar, clique em QUERO SER SÓCIO na tela de login. Informe o código de sócio na hora da compra.</p>
+        <div class="qs-grade qs-planos">
+          <div class="qs-plano"><strong>Bronze</strong><span>5%</span><p>de desconto nos ingressos</p></div>
+          <div class="qs-plano"><strong>Prata</strong><span>10%</span><p>de desconto nos ingressos</p></div>
+          <div class="qs-plano"><strong>Ouro</strong><span>20%</span><p>de desconto nos ingressos</p></div>
+        </div>
+      </section>
+
+      <section class="qs-cheia" id="qs-times">
+        <p class="qs-rotulo">NO CADASTRO</p>
+        <h2 class="qs-titulo">TIMES</h2>
+        <p class="qs-lead">Escolha seu time ao se cadastrar. A lista de partidas mostra os jogos dele.</p>
+        <div id="qs-times-lista" class="qs-times"></div>
+      </section>
+
+    </main>
+
+    <div class="qs-fim">
+      <button class="btn-primary" onclick="irPara('screen-partidas')">VER PARTIDAS DISPONÍVEIS</button>
+      <p class="qs-nota">Versão de demonstração: o pagamento é simulado.</p>
+    </div>
+  </div>
+  <!-- [PIM-WEB Perfil] Tela do perfil do usuário. Nome e time editáveis; troca de senha; biometria. Sem CPF na tela. -->
+  <div class="screen" id="screen-perfil">
+    <div class="rd-app">
+      <header class="rd-topbar">
+        <div class="rd-marca">
+          <img src="./CHAMPIONS_CARD.png" alt="" class="rd-marca-img">
+          <span class="rd-marca-nome">CHAMPIONS<br>CARD</span>
+        </div>
+        <nav class="rd-nav" aria-label="Navegação principal">
+          <button class="rd-nav-item" onclick="irPara('screen-partidas')">Partidas Disponíveis</button>
+          <button class="rd-nav-item" onclick="abrirCarrinho()">Carrinho <span class="car-contador rd-contador">0</span></button>
+          <button class="rd-nav-item" onclick="abrirQuemSomos()">Quem Somos</button>
+          <div class="rd-nav-item rd-ativo">Perfil</div>
+        </nav>
+        <div class="rd-sidebar-rodape">
+          <button class="rd-nav-item" onclick="sair()">Sair</button>
+        </div>
+      </header>
+
+      <div class="rd-conteudo">
+        <header class="rd-topo pf-topo">
+          <span id="pf-avatar" class="rd-avatar"></span>
+          <div>
+            <h1 id="pf-nome-titulo" class="rd-saudacao"></h1>
+            <p id="pf-email"></p>
+          </div>
+        </header>
+
+        <div class="pf-grade">
+
+          <section class="rd-painel">
+            <h2 class="rd-titulo">Meus dados</h2>
+            <div class="pf-campo">
+              <label for="pf-nome">Nome completo</label>
+              <input type="text" id="pf-nome" class="input-field" maxlength="100" autocomplete="name" />
+            </div>
+            <div class="pf-campo">
+              <label for="pf-time">Time</label>
+              <select id="pf-time" class="input-field select-field">
+                <option value="Palmeiras">Palmeiras</option>
+                <option value="Corinthians">Corinthians</option>
+                <option value="Flamengo">Flamengo</option>
+                <option value="São Paulo">São Paulo</option>
+                <option value="Santos">Santos</option>
+              </select>
+            </div>
+            <div class="pf-campo">
+              <label for="pf-email-leitura">E-mail</label>
+              <input type="text" id="pf-email-leitura" class="input-field" readonly />
+              <small class="pf-nota">O e-mail não pode ser alterado por aqui.</small>
+            </div>
+            <p id="pf-msg-dados" class="pf-msg" role="status"></p>
+            <button type="button" class="btn-primary pf-btn" onclick="salvarPerfil()">SALVAR ALTERAÇÕES</button>
+          </section>
+
+          <section class="rd-painel">
+            <h2 class="rd-titulo">Plano de sócio</h2>
+            <p id="pf-plano" class="pf-texto"></p>
+            <div id="pf-bloco-codigo" class="pf-codigo-bloco" style="display:none;">
+              <span class="pf-codigo-rotulo">Código de sócio</span>
+              <strong id="pf-codigo" class="pf-codigo">••••••</strong>
+              <button type="button" id="pf-btn-codigo" class="pf-link" onclick="alternarCodigoPerfil()">Mostrar</button>
+            </div>
+            <p class="pf-nota">Para assinar ou mudar de plano, use QUERO SER SÓCIO na tela de login.</p>
+          </section>
+
+          <section class="rd-painel">
+            <h2 class="rd-titulo">Segurança</h2>
+            <div class="pf-campo">
+              <label for="pf-senha-atual">Senha atual</label>
+              <input type="password" id="pf-senha-atual" class="input-field" autocomplete="current-password" />
+            </div>
+            <div class="pf-campo">
+              <label for="pf-senha-nova">Nova senha</label>
+              <input type="password" id="pf-senha-nova" class="input-field" autocomplete="new-password" />
+              <small class="pf-nota">De 8 a 128 caracteres, com letras e números.</small>
+            </div>
+            <div class="pf-campo">
+              <label for="pf-senha-confirma">Confirmar nova senha</label>
+              <input type="password" id="pf-senha-confirma" class="input-field" autocomplete="new-password" />
+            </div>
+            <p id="pf-msg-senha" class="pf-msg" role="status"></p>
+            <button type="button" class="btn-primary pf-btn" onclick="trocarSenhaPerfil()">TROCAR SENHA</button>
+          </section>
+
+          <section class="rd-painel">
+            <h2 class="rd-titulo">Biometria facial</h2>
+            <p id="pf-face" class="pf-texto"></p>
+            <p id="pf-msg-face" class="pf-msg" role="status"></p>
+            <button type="button" id="pf-btn-face" class="btn-secundario" style="display:none;" onclick="removerBiometriaPerfil()">REMOVER BIOMETRIA</button>
+          </section>
+
+        </div>
+      </div>
+    </div>
+  </div>
   <!-- [PIM-WEB Admin] Tela da área administrativa: tabela de ingressos vendidos. -->
   <div class="screen" id="screen-admin">
     <div class="card">
@@ -475,8 +697,13 @@
   <script src="js/chat.js"></script>
   <!-- [PIM-WEB Admin] Área admin -->
   <script src="js/tela-admin.js"></script>
-    <!-- [PIM-WEB Carrinho] Carrinho de compras -->
   <script src="js/tela-carrinho.js"></script>
+  
+    <!-- [PIM-WEB Quem Somos] Menu de seções da página institucional -->
+  <script src="js/tela-quem-somos.js"></script>
+  <script src="js/tela-central.js"></script>
+  <script src="js/tela-mural.js"></script>
+  <script src="js/tela-perfil.js"></script>
   <!-- Inicialização -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
