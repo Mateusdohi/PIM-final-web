@@ -1,6 +1,6 @@
-/* [PIM-WEB Visual] Redesign do login e das partidas. Carregado depois do style.css; só afeta #screen-login e #screen-partidas. */
+/* [PIM-WEB Visual] Redesign do login e das partidas. Carregado depois do style.css; s├│ afeta #screen-login e #screen-partidas. */
 
-/* [PIM-WEB Visual] Tema claro só nessas duas telas: redefine as variáveis no escopo e não toca nas outras telas. */
+/* [PIM-WEB Visual] Tema claro s├│ nessas duas telas: redefine as vari├íveis no escopo e n├úo toca nas outras telas. */
 #screen-login,
 #screen-partidas {
   --bg-item: #f3f5f8;
@@ -24,14 +24,14 @@
   color: #14213d;
 }
 
-/* [PIM-WEB Visual] A logo fixa do canto some nessas telas porque a marca já está no layout novo. */
+/* [PIM-WEB Visual] A logo fixa do canto some nessas telas porque a marca j├í est├í no layout novo. */
 body:has(#screen-login.active) .logo-container,
 body:has(#screen-partidas.active) .logo-container {
   display: none;
 }
 
 /* ===== LOGIN ===== */
-/* [PIM-WEB Visual] Duas colunas: apresentação à esquerda, formulário à direita. */
+/* [PIM-WEB Visual] Duas colunas: apresenta├º├úo ├á esquerda, formul├írio ├á direita. */
 .rd-login {
   display: grid;
   grid-template-columns: 1.1fr 1fr;
@@ -42,7 +42,7 @@ body:has(#screen-partidas.active) .logo-container {
 .rd-login-hero {
   background: var(--rd-navy);
   color: #fff;
-    padding: 48px 56px 96px; /* [PIM-WEB Visual] espaço no rodapé para o botão do chat não cobrir os benefícios */
+    padding: 48px 56px 96px; /* [PIM-WEB Visual] espa├ºo no rodap├® para o bot├úo do chat n├úo cobrir os benef├¡cios */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -78,7 +78,7 @@ body:has(#screen-partidas.active) .logo-container {
 .rd-campo { display: flex; flex-direction: column; gap: 6px; }
 .rd-campo label { font-size: 0.9rem; font-weight: 600; color: #14213d; }
 
-/* [PIM-WEB Visual] Campos, botões e links do login em estilo claro, sem brilho. */
+/* [PIM-WEB Visual] Campos, bot├Áes e links do login em estilo claro, sem brilho. */
 #screen-login .input-field {
   font-size: 0.95rem; font-weight: 500; letter-spacing: 0;
   padding: 13px 14px; border-radius: 8px; color: #14213d;
@@ -105,7 +105,7 @@ body:has(#screen-partidas.active) .logo-container {
 }
 #screen-login .btn-socio-toggle:hover { background: rgba(22, 128, 63, 0.07); }
 
-/* [PIM-WEB Visual] Painel de sócio (abre e fecha pelo JS existente) em estilo claro. */
+/* [PIM-WEB Visual] Painel de s├│cio (abre e fecha pelo JS existente) em estilo claro. */
 #screen-login .login-socio-painel { background: #f8faf9; border: 1px solid var(--rd-borda); animation: none; }
 #screen-login .socio-painel-titulo { letter-spacing: 0.5px; font-size: 1.05rem; }
 #screen-login .socio-painel-subtitulo { letter-spacing: 0; }
@@ -116,7 +116,7 @@ body:has(#screen-partidas.active) .logo-container {
 #screen-login .btn-confirmar-socio:hover { background: var(--rd-verde-escuro); }
 
 /* ===== PARTIDAS ===== */
-/* [PIM-WEB Visual] Menu lateral escuro + conteúdo claro. */
+/* [PIM-WEB Visual] Menu lateral escuro + conte├║do claro. */
 .rd-app {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
@@ -124,7 +124,7 @@ body:has(#screen-partidas.active) .logo-container {
   min-height: 100vh;
 }
 
-/* padding-bottom grande: evita que o botão do chat (fixo no canto) cubra o rodapé do menu */
+/* padding-bottom grande: evita que o bot├úo do chat (fixo no canto) cubra o rodap├® do menu */
 .rd-sidebar {
   background: var(--rd-navy); color: #fff;
   padding: 24px 16px 96px;
@@ -168,13 +168,13 @@ body:has(#screen-partidas.active) .logo-container {
 .rd-titulo { font-size: 1.1rem; font-weight: 800; color: #14213d; margin-bottom: 14px; }
 .rd-titulo::after { content: ""; display: block; width: 28px; height: 3px; margin-top: 6px; border-radius: 2px; background: var(--rd-verde); }
 
-/* [PIM-WEB Visual] Notícia do time (texto vem de obterNoticiaTime). pre-line respeita as quebras de linha do texto. */
+/* [PIM-WEB Visual] Not├¡cia do time (texto vem de obterNoticiaTime). pre-line respeita as quebras de linha do texto. */
 #screen-partidas .noticia-box {
   text-align: left; letter-spacing: 0; white-space: pre-line;
   border-left: 3px solid var(--rd-verde); color: #14213d;
 }
 
-/* [PIM-WEB Visual] Linha de partida: times | data, hora e preço | botão. O clique continua no item inteiro (JS existente). */
+/* [PIM-WEB Visual] Linha de partida: times | data, hora e pre├ºo | bot├úo. O clique continua no item inteiro (JS existente). */
 #screen-partidas .partida-item {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) auto;
@@ -254,7 +254,7 @@ body:has(#screen-partidas.active) .logo-container {
   color: #14213d;
 }
 
-/* [PIM-WEB Visual] A logo fixa do canto sai de todas as telas: o fundo claro não combina com ela. */
+/* [PIM-WEB Visual] A logo fixa do canto sai de todas as telas: o fundo claro n├úo combina com ela. */
 .logo-container { display: none; }
 
 .screen:not(#screen-login):not(#screen-partidas) .card {
@@ -293,7 +293,7 @@ body:has(#screen-partidas.active) .logo-container {
 #screen-assentos .assento.ocupado, #screen-assentos .leg-ocupado { background: #c3cad5; border-color: #c3cad5; }
 #screen-assentos .assentos-campo { color: #8a94a3; border-color: #c3cad5; }
 
-/* Confirmação: o JS pinta o título com a cor do time (branco no Corinthians sumia). */
+/* Confirma├º├úo: o JS pinta o t├¡tulo com a cor do time (branco no Corinthians sumia). */
 #screen-confirmacao .confirm-titulo { color: var(--rd-verde) !important; text-shadow: none !important; }
 #screen-confirmacao .confirm-subtitulo { color: #14213d !important; }
 #screen-confirmacao .confirm-logo-champions {
@@ -304,7 +304,7 @@ body:has(#screen-partidas.active) .logo-container {
 #screen-admin .card { max-width: 900px; }
 #admin-tabela-corpo td { border-top: 1px solid var(--rd-borda) !important; }
 
-/* [PIM-WEB Visual] Partidas: colunas de largura fixa, iguais em todas as linhas. O layout muda pela largura do painel, não da janela. */
+/* [PIM-WEB Visual] Partidas: colunas de largura fixa, iguais em todas as linhas. O layout muda pela largura do painel, n├úo da janela. */
 #screen-partidas .rd-painel { container-type: inline-size; }
 #screen-partidas .time-logo { border: 1px solid var(--rd-borda); }
 #screen-partidas .partida-item { grid-template-columns: minmax(0, 1fr) 140px 170px; }
@@ -312,7 +312,7 @@ body:has(#screen-partidas.active) .logo-container {
 .rd-times b { white-space: normal; }
 #screen-partidas .rd-btn-ingresso { width: 100%; padding: 10px 12px; }
 
-/* Painel médio: informações descem para baixo dos times e o botão fica à direita. */
+/* Painel m├®dio: informa├º├Áes descem para baixo dos times e o bot├úo fica ├á direita. */
 @container (max-width: 720px) {
   #screen-partidas .partida-item { grid-template-columns: minmax(0, 1fr) 170px; }
   #screen-partidas .partida-item .rd-times { grid-column: 1; grid-row: 1; }
@@ -320,19 +320,19 @@ body:has(#screen-partidas.active) .logo-container {
   #screen-partidas .partida-item .rd-btn-ingresso { grid-column: 2; grid-row: 1 / span 2; }
 }
 
-/* Painel estreito (celular): tudo em uma coluna, botão em largura total. */
+/* Painel estreito (celular): tudo em uma coluna, bot├úo em largura total. */
 @container (max-width: 460px) {
   #screen-partidas .partida-item { grid-template-columns: 1fr; }
   #screen-partidas .partida-item .rd-times,
   #screen-partidas .partida-item .rd-info,
   #screen-partidas .partida-item .rd-btn-ingresso { grid-column: auto; grid-row: auto; }
 }
-/* ===== [PIM-WEB Visual] Mapa do estádio em SVG ===== */
+/* ===== [PIM-WEB Visual] Mapa do est├ídio em SVG ===== */
 #screen-mapa {
   position: relative; overflow: hidden;
   background: linear-gradient(180deg, #f7f9fb, #eef2f6);
 }
-/* Cantos decorativos em verde e azul-marinho, só CSS (sem imagem). */
+/* Cantos decorativos em verde e azul-marinho, s├│ CSS (sem imagem). */
 #screen-mapa::before {
   content: ""; position: absolute; top: 0; left: 0; width: 120px; height: 120px;
   background: #16803f; clip-path: polygon(0 0, 100% 0, 0 100%); z-index: -1;
@@ -387,7 +387,7 @@ body:has(#screen-partidas.active) .logo-container {
 #screen-assentos .card-assentos { max-width: 760px; }
 #screen-assentos .assentos-info { color: #5b6573; letter-spacing: 0; }
 
-/* Cadeira desenhada só com CSS: ::before é o encosto e ::after é a base. As cores vêm das variáveis. */
+/* Cadeira desenhada s├│ com CSS: ::before ├® o encosto e ::after ├® a base. As cores v├¬m das vari├íveis. */
 #screen-assentos .assento {
   --as-encosto: #d9f0e2;
   --as-base: #8fd1a9;
@@ -432,7 +432,7 @@ body:has(#screen-partidas.active) .logo-container {
 #screen-assentos .assentos-pecas { display: flex; flex-direction: column; justify-content: center; gap: 4px; }
 /* ===== [PIM-WEB Visual] Alinhamento dos assentos por setor ===== */
 #screen-assentos .assentos-grade { align-items: flex-start; }
-/* Fileira de largura fixa: rótulo preso à esquerda, cadeiras centralizadas. */
+/* Fileira de largura fixa: r├│tulo preso ├á esquerda, cadeiras centralizadas. */
 #screen-assentos .assentos-fileira { position: relative; justify-content: center; margin: 0 auto; padding: 0 32px; }
 #screen-assentos .assentos-fileira .assentos-rotulo {
   position: absolute; left: 0; top: 50%; transform: translateY(-50%); margin: 0;
@@ -445,13 +445,13 @@ body:has(#screen-partidas.active) .logo-container {
   writing-mode: vertical-rl; margin: 0; padding: 12px 6px;
   display: flex; align-items: center; justify-content: center;
 }
-/* [PIM-WEB Visual] Com até 28 cadeiras por fileira, a cadeira fica um pouco menor. */
+/* [PIM-WEB Visual] Com at├® 28 cadeiras por fileira, a cadeira fica um pouco menor. */
 #screen-assentos .assento { width: 18px; height: 20px; }
 #screen-assentos .assento::before { left: 2px; right: 2px; height: 11px; border-radius: 6px 6px 2px 2px; }
 #screen-assentos .assento::after { height: 8px; }
 #screen-assentos .assentos-fileira, #screen-assentos .assentos-coluna, #screen-assentos .assentos-pecas { gap: 3px; }
 #screen-assentos .card-assentos { max-width: 860px; }
-/* ===== [PIM-WEB Visual] Tela de carregamento após o login ===== */
+/* ===== [PIM-WEB Visual] Tela de carregamento ap├│s o login ===== */
 .rd-splash {
   position: fixed; inset: 0; z-index: 9999;
   background: #f4f6f9; color: #14213d;
@@ -530,7 +530,7 @@ body:has(#screen-partidas.active) .logo-container {
   background: #3ecf7a; color: #0f1f3a; font-size: 0.75rem; font-weight: 800; text-align: center;
 }
 
-/* Botão secundário (contorno verde) da tela de assentos. */
+/* Bot├úo secund├írio (contorno verde) da tela de assentos. */
 .btn-secundario {
   width: 100%; background: #fff; color: #16803f; border: 1.5px solid #16803f; border-radius: 8px;
   padding: 12px; font: inherit; font-size: 0.85rem; font-weight: 800; letter-spacing: 1px;
@@ -568,7 +568,7 @@ body:has(#screen-partidas.active) .logo-container {
 .chat-entrada input:focus { outline: none; border-color: #16803f; box-shadow: 0 0 0 3px rgba(22, 128, 63, 0.15); }
 .chat-entrada button { background: #16803f; color: #fff; border-radius: 8px; }
 .chat-entrada button:hover { background: #116a34; }
-/* ===== [PIM-WEB Chat] Botões de dúvidas ===== */
+/* ===== [PIM-WEB Chat] Bot├Áes de d├║vidas ===== */
 .chat-sugestoes { display: flex; flex-wrap: wrap; gap: 6px; align-self: flex-start; max-width: 100%; }
 .chat-sugestao {
   background: #fff; color: #16803f; border: 1.5px solid #16803f; border-radius: 999px;
@@ -577,3 +577,226 @@ body:has(#screen-partidas.active) .logo-container {
 }
 .chat-sugestao:hover { background: #16803f; color: #fff; }
 .chat-sugestao:focus-visible { outline: 2px solid #0f1f3a; outline-offset: 2px; }
+
+/* ===== [PIM-WEB Layout] Menu de navegação no topo ===== */
+.rd-app { display: flex; flex-direction: column; }
+.rd-conteudo { flex: 1; }
+.rd-topbar {
+  position: sticky; top: 0; z-index: 20;
+  background: var(--rd-navy); color: #fff;
+  padding: 10px 24px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 28px;
+}
+.rd-topbar .rd-marca-img { width: 40px; }
+.rd-topbar .rd-nav { flex: 0 1 auto; flex-direction: row; flex-wrap: wrap; gap: 4px; }
+.rd-topbar .rd-nav-item { width: auto; padding: 10px 14px; white-space: nowrap; }
+.rd-topbar .rd-contador { margin-left: 6px; }
+.rd-topbar .rd-sidebar-rodape { margin: 0 0 0 auto; flex-direction: row; align-items: center; }
+.rd-painel .rd-socio-card {
+  display: block; margin-top: 14px; background: #f3f5f8; color: #5b6573;
+  border: 1px solid var(--rd-borda); border-radius: 12px; padding: 14px;
+}
+.rd-painel .rd-socio-card strong { color: #14213d; }
+@media (max-width: 900px) { .rd-topbar { position: static; padding: 10px 16px; } }
+
+/* ===== [PIM-WEB Estádio] Nome do estádio e link do mapa ===== */
+.mp-estadio {
+  margin-top: 6px; font-weight: 600; color: #14213d;
+  display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center;
+}
+.mp-estadio:empty { display: none; }
+.rd-link-mapa { color: #16803f; font-weight: 700; text-decoration: underline; }
+.rd-link-mapa:hover { color: #116a34; }
+.rd-estadio {
+  flex: 0 0 100%; display: flex; flex-wrap: wrap; gap: 4px 10px;
+  font-size: 0.78rem; font-weight: 500; color: #5b6573;
+}
+
+/* ===== [PIM-WEB Quem Somos] Página longa com menu de seções ===== */
+#screen-quem-somos {
+  --bg-card: #ffffff; --bg-item: #f3f5f8; --bg-input: #ffffff;
+  --color-white: #14213d; --color-muted: #5b6573; --border-default: #d5dbe4;
+  --neon-cyan: #16803f; --neon-green: #16803f; --setor-bg: rgba(22, 128, 63, 0.06);
+  --rd-navy: #0f1f3a; --rd-verde: #16803f; --rd-verde-claro: #3ecf7a; --rd-borda: #e3e8ef;
+  background: #f4f6f9; color: #14213d; padding: 0;
+}
+#screen-quem-somos.active { display: block; }
+.qs-cabecalho { position: sticky; top: 0; z-index: 30; }
+.qs-cabecalho .rd-topbar { position: static; }
+.qs-subnav { background: #16803f; display: flex; gap: 6px; padding: 10px 16px; overflow-x: auto; white-space: nowrap; }
+.qs-subitem {
+  flex: none; background: transparent; color: #fff; border: none; border-radius: 999px;
+  padding: 9px 16px; font: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.qs-subitem:first-child { margin-left: auto; }
+.qs-subitem:last-child { margin-right: auto; }
+.qs-subitem:hover { background: rgba(255, 255, 255, 0.18); }
+.qs-subitem.qs-ativo { background: #fff; color: #16803f; }
+.qs-subitem:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.qs-miolo { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
+.qs-secao, .qs-cheia { scroll-margin-top: 140px; border-bottom: 1px solid #e3e8ef; }
+.qs-secao { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; padding: 64px 0; }
+.qs-inverso .qs-arte { order: 2; }
+.qs-cheia { padding: 64px 0; text-align: center; }
+.qs-rotulo { font-size: 0.78rem; letter-spacing: 3px; color: #5b6573; font-weight: 700; }
+.qs-titulo { font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 900; color: #0f1f3a; line-height: 1.1; margin: 6px 0 18px; }
+.qs-texto p { color: #3b4658; line-height: 1.7; margin-bottom: 14px; }
+.qs-texto .qs-rotulo { margin-bottom: 0; }
+.qs-itens { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.qs-itens li { position: relative; padding-left: 20px; color: #3b4658; line-height: 1.55; }
+.qs-itens li::before { content: ""; position: absolute; left: 0; top: 0.6em; width: 8px; height: 8px; border-radius: 50%; background: #16803f; }
+.qs-arte {
+  aspect-ratio: 16 / 11; border-radius: 14px; background-color: #0f1f3a;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1.5px, transparent 1.5px);
+  background-size: 22px 22px; display: flex; align-items: center; justify-content: center;
+}
+.qs-arte svg { width: 40%; height: auto; fill: none; stroke: #3ecf7a; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.qs-foto { width: 100%; border-radius: 14px; display: block; }
+.qs-lead { color: #5b6573; max-width: 620px; margin: 0 auto 28px; line-height: 1.6; }
+.qs-cheia .qs-titulo { margin-bottom: 14px; }
+.qs-grade { display: grid; gap: 16px; text-align: left; }
+.qs-passos { grid-template-columns: repeat(4, 1fr); margin-top: 24px; }
+.qs-planos { grid-template-columns: repeat(3, 1fr); }
+.qs-passo, .qs-plano { background: #fff; border: 1px solid #e3e8ef; border-radius: 14px; padding: 22px; }
+.qs-passo b { display: block; font-size: 2.2rem; font-weight: 900; color: #16803f; }
+.qs-passo h3 { font-size: 1rem; color: #0f1f3a; margin: 4px 0 6px; }
+.qs-passo p, .qs-plano p { color: #5b6573; line-height: 1.5; font-size: 0.9rem; }
+.qs-plano { text-align: center; }
+.qs-plano strong { display: block; font-size: 1.1rem; color: #0f1f3a; }
+.qs-plano span { display: block; font-size: 2.6rem; font-weight: 900; color: #16803f; margin: 6px 0; }
+.qs-times { display: flex; flex-wrap: wrap; justify-content: center; gap: 28px; }
+.qs-time { display: flex; flex-direction: column; align-items: center; gap: 8px; font-weight: 700; color: #14213d; }
+.qs-escudo { width: 88px; height: 88px; border-radius: 50%; background: #fff; border: 1px solid #e3e8ef; display: flex; align-items: center; justify-content: center; }
+.qs-fim { text-align: center; padding: 48px 24px 72px; }
+.qs-fim .btn-primary { max-width: 360px; margin: 0 auto; display: block; }
+.qs-nota { color: #8a94a3; font-size: 0.8rem; margin-top: 16px; }
+@media (max-width: 900px) {
+  .qs-cabecalho { position: static; }
+  .qs-secao, .qs-cheia { scroll-margin-top: 16px; }
+  .qs-secao { grid-template-columns: 1fr; gap: 24px; padding: 40px 0; }
+  .qs-inverso .qs-arte { order: 0; }
+  .qs-cheia { padding: 40px 0; }
+  .qs-passos { grid-template-columns: repeat(2, 1fr); }
+  .qs-planos { grid-template-columns: 1fr; }
+}
+/* ===== [PIM-WEB Central] Central do Torcedor ===== */
+.ct { margin-bottom: 14px; }
+.ct-abas { display: flex; gap: 4px; background: #f3f5f8; border-radius: 10px; padding: 4px; }
+.ct-aba {
+  flex: 1; border: none; background: transparent; border-radius: 8px; padding: 8px 4px;
+  font: inherit; font-size: 0.8rem; font-weight: 700; color: #5b6573; cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.ct-aba:hover { color: #14213d; }
+.ct-aba-ativa { background: #fff; color: #16803f; box-shadow: 0 1px 4px rgba(15, 31, 58, 0.12); }
+.ct-aba:focus-visible { outline: 2px solid #16803f; outline-offset: 2px; }
+.ct-painel { padding: 14px 2px 2px; display: flex; flex-direction: column; gap: 10px; }
+
+.ct-times { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 0.85rem; color: #14213d; }
+.ct-times i { font-style: normal; color: #8a94a3; font-size: 0.75rem; }
+.ct-quando { font-weight: 700; color: #14213d; }
+.ct-estadio { font-size: 0.8rem; color: #5b6573; }
+.ct-contagem { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.ct-cx { background: #0f1f3a; color: #fff; border-radius: 10px; padding: 8px 4px; text-align: center; }
+.ct-cx b { display: block; font-size: 1.35rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+.ct-cx small { font-size: 0.62rem; letter-spacing: 1px; color: #b8c4d6; }
+.ct-preco { font-size: 1.4rem; font-weight: 900; color: #14213d; }
+.ct-econ { color: #16803f; font-weight: 700; font-size: 0.85rem; }
+.ct-btn { align-self: flex-start; }
+
+.ct-destaque { font-size: 1.05rem; font-weight: 800; color: #0f1f3a; }
+.ct-texto { color: #3b4658; font-size: 0.88rem; line-height: 1.5; }
+.ct-nota { color: #8a94a3; font-size: 0.78rem; line-height: 1.4; }
+.ct-vazio { color: #5b6573; font-size: 0.85rem; }
+.ct-resultado { font-size: 1.15rem; font-weight: 900; color: #14213d; }
+.ct-planos { display: flex; gap: 6px; flex-wrap: wrap; }
+.ct-plano {
+  background: #fff; color: #16803f; border: 1.5px solid #16803f; border-radius: 999px;
+  padding: 6px 12px; font: inherit; font-size: 0.78rem; font-weight: 700; cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.ct-plano:hover, .ct-plano-ativo { background: #16803f; color: #fff; }
+
+.ct-setores { display: flex; flex-direction: column; gap: 10px; }
+.ct-setor { display: grid; grid-template-columns: 56px 1fr; gap: 2px 10px; align-items: center; font-size: 0.82rem; color: #14213d; }
+.ct-barra { height: 8px; background: #e3e8ef; border-radius: 999px; overflow: hidden; }
+.ct-barra span { display: block; height: 100%; background: #16803f; border-radius: 999px; transition: width 0.6s ease; }
+.ct-setor small { grid-column: 2; color: #5b6573; }
+
+.ct-dica { border: 1px solid #e3e8ef; border-radius: 10px; padding: 10px 12px; background: #fff; }
+.ct-dica summary { cursor: pointer; font-weight: 700; font-size: 0.85rem; color: #14213d; }
+.ct-dica p { margin-top: 8px; color: #3b4658; font-size: 0.85rem; line-height: 1.5; }
+
+/* Rótulo honesto: o texto antigo do mural é um exemplo fixo, não é notícia real. */
+#noticia-time::before {
+  content: "Mural do time · texto de exemplo"; display: block;
+  font-size: 0.72rem; color: #8a94a3; margin-bottom: 6px; letter-spacing: 0.3px;
+}
+
+@media (prefers-reduced-motion: reduce) { .ct-barra span { transition: none; } }
+'@
+[System.IO.File]::AppendAllText("$PWD\redesign.css", $css, (New-Object System.Text.UTF8Encoding($false)))
+/* ===== [PIM-WEB Mural] Mural do time ===== */
+#noticia-time { display: none; }
+.mu { margin-top: 14px; }
+.mu-titulo { font-size: 0.95rem; font-weight: 800; color: #0f1f3a; margin-bottom: 8px; }
+.mu-card {
+  --mu-cor: #16803f;
+  background: #f8faf9; border: 1px solid #e3e8ef; border-left: 5px solid var(--mu-cor);
+  border-radius: 12px; padding: 14px 16px; min-height: 132px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.mu-tag {
+  align-self: flex-start; background: var(--mu-cor); color: #fff; border-radius: 999px;
+  padding: 2px 10px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.mu-card-titulo { font-size: 1rem; font-weight: 800; color: #14213d; line-height: 1.25; }
+.mu-texto { color: #3b4658; font-size: 0.86rem; line-height: 1.5; }
+.mu-exemplo { color: #8a94a3; font-size: 0.72rem; margin-top: auto; }
+.mu-troca { animation: muEntra 0.35s ease; }
+@keyframes muEntra { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: none; } }
+.mu-nav { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+.mu-seta {
+  width: 30px; height: 30px; border-radius: 50%; border: 1px solid #d5dbe4; background: #fff;
+  color: #14213d; font-size: 1.1rem; line-height: 1; cursor: pointer; transition: background 0.15s;
+}
+.mu-seta:hover { background: #eef2f6; }
+.mu-pontos { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.mu-ponto { width: 8px; height: 8px; border-radius: 50%; border: none; background: #c9d1dc; padding: 0; cursor: pointer; }
+.mu-ponto-ativo { background: #16803f; transform: scale(1.3); }
+.mu-seta:focus-visible, .mu-ponto:focus-visible { outline: 2px solid #16803f; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .mu-troca { animation: none; } }
+/* ===== [PIM-WEB Perfil] Tela do perfil ===== */
+.pf-topo { margin-bottom: 4px; }
+.pf-grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+#screen-perfil {
+  --bg-item: #f3f5f8; --bg-input: #ffffff; --color-white: #14213d; --color-muted: #5b6573;
+  --border-default: #d5dbe4; --neon-cyan: #16803f; --neon-green: #16803f;
+  --rd-navy: #0f1f3a; --rd-verde: #16803f; --rd-verde-escuro: #116a34; --rd-verde-claro: #3ecf7a; --rd-borda: #e3e8ef;
+  background: #f4f6f9; color: #14213d; padding: 0; align-items: stretch;
+}
+#screen-perfil .rd-painel { display: flex; flex-direction: column; gap: 12px; }
+.pf-campo { display: flex; flex-direction: column; gap: 6px; }
+.pf-campo label { font-size: 0.85rem; font-weight: 600; color: #14213d; }
+#screen-perfil .input-field { font-size: 0.95rem; font-weight: 500; letter-spacing: 0; padding: 12px 14px; border-radius: 8px; color: #14213d; }
+#screen-perfil .input-field:focus { border-color: #16803f; box-shadow: 0 0 0 3px rgba(22, 128, 63, 0.15); }
+#screen-perfil .input-field[readonly] { background: #f3f5f8; color: #5b6573; cursor: not-allowed; }
+#screen-perfil .select-field option { background: #fff; color: #14213d; }
+.pf-nota { color: #8a94a3; font-size: 0.78rem; line-height: 1.4; }
+.pf-texto { color: #3b4658; font-size: 0.92rem; line-height: 1.5; }
+.pf-btn { align-self: flex-start; width: auto; padding: 12px 24px; background: #16803f; color: #fff; border-radius: 8px; letter-spacing: 1px; margin-top: 0; }
+.pf-btn:hover { background: #116a34; transform: none; }
+.pf-msg { font-size: 0.85rem; min-height: 1.2em; }
+.pf-msg-ok { color: #16803f; font-weight: 600; }
+.pf-msg-erro { color: #b42318; font-weight: 600; }
+.pf-codigo-bloco {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  background: #f3f5f8; border: 1px solid #e3e8ef; border-radius: 10px; padding: 12px 14px;
+}
+.pf-codigo-rotulo { font-size: 0.8rem; color: #5b6573; }
+.pf-codigo { font-size: 1.1rem; letter-spacing: 3px; color: #14213d; font-variant-numeric: tabular-nums; }
+.pf-link { background: none; border: none; color: #16803f; font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 0; }
+.pf-link:hover { color: #116a34; }
+#screen-perfil .btn-secundario { align-self: flex-start; width: auto; padding: 10px 20px; }
+@media (max-width: 900px) { .pf-grade { grid-template-columns: 1fr; } }
