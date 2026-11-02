@@ -178,6 +178,7 @@
           <button class="rd-nav-item" onclick="abrirCarrinho()">Carrinho <span class="car-contador rd-contador">0</span></button>
           <!-- [PIM-WEB Quem Somos] Abre a página institucional. -->
          <button class="rd-nav-item" onclick="abrirQuemSomos()">Quem Somos</button>
+          <button class="rd-nav-item" onclick="abrirMeusIngressos()">Meus Ingressos</button>
           <button class="rd-nav-item" onclick="abrirPerfil()">Perfil</button>
           <!-- [PIM-WEB Admin] Botão só aparece para role Admin. Esconder não protege: o servidor confere o role. -->
           <button id="btn-area-admin" class="rd-nav-item" style="display:none;" onclick="abrirAreaAdmin()">Área Admin</button>
@@ -356,8 +357,8 @@
 
       <div class="confirm-check">✅</div>
       <h2 id="confirm-titulo" class="confirm-titulo">COMPRA CONFIRMADA!</h2>
-      <p id="confirm-subtitulo" class="confirm-subtitulo">ENVIAMOS O INGRESSO NO SEU E-MAIL</p>
-      <p class="confirm-detalhe">Verifique sua caixa de entrada e aproveite o jogo! 🎉</p>
+      <p id="confirm-subtitulo" class="confirm-subtitulo">SEU INGRESSO FOI EMITIDO</p>
+      <p class="confirm-detalhe">Compra aprovada. Aproveite o jogo! 🎉</p>
 
       <!-- Logo Champions Card animada embaixo (#5) -->
       <div class="confirm-logo-wrap">
@@ -365,7 +366,8 @@
         <img src="./CHAMPIONS_CARD.png" alt="Champions Card" class="confirm-logo-champions">
       </div>
 
-      <button class="btn-primary" onclick="irPara('screen-partidas')" style="margin-top:8px;">VER MAIS PARTIDAS</button>
+      <button class="btn-primary" onclick="abrirMeusIngressos()" style="margin-top:8px;">VER MEUS INGRESSOS</button>
+      <button class="btn-secundario" onclick="irPara('screen-partidas')">VER MAIS PARTIDAS</button>
       <button class="btn-sair" onclick="sair()">SAIR</button>
     </div>
   </div>
@@ -424,6 +426,7 @@
           <button class="rd-nav-item" onclick="irPara('screen-partidas')">Partidas Disponíveis</button>
           <button class="rd-nav-item" onclick="abrirCarrinho()">Carrinho <span class="car-contador rd-contador">0</span></button>
           <div class="rd-nav-item rd-ativo">Quem Somos</div>
+          <button class="rd-nav-item" onclick="abrirMeusIngressos()">Meus Ingressos</button>
           <button class="rd-nav-item" onclick="abrirPerfil()">Perfil</button>
           <!-- Cópia do botão admin: o JS copia a visibilidade do original. O servidor continua conferindo o papel. -->
           <button id="qs-btn-admin" class="rd-nav-item" style="display:none;" onclick="abrirAreaAdmin()">Área Admin</button>
@@ -540,6 +543,7 @@
           <button class="rd-nav-item" onclick="irPara('screen-partidas')">Partidas Disponíveis</button>
           <button class="rd-nav-item" onclick="abrirCarrinho()">Carrinho <span class="car-contador rd-contador">0</span></button>
           <button class="rd-nav-item" onclick="abrirQuemSomos()">Quem Somos</button>
+          <button class="rd-nav-item" onclick="abrirMeusIngressos()">Meus Ingressos</button>
           <div class="rd-nav-item rd-ativo">Perfil</div>
         </nav>
         <div class="rd-sidebar-rodape">
@@ -624,6 +628,38 @@
       </div>
     </div>
   </div>
+  <!-- [PIM-WEB Meus Ingressos] Lista os ingressos do próprio usuário (GET /api/tickets). Motivo: depois da compra, o torcedor precisa ver o código e o assento. -->
+  <div class="screen" id="screen-ingressos">
+    <div class="rd-app">
+      <header class="rd-topbar">
+        <div class="rd-marca">
+          <img src="./CHAMPIONS_CARD.png" alt="" class="rd-marca-img">
+          <span class="rd-marca-nome">CHAMPIONS<br>CARD</span>
+        </div>
+        <nav class="rd-nav" aria-label="Navegação principal">
+          <button class="rd-nav-item" onclick="irPara('screen-partidas')">Partidas Disponíveis</button>
+          <button class="rd-nav-item" onclick="abrirCarrinho()">Carrinho <span class="car-contador rd-contador">0</span></button>
+          <button class="rd-nav-item" onclick="abrirQuemSomos()">Quem Somos</button>
+          <div class="rd-nav-item rd-ativo">Meus Ingressos</div>
+          <button class="rd-nav-item" onclick="abrirPerfil()">Perfil</button>
+        </nav>
+        <div class="rd-sidebar-rodape">
+          <button class="rd-nav-item" onclick="sair()">Sair</button>
+        </div>
+      </header>
+
+      <div class="rd-conteudo">
+        <header class="rd-topo">
+          <div>
+            <h1 class="rd-saudacao">Meus ingressos</h1>
+            <p id="mi-resumo">Carregando...</p>
+          </div>
+        </header>
+        <p id="mi-vazio" class="mi-vazio" style="display:none;">Você ainda não comprou ingressos.</p>
+        <div id="mi-lista" class="mi-lista"></div>
+      </div>
+    </div>
+  </div>
   <!-- [PIM-WEB Admin] Tela da área administrativa: tabela de ingressos vendidos. -->
   <div class="screen" id="screen-admin">
     <div class="card">
@@ -704,6 +740,8 @@
   <script src="js/tela-central.js"></script>
   <script src="js/tela-mural.js"></script>
   <script src="js/tela-perfil.js"></script>
+  <!-- [PIM-WEB Meus Ingressos] -->
+  <script src="js/tela-ingressos.js"></script>
   <!-- Inicialização -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
