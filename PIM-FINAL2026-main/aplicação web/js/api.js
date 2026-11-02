@@ -57,6 +57,8 @@ const Api = {
              apiFetch('/api/membership/subscribe', { metodo: 'POST', corpo: { plan, method, cardToken } }),
   // [PIM-WEB Admin] Lista de ingressos da área admin. O servidor responde 403 se o role não for Admin.
   adminIngressos: () => apiFetch('/api/admin/tickets'),
+  // [PIM-WEB Meus Ingressos] Ingressos do próprio usuário. O servidor filtra pelo token; não se envia id de usuário.
+  meusIngressos: () => apiFetch('/api/tickets'),
 };
 
 // [PIM-WEB Cartão 8] Converte "sao_paulo" (API) em "sao paulo" (chave de temas/logos do front).

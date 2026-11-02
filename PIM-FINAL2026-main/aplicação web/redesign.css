@@ -792,3 +792,29 @@ body:has(#screen-partidas.active) .logo-container {
 .pf-link:hover { color: #116a34; }
 #screen-perfil .btn-secundario { align-self: flex-start; width: auto; padding: 10px 20px; }
 @media (max-width: 900px) { .pf-grade { grid-template-columns: 1fr; } }
+
+/* ===== [PIM-WEB Meus Ingressos] Lista de ingressos do usuário ===== */
+/* [PIM-WEB Meus Ingressos] Mesmo tema claro da tela de perfil. */
+#screen-ingressos {
+  --bg-item: #f3f5f8; --bg-input: #ffffff; --color-white: #14213d; --color-muted: #5b6573;
+  --border-default: #d5dbe4; --neon-cyan: #16803f; --neon-green: #16803f;
+  --rd-navy: #0f1f3a; --rd-verde: #16803f; --rd-verde-escuro: #116a34; --rd-verde-claro: #3ecf7a; --rd-borda: #e3e8ef;
+  background: #f4f6f9; color: #14213d; padding: 0; align-items: stretch;
+}
+.mi-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.mi-card {
+  background: #fff; border: 1px solid #e3e8ef; border-left: 5px solid #16803f;
+  border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px;
+}
+.mi-partida { font-size: 1rem; font-weight: 800; color: #14213d; line-height: 1.25; }
+.mi-dados { display: flex; flex-direction: column; gap: 6px; margin: 0; }
+.mi-linha { display: flex; justify-content: space-between; gap: 12px; font-size: 0.85rem; }
+.mi-linha dt { color: #5b6573; }
+.mi-linha dd { color: #14213d; font-weight: 600; text-align: right; margin: 0; }
+.mi-codigo-box {
+  border: 1px dashed #b9c2cf; border-radius: 8px; padding: 10px 12px; background: #f8faf9;
+  display: flex; flex-direction: column; gap: 4px; align-items: center;
+}
+.mi-codigo-rotulo { font-size: 0.65rem; letter-spacing: 1px; color: #5b6573; font-weight: 700; }
+.mi-codigo { font-family: Consolas, 'Courier New', monospace; font-size: 1.05rem; color: #14213d; word-break: break-all; }
+.mi-vazio { color: #5b6573; font-size: 0.95rem; }
