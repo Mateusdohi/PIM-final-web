@@ -64,6 +64,8 @@ function cvIniciar(containerId, grupoMetodosId) {
     nome.textContent = nomeUsuario ? nomeUsuario.toUpperCase() : 'SEU NOME';
     const ativo = document.querySelector(`#${grupoMetodosId} .btn-metodo.active`);
     tipo.textContent = ativo ? ativo.textContent.trim().toUpperCase() : 'CRÉDITO';
+    // [PIM-WEB Cartão Visual] O atalho do cartão de teste só aparece para o Admin. É conveniência de tela, não segurança: o gateway é simulado.
+    teste.hidden = !(typeof estado !== 'undefined' && estado.usuarioLogado && estado.usuarioLogado.role === 'Admin');
   }
 
   // [PIM-WEB Cartão Visual] Máscaras: número em grupos de 4, validade MM/AA, CVV só dígitos.
