@@ -163,7 +163,7 @@ function prepararPagamento(setor) {
   // O comentário fica fora da crase: dentro do template literal ele viraria texto.
   const a = estado.assentoSelecionado;
   document.getElementById('resumo-partida').innerHTML =
-    `${partida.nome} (${setor.toUpperCase()} · FILEIRA ${a.row}, CADEIRA ${a.number})<br><small style="color:#888;font-size:0.78rem;font-weight:500;letter-spacing:1px;">📅 ${partida.data} &nbsp;⏰ ${partida.hora}</small>`;
+    `${partida.nome} (${setor.toUpperCase()} · FILEIRA ${a.row}, CADEIRA ${a.number})<br><small style="color:#888;font-size:0.78rem;font-weight:500;letter-spacing:1px;">${partida.data} &nbsp;·&nbsp; ${partida.hora}</small>`;
   document.getElementById('resumo-total').textContent =
     `TOTAL: R$ ${precoFinal.toFixed(2).replace('.', ',')}`;
 

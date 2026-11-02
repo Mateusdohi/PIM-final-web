@@ -51,6 +51,8 @@ function irPara(id, adicionarHistorico = true) {
   document.getElementById(id).classList.add('active');
     // [PIM-WEB Admin] Reavalia o botão da área admin sempre que a tela de partidas abre.
   if (id === 'screen-partidas' && typeof atualizarBotaoAdmin === 'function') atualizarBotaoAdmin();
+  // [PIM-WEB Cartão Visual] Atualiza o cartão desenhado (nome, tipo e número) a cada troca de tela.
+  if (typeof cvAtualizarTodos === 'function') cvAtualizarTodos();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
