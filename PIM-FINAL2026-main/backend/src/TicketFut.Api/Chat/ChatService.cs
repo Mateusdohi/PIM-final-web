@@ -25,10 +25,10 @@ public class ChatService
         {
             new Faq(new[] { "como comprar", "como compro", "passo a passo", "comprar ingresso" },
                 "Como comprar um ingresso?",
-                "Na tela de partidas, clique em VER INGRESSOS. Escolha o setor no mapa e depois o assento. Confirme o pagamento com sua senha. O ingresso é emitido ao final."),
+                "Na tela de partidas, clique em VER INGRESSOS. Escolha o setor no mapa e depois o assento. Confirme o pagamento com sua senha. O ingresso é emitido ao final e fica em MEUS INGRESSOS, no menu."),
             new Faq(new[] { "onde vejo", "meus ingressos", "ver ingresso", "ingresso comprado" },
                 "Onde vejo meus ingressos?",
-                "O site ainda não tem uma tela de meus ingressos. Ao comprar, aparece a tela de confirmação. Não tenho como consultar ingressos antigos por aqui."),
+                "Clique em MEUS INGRESSOS no menu do site. Lá aparecem a partida, o setor, o assento, o valor e o código de cada ingresso comprado."),
             new Faq(new[] { "cancelar", "cancelamento", "reembolso", "devolver", "devolucao", "estorno" },
                 "Posso cancelar ou pedir reembolso?",
                 "O site não tem cancelamento nem reembolso, e o chat não tem informação sobre essa política."),
@@ -59,7 +59,7 @@ public class ChatService
         }),
         new("Planos de sócio", new[] { "plano", "socio", "sócio", "desconto", "bronze", "prata", "ouro", "assinar", "assinatura" }, new[]
         {
-            new Faq(new[] { "quais planos", "tipos", "bronze", "prata", "ouro", "quanto desconto" },
+            new Faq(new[] { "quais planos", "quais os planos", "tipos", "bronze", "prata", "ouro", "quanto desconto" },
                 "Quais são os planos de sócio?",
                 "Há três planos: Bronze (5% de desconto nos ingressos), Prata (10%) e Ouro (20%)."),
             new Faq(new[] { "como assinar", "virar socio", "ser socio", "assinar plano", "como me torno" },
@@ -155,6 +155,13 @@ public class ChatService
     public ChatReply Responder(string mensagem)
     {
         var texto = Normalizar(mensagem);
+
+        // [PIM-WEB Chat] 0) Texto igual ao de um botão de sugestão: responde a dúvida do próprio botão.
+        // Motivo: sem isso, 11 dos 34 botões caíam em outra resposta ou voltavam ao menu, porque a frase do botão não continha as palavras-chave.
+        foreach (var temaBotao in Temas)
+            foreach (var faqBotao in temaBotao.Faqs)
+                if (Normalizar(faqBotao.Pergunta) == texto)
+                    return new ChatReply(faqBotao.Resposta, Relacionadas(temaBotao, faqBotao));
 
         // 1) Frase que bate com uma dúvida específica: responde e sugere as outras do mesmo tema.
         Tema? melhorTema = null; Faq? melhorFaq = null; int melhorTam = 0;
