@@ -742,10 +742,15 @@
   <script src="js/tela-perfil.js"></script>
   <!-- [PIM-WEB Meus Ingressos] -->
   <script src="js/tela-ingressos.js"></script>
+  <!-- [PIM-WEB Cartão Visual] Cartão que se preenche ao digitar (pagamento e carrinho) -->
+  <script src="js/cartao-visual.js"></script>
   <!-- Inicialização -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       aplicarMascarasCartao();
+      // [PIM-WEB Cartão Visual] Pagamento direto e carrinho.
+      cvIniciar('campos-cartao-compra', 'metodos-compra');
+      cvIniciar('car-campos-cartao', 'car-metodos');
       inicializarLogoHover();
       irPara('screen-login', false);
     });

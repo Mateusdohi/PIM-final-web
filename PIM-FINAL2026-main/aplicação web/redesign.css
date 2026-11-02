@@ -818,3 +818,22 @@ body:has(#screen-partidas.active) .logo-container {
 .mi-codigo-rotulo { font-size: 0.65rem; letter-spacing: 1px; color: #5b6573; font-weight: 700; }
 .mi-codigo { font-family: Consolas, 'Courier New', monospace; font-size: 1.05rem; color: #14213d; word-break: break-all; }
 .mi-vazio { color: #5b6573; font-size: 0.95rem; }
+
+/* ===== [PIM-WEB Cartão Visual] Cartão que se preenche ao digitar ===== */
+.cv-cartao {
+  width: 100%; max-width: 340px; aspect-ratio: 1.586; align-self: center; box-sizing: border-box;
+  border-radius: 14px; padding: 16px 18px; color: #fff;
+  background: linear-gradient(135deg, #0f1f3a 0%, #16803f 100%);
+  box-shadow: 0 8px 20px rgba(15, 31, 58, 0.25);
+  display: flex; flex-direction: column; justify-content: space-between;
+  font-family: Consolas, 'Courier New', monospace;
+}
+.cv-topo { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; letter-spacing: 1px; }
+.cv-chip { width: 38px; height: 28px; border-radius: 5px; background: linear-gradient(135deg, #e8c872, #b8923a); }
+.cv-numero { font-size: 1.15rem; letter-spacing: 2px; }
+.cv-rodape { display: flex; justify-content: space-between; gap: 12px; font-size: 0.75rem; text-transform: uppercase; }
+.cv-nome { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65%; }
+.cv-teste {
+  align-self: flex-start; background: none; border: none; padding: 0; cursor: pointer;
+  color: #16803f; text-decoration: underline; font-size: 0.82rem; font-weight: 600;
+}
