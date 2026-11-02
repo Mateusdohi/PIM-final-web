@@ -572,9 +572,10 @@ body {
 
 .select-time.time-palmeiras   { border-color: #00c853 !important; color: #00c853 !important; box-shadow: 0 0 0 2px rgba(0,200,83,0.18) !important; }
 .select-time.time-flamengo    { border-color: #e53935 !important; color: #e53935 !important; box-shadow: 0 0 0 2px rgba(229,57,53,0.18) !important; }
-.select-time.time-corinthians { border-color: #ffffff !important; color: #ffffff !important; box-shadow: 0 0 0 2px rgba(255,255,255,0.12) !important; }
+/* [PIM-WEB Visual] Corinthians e Santos em preto: o branco sumia no fundo claro do cadastro. */
+.select-time.time-corinthians { border-color: #111111 !important; color: #111111 !important; box-shadow: 0 0 0 2px rgba(0,0,0,0.12) !important; }
 .select-time.time-sao-paulo   { border-color: #e53935 !important; color: #e53935 !important; box-shadow: 0 0 0 2px rgba(229,57,53,0.18) !important; }
-.select-time.time-santos      { border-color: #f5f5f5 !important; color: #f5f5f5 !important; box-shadow: 0 0 0 2px rgba(245,245,245,0.12) !important; }
+.select-time.time-santos      { border-color: #111111 !important; color: #111111 !important; box-shadow: 0 0 0 2px rgba(0,0,0,0.12) !important; }
 
 /* Botão "PAGAR POR PIX" no cadastro */
 .btn-pix-toggle {

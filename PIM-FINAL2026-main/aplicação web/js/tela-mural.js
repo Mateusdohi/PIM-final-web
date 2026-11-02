@@ -79,8 +79,7 @@ function desenharMural() {
   const tag = ctEl('span', 'mu-tag');
   const tit = ctEl('h4', 'mu-card-titulo');
   const txt = ctEl('p', 'mu-texto');
-  const ex = ctEl('small', 'mu-exemplo', 'Texto de exemplo');
-  card.append(tag, tit, txt, ex);
+  card.append(tag, tit, txt);
   raiz.appendChild(card);
 
   const nav = ctEl('div', 'mu-nav');
@@ -107,7 +106,6 @@ function desenharMural() {
     tag.textContent = it.tag;
     tit.textContent = it.titulo;
     txt.textContent = it.texto;
-    ex.style.display = it.exemplo ? 'block' : 'none';
     pontos.querySelectorAll('.mu-ponto').forEach((b, k) => b.classList.toggle('mu-ponto-ativo', k === muIdx));
     card.classList.remove('mu-troca'); void card.offsetWidth; card.classList.add('mu-troca');
   }

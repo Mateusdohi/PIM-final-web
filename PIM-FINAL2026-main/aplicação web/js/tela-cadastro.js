@@ -39,9 +39,11 @@ document.getElementById('cad-time').addEventListener('change', function () {
   const timeNorm = normalizarTime(this.value);
   const classe   = TIME_CLASSES[timeNorm];
   const tema     = TEMAS_TIMES[timeNorm];
-  const cor    = (classe && tema) ? tema.primary : 'var(--neon-cyan)';
-  const bg     = (classe && tema) ? tema.bg      : 'rgba(0, 229, 255, 0.04)';
-  const sombra = (classe && tema) ? `0 0 0 2px ${tema.primary}22` : '0 0 0 2px rgba(0,229,255,0.08)';
+  // [PIM-WEB Visual] Corinthians e Santos têm cor principal branca, que some no fundo claro do cadastro: usa preto nesses dois.
+  const claro  = (timeNorm === 'corinthians' || timeNorm === 'santos');
+  const cor    = (classe && tema) ? (claro ? '#111111' : tema.primary) : 'var(--neon-cyan)';
+  const bg     = (classe && tema) ? (claro ? 'rgba(0, 0, 0, 0.04)' : tema.bg) : 'rgba(0, 229, 255, 0.04)';
+  const sombra = (classe && tema) ? `0 0 0 2px ${claro ? 'rgba(0,0,0,0.12)' : tema.primary + '22'}` : '0 0 0 2px rgba(0,229,255,0.08)';
   if (classe && tema) sel.classList.add(classe);
   document.querySelectorAll('.secao-cartao').forEach(s => {
     s.style.borderColor = cor;

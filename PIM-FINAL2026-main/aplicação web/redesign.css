@@ -464,7 +464,8 @@ body:has(#screen-partidas.active) .logo-container {
   display: flex; align-items: center; gap: 12px;
   font-weight: 800; letter-spacing: 1px; font-size: 0.9rem; line-height: 1.15; color: #0f1f3a;
 }
-.rd-splash-marca-img { width: 44px; height: auto; }
+/* [PIM-WEB Visual] O logo e branco e sumia no fundo claro da tela de carregamento: filtro deixa preto. */
+.rd-splash-marca-img { width: 44px; height: auto; filter: brightness(0); }
 
 .rd-splash-centro {
   flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -728,17 +729,8 @@ body:has(#screen-partidas.active) .logo-container {
 .ct-dica summary { cursor: pointer; font-weight: 700; font-size: 0.85rem; color: #14213d; }
 .ct-dica p { margin-top: 8px; color: #3b4658; font-size: 0.85rem; line-height: 1.5; }
 
-/* Rótulo honesto: o texto antigo do mural é um exemplo fixo, não é notícia real. */
-#noticia-time::before {
-  content: "Mural do time · texto de exemplo"; display: block;
-  font-size: 0.72rem; color: #8a94a3; margin-bottom: 6px; letter-spacing: 0.3px;
-}
-
 @media (prefers-reduced-motion: reduce) { .ct-barra span { transition: none; } }
-'@
-[System.IO.File]::AppendAllText("$PWD\redesign.css", $css, (New-Object System.Text.UTF8Encoding($false)))
 /* ===== [PIM-WEB Mural] Mural do time ===== */
-#noticia-time { display: none; }
 .mu { margin-top: 14px; }
 .mu-titulo { font-size: 0.95rem; font-weight: 800; color: #0f1f3a; margin-bottom: 8px; }
 .mu-card {
