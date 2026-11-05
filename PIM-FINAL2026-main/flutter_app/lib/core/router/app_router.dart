@@ -12,6 +12,9 @@ import '../../presentation/checkout/checkout_page.dart';
 import '../../presentation/checkout/payment_confirmation_page.dart';
 import '../../presentation/checkout/plans_page.dart';
 import '../../presentation/home/matches_page.dart';
+import '../../presentation/profile/profile_page.dart';
+import '../../presentation/seats/seats_page.dart';
+import '../../presentation/tickets/tickets_page.dart';
 import '../../presentation/home/team_splash_page.dart';
 import '../../presentation/map/map_page.dart';
 import 'route_args.dart';
@@ -63,10 +66,17 @@ GoRouter buildRouter(AuthBloc auth) {
       ),
       GoRoute(path: '/splash', builder: (_, __) => const TeamSplashPage()),
       GoRoute(path: '/matches', builder: (_, __) => const MatchesPage()),
+      GoRoute(path: '/tickets', builder: (_, __) => const TicketsPage()),
+      GoRoute(path: '/profile', builder: (_, __) => const ProfilePage()),
       GoRoute(
         path: '/map',
         redirect: (_, state) => state.extra is Match ? null : '/matches',
         builder: (_, state) => MapPage(match: state.extra! as Match),
+      ),
+      GoRoute(
+        path: '/seats',
+        redirect: (_, state) => state.extra is SeatsArgs ? null : '/matches',
+        builder: (_, state) => SeatsPage(args: state.extra! as SeatsArgs),
       ),
       GoRoute(
         path: '/checkout',

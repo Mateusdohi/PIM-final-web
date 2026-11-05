@@ -11,6 +11,7 @@ import '../../core/theme/team_theme.dart';
 import '../../domain/entities/payment.dart';
 import '../../domain/usecases/matches/match_usecases.dart';
 import '../auth/bloc/auth_bloc.dart';
+import '../accessibility/accessibility_sheet.dart';
 import '../common/widgets.dart';
 import 'bloc/matches_cubit.dart';
 import 'widgets/match_card.dart';
@@ -54,14 +55,25 @@ class _MatchesViewState extends State<_MatchesView> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PARTIDAS'),
-        leading: Padding(padding: const EdgeInsets.all(12), child: TeamLogo(user?.team ?? '', size: 28)),
+        titleSpacing: 16,
+        title: Row(children: [
+          Image.asset('assets/images/champions_card.png', height: 34),
+          const SizedBox(width: 10),
+          const Text('CHAMPIONS\nCARD', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1, height: 1.15, color: Colors.white)),
+        ]),
         actions: [
           PopupMenuButton<String>(
+            tooltip: 'Abrir menu',
             icon: const Icon(Icons.more_vert),
             onSelected: (v) {
               final auth = context.read<AuthBloc>();
               switch (v) {
+                case 'tickets':
+                  context.push('/tickets');
+                case 'profile':
+                  context.push('/profile');
+                case 'access':
+                  showAccessibilitySheet(context);
                 case 'plans':
                   context.push('/plans', extra: const PlansArgs());
                 case 'face':
@@ -73,6 +85,9 @@ class _MatchesViewState extends State<_MatchesView> {
               }
             },
             itemBuilder: (_) => [
+              const PopupMenuItem(value: 'tickets', child: Text('Meus ingressos')),
+              const PopupMenuItem(value: 'profile', child: Text('Perfil')),
+              const PopupMenuItem(value: 'access', child: Text('Acessibilidade')),
               if (user != null && !user.isMember) const PopupMenuItem(value: 'plans', child: Text('Quero ser sócio')),
               PopupMenuItem(value: 'face', child: Text(user?.hasFace == true ? 'Refazer cadastro facial' : 'Cadastrar rosto')),
               const PopupMenuItem(value: 'logout', child: Text('Sair')),
@@ -88,8 +103,29 @@ class _MatchesViewState extends State<_MatchesView> {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16),
             children: [
+              // Saudação (igual ao topo da tela de partidas do web)
+              Row(children: [
+                CircleAvatar(
+                  radius: 22,
+                  backgroundColor: AppColors.navy,
+                  child: Text(
+                    (user?.name.isNotEmpty ?? false) ? user!.name.substring(0, 1).toUpperCase() : '?',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('Olá, ${(user?.name ?? '').split(' ').first}',
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.text)),
+                    const Text('Aqui estão as partidas disponíveis para você.',
+                        style: TextStyle(fontSize: 13, color: AppColors.muted)),
+                  ]),
+                ),
+              ]),
+              const SizedBox(height: 16),
               AppCard(
-                borderColor: team.primary,
+                borderColor: AppColors.brand,
                 child: Text(team.news, style: const TextStyle(height: 1.4)),
               ),
               if (user != null && !user.hasFace) ...[
@@ -108,13 +144,14 @@ class _MatchesViewState extends State<_MatchesView> {
                 const SizedBox(height: 12),
                 AppCard(
                   child: Row(children: [
-                    Icon(Icons.workspace_premium, color: team.primary),
+                    const Icon(Icons.workspace_premium, color: AppColors.brand),
                     const SizedBox(width: 12),
                     Expanded(child: Text('${user.planName} • ${user.planPercent}% de desconto', style: const TextStyle(fontWeight: FontWeight.w700))),
                   ]),
                 ),
               ],
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
+              const SectionLabel('Partidas Disponíveis'),
               TextField(
                 onChanged: _onSearch,
                 decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Buscar time ou estádio'),

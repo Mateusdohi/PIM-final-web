@@ -24,6 +24,8 @@ class CheckoutPage extends StatelessWidget {
         create: (_) => CheckoutBloc(
           match: args.match,
           sector: args.sector,
+          seatRow: args.seatRow,
+          seatNumber: args.seatNumber,
           createIntent: sl<CreatePaymentIntentUseCase>(),
           requireBiometric: sl<RequireBiometricUseCase>(),
           confirm: sl<ConfirmPaymentUseCase>(),
@@ -67,13 +69,18 @@ class _CheckoutViewState extends State<_CheckoutView> {
 
   Future<void> _openCamera() async {
     final bloc = context.read<CheckoutBloc>();
-    final path = await Navigator.of(context).push<String>(MaterialPageRoute(
+    // Uma única selfie confirma a compra (a prova de vida com duas fotos está desativada).
+    final shots = await Navigator.of(context).push<List<String>>(MaterialPageRoute(
       builder: (_) => const FaceCapturePage(
         title: 'CONFIRME SUA IDENTIDADE',
         hint: 'Tire uma selfie agora para confirmar a compra',
       ),
     ));
-    bloc.add(path == null ? const SelfieCancelled() : SelfieCaptured(path));
+    if (shots == null || shots.isEmpty || !mounted) {
+      bloc.add(const SelfieCancelled());
+      return;
+    }
+    bloc.add(SelfieCaptured(shots.first));
   }
 
   Future<void> _onFailure(BuildContext context, CheckoutState s) async {
@@ -130,6 +137,11 @@ class _CheckoutViewState extends State<_CheckoutView> {
                   borderColor: primary,
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text('${match.title} (${sector.label})', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                    if (widget.args.seatRow != null && widget.args.seatNumber != null) ...[
+                      const SizedBox(height: 4),
+                      Text('Fileira ${widget.args.seatRow} · Cadeira ${widget.args.seatNumber}',
+                          style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.brand)),
+                    ],
                     const SizedBox(height: 4),
                     Text('📅 ${Fmt.date(match.kickoffAt)}   ⏰ ${Fmt.time(match.kickoffAt)}',
                         style: const TextStyle(color: AppColors.muted, fontSize: 13)),

@@ -1,3 +1,4 @@
+import '../../domain/entities/seat.dart';
 import '../../core/error/failures.dart';
 import '../../core/network/guard.dart';
 import '../../domain/entities/match.dart';
@@ -66,6 +67,14 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Result<void>> deleteFace() => guard(_remote.deleteFace);
 
   @override
+  Future<Result<User>> updateProfile({required String name, required String team}) =>
+      guard(() => _remote.updateProfile(name, team));
+
+  @override
+  Future<Result<void>> changePassword({required String current, required String next}) =>
+      guard(() => _remote.changePassword(current, next));
+
+  @override
   Future<void> logout({required bool keepBiometricSession}) async {
     if (keepBiometricSession && await _tokens.biometricEnabled) {
       // Só "tranca": o refresh token continua guardado e só é usado depois da biometria.
@@ -98,6 +107,9 @@ class MatchRepositoryImpl implements MatchRepository {
 
   @override
   Future<Result<List<SectorAvailability>>> getSectors(int matchId) => guard(() => _remote.sectors(matchId));
+
+  @override
+  Future<Result<SeatMap>> getSeats(int matchId, Sector sector) => guard(() => _remote.seats(matchId, sector));
 }
 
 class PaymentRepositoryImpl implements PaymentRepository {
@@ -110,16 +122,31 @@ class PaymentRepositoryImpl implements PaymentRepository {
     required Sector sector,
     required PaymentMethod method,
     String? memberCode,
+    int? seatRow,
+    int? seatNumber,
   }) =>
-      guard(() => _remote.createIntent(matchId: matchId, sector: sector, method: method, memberCode: memberCode));
+      guard(() => _remote.createIntent(
+            matchId: matchId,
+            sector: sector,
+            method: method,
+            memberCode: memberCode,
+            seatRow: seatRow,
+            seatNumber: seatNumber,
+          ));
 
   @override
   Future<Result<PurchaseResult>> confirm({
     required PaymentIntent intent,
     required String selfiePath,
+    String? livenessSelfiePath,
     String? cardToken,
   }) =>
-      guard(() => _remote.confirm(intent: intent, selfiePath: selfiePath, cardToken: cardToken));
+      guard(() => _remote.confirm(
+            intent: intent,
+            selfiePath: selfiePath,
+            livenessSelfiePath: livenessSelfiePath,
+            cardToken: cardToken,
+          ));
 
   @override
   Future<Result<SubscriptionResult>> subscribe({

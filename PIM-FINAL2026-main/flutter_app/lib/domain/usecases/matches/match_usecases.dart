@@ -1,6 +1,7 @@
 import '../../../core/error/failures.dart';
 import '../../entities/match.dart';
 import '../../entities/payment.dart';
+import '../../entities/seat.dart';
 import '../../repositories/repositories.dart';
 
 class GetMatchesUseCase {
@@ -19,4 +20,10 @@ class GetSectorsUseCase {
   GetSectorsUseCase(this._repo);
   final MatchRepository _repo;
   Future<Result<List<SectorAvailability>>> call(int matchId) => _repo.getSectors(matchId);
+}
+
+class GetSeatsUseCase {
+  GetSeatsUseCase(this._repo);
+  final MatchRepository _repo;
+  Future<Result<SeatMap>> call(int matchId, Sector sector) => _repo.getSeats(matchId, sector);
 }

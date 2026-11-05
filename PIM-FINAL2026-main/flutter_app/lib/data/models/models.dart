@@ -74,6 +74,7 @@ class PaymentModel {
         method: PaymentMethod.values.firstWhere(
           (m) => m.apiValue.toLowerCase() == (j['method'] as String).toLowerCase(),
         ),
+        challenge: j['challenge'] as String?,
       );
 
   static Ticket ticketFromJson(Map<String, dynamic> j) => Ticket(
@@ -84,5 +85,7 @@ class PaymentModel {
         code: j['code'] as String,
         amount: _d(j['amount']),
         kickoffAt: DateTime.parse(j['kickoffAt'] as String).toUtc(),
+        seatRow: j['seatRow'] as int?,
+        seatNumber: j['seatNumber'] as int?,
       );
 }

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 
+import 'core/accessibility/accessibility_settings.dart';
 import 'core/di/injection.dart';
 import 'core/network/session_events.dart';
 import 'core/router/app_router.dart';
@@ -46,10 +47,17 @@ class _AppState extends State<App> {
       // O tema muda com o time do usuário (cores do clube), como no app web
       child: BlocBuilder<AuthBloc, AuthState>(
         buildWhen: (p, c) => p.user?.team != c.user?.team,
-        builder: (context, state) => MaterialApp.router(
+        builder: (context, state) => ListenableBuilder(
+          listenable: sl<AccessibilitySettings>(),
+          builder: (context, _) => MaterialApp.router(
           title: 'TicketFut',
           debugShowCheckedModeBanner: false,
-          theme: AppTheme.forTeam(state.user?.team),
+          theme: AppTheme.forTeam(state.user?.team, highContrast: sl<AccessibilitySettings>().highContrast),
+          builder: (context, child) => MediaQuery.withClampedTextScaling(
+            minScaleFactor: sl<AccessibilitySettings>().textScale,
+            maxScaleFactor: sl<AccessibilitySettings>().textScale > 1.0 ? sl<AccessibilitySettings>().textScale + 0.6 : 1.6,
+            child: child ?? const SizedBox.shrink(),
+          ),
           routerConfig: _router,
           locale: const Locale('pt', 'BR'),
           supportedLocales: const [Locale('pt', 'BR')],
@@ -58,6 +66,7 @@ class _AppState extends State<App> {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
+          ),
         ),
       ),
     );

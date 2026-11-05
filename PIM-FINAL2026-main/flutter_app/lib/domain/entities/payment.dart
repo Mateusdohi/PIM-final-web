@@ -56,7 +56,11 @@ class PaymentIntent extends Equatable {
     required this.discountPercent,
     required this.expiresAt,
     required this.method,
+    this.challenge,
   });
+
+  /// Lado que o usuário deve virar a cabeça na prova de vida ("left" ou "right"); null = sem prova de vida.
+  final String? challenge;
 
   final String id;
   final String nonce;
@@ -81,7 +85,13 @@ class Ticket extends Equatable {
     required this.code,
     required this.amount,
     required this.kickoffAt,
+    this.seatRow,
+    this.seatNumber,
   });
+
+  final int? seatRow;
+  final int? seatNumber;
+  bool get hasSeat => seatRow != null && seatNumber != null;
 
   final String id;
   final int matchId;
