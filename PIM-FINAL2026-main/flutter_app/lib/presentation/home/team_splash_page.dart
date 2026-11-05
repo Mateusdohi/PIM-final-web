@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/theme/app_theme.dart';
 import '../../core/theme/team_theme.dart';
 import '../auth/bloc/auth_bloc.dart';
 import '../common/widgets.dart';
@@ -46,12 +47,7 @@ class _TeamSplashPageState extends State<TeamSplashPage> {
     final team = TeamTheme.of(slug);
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft, end: Alignment.bottomRight,
-            colors: [team.splashBg.first, team.splashBg.last, team.splashBg.first],
-          ),
-        ),
+        color: AppColors.bgMain,
         child: Center(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             if (slug != TeamTheme.defaultSlug) TweenAnimationBuilder<double>(
@@ -62,7 +58,7 @@ class _TeamSplashPageState extends State<TeamSplashPage> {
               child: TeamLogo(slug, size: 96),
             ),
             const SizedBox(height: 24),
-            Text(team.welcome, style: TextStyle(fontSize: 12, letterSpacing: 4, color: team.accent2.withAlpha(180))),
+            Text(team.welcome, style: TextStyle(fontSize: 12, letterSpacing: 4, color: AppColors.muted)),
             const SizedBox(height: 24),
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 500),
@@ -72,7 +68,7 @@ class _TeamSplashPageState extends State<TeamSplashPage> {
                 child: Text(
                   team.phrases[_idx],
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 3, color: team.primary),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 3, color: AppColors.brand),
                 ),
               ),
             ),

@@ -36,7 +36,6 @@ class _MapView extends StatelessWidget {
         appBar: AppBar(
           title: const Text('ARENA'),
           bottom: TabBar(
-            indicatorColor: Theme.of(context).colorScheme.primary,
             onTap: (i) {
               final c = context.read<MapCubit>();
               if (i == 1 && !c.state.locationAsked) c.locateUser();
@@ -89,7 +88,7 @@ class _MapView extends StatelessWidget {
     return StadiumSectorsView(
       sectors: state.sectors,
       isAway: match.isAway,
-      onSelect: (sector) => context.push('/checkout', extra: CheckoutArgs(match: match, sector: sector)),
+      onSelect: (sector) => context.push('/seats', extra: SeatsArgs(match: match, sector: sector)),
     );
   }
 }

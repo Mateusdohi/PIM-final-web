@@ -20,8 +20,9 @@ class CheckoutSubmitted extends CheckoutEvent {
 }
 
 class SelfieCaptured extends CheckoutEvent {
-  const SelfieCaptured(this.path);
+  const SelfieCaptured(this.path, {this.livenessPath});
   final String path;
+  final String? livenessPath; // segunda selfie (cabeça virada), quando há prova de vida
 }
 
 class SelfieCancelled extends CheckoutEvent {
@@ -82,6 +83,8 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
   CheckoutBloc({
     required this.match,
     required this.sector,
+    this.seatRow,
+    this.seatNumber,
     required CreatePaymentIntentUseCase createIntent,
     required RequireBiometricUseCase requireBiometric,
     required ConfirmPaymentUseCase confirm,
@@ -96,6 +99,8 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
 
   final Match match;
   final Sector sector;
+  final int? seatRow;
+  final int? seatNumber;
   final CreatePaymentIntentUseCase _createIntent;
   final RequireBiometricUseCase _requireBiometric;
   final ConfirmPaymentUseCase _confirm;
@@ -120,7 +125,8 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
     final reusable = intent != null && !intent.isExpired && intent.method == e.method;
     if (!reusable) {
       emit(state.copyWith(step: CheckoutStep.creatingIntent, clearIntent: true));
-      final r = await _createIntent(matchId: match.id, sector: sector, method: e.method, memberCode: e.memberCode);
+      final r = await _createIntent(
+          matchId: match.id, sector: sector, method: e.method, memberCode: e.memberCode, seatRow: seatRow, seatNumber: seatNumber);
       final failure = r.failureOrNull;
       if (failure != null) {
         emit(_fail(failure, dropIntent: true));
@@ -145,7 +151,7 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
     final intent = state.intent;
     if (intent == null) return;
     emit(state.copyWith(step: CheckoutStep.confirming));
-    final r = await _confirm(intent: intent, selfiePath: e.path, card: _card);
+    final r = await _confirm(intent: intent, selfiePath: e.path, livenessSelfiePath: e.livenessPath, card: _card);
     r.fold(
       (f) => emit(_fail(f, dropIntent: _terminalCodes.contains(f.code))),
       (result) {

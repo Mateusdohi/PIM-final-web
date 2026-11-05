@@ -13,7 +13,15 @@ class MatchCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
-    return Opacity(
+    final label = '${match.homeName} contra ${match.awayName}. ${Fmt.date(match.kickoffAt)} às ${Fmt.time(match.kickoffAt)}. '
+        'Estádio ${match.stadium.name}. ${match.isFinished ? 'Partida encerrada.' : 'Preço ${Fmt.money(match.price)}.'}'
+        '${match.isAway && !match.isFinished ? ' Você é visitante.' : ''}';
+    return Semantics(
+      button: !match.isFinished,
+      label: label,
+      hint: match.isFinished ? null : 'Toque duas vezes para ver os ingressos',
+      excludeSemantics: true,
+      child: Opacity(
       opacity: match.isFinished ? 0.5 : 1,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -21,9 +29,9 @@ class MatchCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: AppColors.bgItem,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border(left: BorderSide(color: primary, width: 3)),
+            border: Border.all(color: AppColors.borderSoft),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
@@ -37,9 +45,9 @@ class MatchCard extends StatelessWidget {
             ]),
             const SizedBox(height: 8),
             Wrap(spacing: 14, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
-              Text('📅 ${Fmt.date(match.kickoffAt)}', style: const TextStyle(color: AppColors.muted, fontSize: 13)),
-              Text('⏰ ${Fmt.time(match.kickoffAt)}', style: const TextStyle(color: AppColors.muted, fontSize: 13)),
-              Text('🏟 ${match.stadium.name}', style: const TextStyle(color: AppColors.muted, fontSize: 13)),
+              Text(Fmt.date(match.kickoffAt), style: const TextStyle(color: AppColors.muted, fontSize: 13)),
+              Text(Fmt.time(match.kickoffAt), style: const TextStyle(color: AppColors.muted, fontSize: 13)),
+              Text(match.stadium.name, style: const TextStyle(color: AppColors.muted, fontSize: 13)),
             ]),
             const SizedBox(height: 8),
             Row(children: [
@@ -63,8 +71,19 @@ class MatchCard extends StatelessWidget {
               if (match.isAway && !match.isFinished)
                 const Text('VISITANTE', style: TextStyle(color: AppColors.warning, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.5)),
             ]),
+            if (!match.isFinished) ...[
+              const SizedBox(height: 12),
+              Container(
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(vertical: 11),
+                decoration: BoxDecoration(color: primary, borderRadius: BorderRadius.circular(999)),
+                child: Text('VER INGRESSOS →',
+                    style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.6)),
+              ),
+            ],
           ]),
         ),
+      ),
       ),
     );
   }
