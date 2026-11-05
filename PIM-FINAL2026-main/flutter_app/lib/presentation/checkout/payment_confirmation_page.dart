@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -17,7 +16,6 @@ class PaymentConfirmationPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = context.read<AuthBloc>().state.user;
     final t = args.result.ticket;
-    final pix = args.result.pixPayload;
 
     return Scaffold(
       body: SafeArea(
@@ -52,24 +50,6 @@ class PaymentConfirmationPage extends StatelessWidget {
                     Text('Total pago: ${Fmt.money(t.amount)}', style: TextStyle(color: AppColors.brand, fontWeight: FontWeight.w800)),
                   ]),
                 ),
-                if (pix != null) ...[
-                  const SizedBox(height: 12),
-                  AppCard(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      const Text('PIX (AMBIENTE DE TESTE)', style: TextStyle(color: AppColors.muted, fontSize: 11, letterSpacing: 2)),
-                      const SizedBox(height: 6),
-                      Text(pix, style: const TextStyle(fontSize: 12)),
-                      TextButton.icon(
-                        onPressed: () {
-                          Clipboard.setData(ClipboardData(text: pix));
-                          showAppSnack(context, 'Código Pix copiado');
-                        },
-                        icon: const Icon(Icons.copy, size: 16),
-                        label: const Text('COPIAR'),
-                      ),
-                    ]),
-                  ),
-                ],
                 const SizedBox(height: 20),
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   if (user != null) TeamLogo(user.team, size: 44),

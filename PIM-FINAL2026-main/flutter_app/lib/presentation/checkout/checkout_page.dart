@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/di/injection.dart';
 import '../../core/router/route_args.dart';
@@ -180,13 +182,7 @@ class _CheckoutViewState extends State<_CheckoutView> {
                 if (_method.isCard)
                   CardForm(controller: _card)
                 else
-                  const AppCard(
-                    child: Row(children: [
-                      Icon(Icons.qr_code_2, size: 40),
-                      SizedBox(width: 12),
-                      Expanded(child: Text('O código Pix será gerado depois da confirmação da sua identidade.', style: TextStyle(fontSize: 13))),
-                    ]),
-                  ),
+                  _PixPanel(amount: state.intent?.amount ?? match.price),
                 const SizedBox(height: 20),
                 Row(children: [
                   const Icon(Icons.lock_outline, size: 16, color: AppColors.muted),
@@ -213,6 +209,53 @@ class _CheckoutViewState extends State<_CheckoutView> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Pagamento por Pix: o QR Code e a chave aparecem ANTES de confirmar a compra (igual ao web).
+/// Ambiente de teste: o pagamento é simulado, não há cobrança real.
+class _PixPanel extends StatelessWidget {
+  const _PixPanel({required this.amount});
+  final double amount;
+
+  static const _chave = 'ingressos@ticketfut.com.br';
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
+        const Text('PAGUE COM PIX', style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 1.5, fontSize: 13)),
+        const SizedBox(height: 4),
+        Text('Valor: ${Fmt.money(amount)}', style: const TextStyle(color: AppColors.muted, fontSize: 13)),
+        const SizedBox(height: 14),
+        Semantics(
+          label: 'QR Code do Pix. Chave Pix $_chave',
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.borderSoft)),
+            child: QrImageView(data: _chave, size: 170, backgroundColor: Colors.white),
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Text('CHAVE PIX', style: TextStyle(color: AppColors.muted, fontSize: 11, letterSpacing: 2)),
+        const SizedBox(height: 2),
+        const SelectableText(_chave, style: TextStyle(fontWeight: FontWeight.w800)),
+        TextButton.icon(
+          onPressed: () {
+            Clipboard.setData(const ClipboardData(text: _chave));
+            showAppSnack(context, 'Chave Pix copiada');
+          },
+          icon: const Icon(Icons.copy, size: 16),
+          label: const Text('COPIAR CHAVE'),
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          'Pague pelo QR Code ou pela chave e depois toque em "Confirmar compra". Ambiente de teste: o pagamento é simulado.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: AppColors.muted, fontSize: 12, height: 1.4),
+        ),
+      ]),
     );
   }
 }

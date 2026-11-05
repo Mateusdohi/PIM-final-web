@@ -8,7 +8,6 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../domain/entities/seat.dart';
 import '../../domain/usecases/matches/match_usecases.dart';
-import '../common/widgets.dart';
 
 /// Escolha da cadeira no setor (mapa de assentos igual ao do web).
 class SeatsPage extends StatefulWidget {
