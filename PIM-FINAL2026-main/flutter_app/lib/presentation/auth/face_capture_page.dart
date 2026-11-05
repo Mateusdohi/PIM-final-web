@@ -8,9 +8,18 @@ import '../../core/theme/app_theme.dart';
 /// Abre a câmera FRONTAL, captura uma selfie e devolve o caminho do arquivo via Navigator.pop.
 /// Usada no cadastro facial e na confirmação de compra.
 class FaceCapturePage extends StatefulWidget {
-  const FaceCapturePage({super.key, this.title = 'SUA SELFIE', this.hint = 'Centralize seu rosto no oval, com boa iluminação'});
+  const FaceCapturePage({
+    super.key,
+    this.title = 'SUA SELFIE',
+    this.hint = 'Centralize seu rosto no oval, com boa iluminação',
+    this.hints,
+  });
   final String title;
   final String hint;
+
+  /// Vários passos na mesma tela (ex.: prova de vida: de frente e com a cabeça virada).
+  /// A câmera continua aberta entre os passos; a tela devolve um caminho por passo.
+  final List<String>? hints;
 
   @override
   State<FaceCapturePage> createState() => _FaceCapturePageState();
@@ -21,6 +30,10 @@ class _FaceCapturePageState extends State<FaceCapturePage> with WidgetsBindingOb
   String? _error;
   XFile? _shot;
   bool _taking = false;
+  int _step = 0;
+  final List<String> _paths = [];
+
+  List<String> get _hints => widget.hints ?? [widget.hint];
 
   @override
   void initState() {
@@ -89,10 +102,24 @@ class _FaceCapturePageState extends State<FaceCapturePage> with WidgetsBindingOb
     }
   }
 
+  void _useShot() {
+    final shot = _shot;
+    if (shot == null) return;
+    _paths.add(shot.path);
+    if (_step + 1 < _hints.length) {
+      setState(() {
+        _step++;
+        _shot = null; // volta para a câmera (que continua aberta) para o próximo passo
+      });
+    } else {
+      Navigator.of(context).pop(List<String>.of(_paths));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
+      appBar: AppBar(title: Text(_hints.length > 1 ? '${widget.title} (${_step + 1}/${_hints.length})' : widget.title)),
       body: SafeArea(child: _body(context)),
     );
   }
@@ -121,7 +148,7 @@ class _FaceCapturePageState extends State<FaceCapturePage> with WidgetsBindingOb
           child: Row(children: [
             Expanded(child: OutlinedButton(onPressed: () => setState(() => _shot = null), child: const Text('REFAZER'))),
             const SizedBox(width: 12),
-            Expanded(child: FilledButton(onPressed: () => Navigator.of(context).pop(_shot!.path), child: const Text('USAR FOTO'))),
+            Expanded(child: FilledButton(onPressed: _useShot, child: Text(_step + 1 < _hints.length ? 'USAR E CONTINUAR' : 'USAR FOTO'))),
           ]),
         ),
       ]);
@@ -131,7 +158,7 @@ class _FaceCapturePageState extends State<FaceCapturePage> with WidgetsBindingOb
     if (c == null || !c.value.isInitialized) return const Center(child: CircularProgressIndicator());
 
     return Column(children: [
-      Padding(padding: const EdgeInsets.all(16), child: Text(widget.hint, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.muted))),
+      Padding(padding: const EdgeInsets.all(16), child: Text(_hints[_step], textAlign: TextAlign.center, style: const TextStyle(color: AppColors.muted))),
       Expanded(
         child: Stack(alignment: Alignment.center, children: [
           ClipRect(child: Center(child: CameraPreview(c))),
@@ -140,13 +167,20 @@ class _FaceCapturePageState extends State<FaceCapturePage> with WidgetsBindingOb
       ),
       Padding(
         padding: const EdgeInsets.symmetric(vertical: 20),
-        child: GestureDetector(
-          onTap: _capture,
-          child: Container(
-            width: 72, height: 72,
-            decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 4)),
-            padding: const EdgeInsets.all(5),
-            child: Container(decoration: BoxDecoration(shape: BoxShape.circle, color: _taking ? AppColors.muted : Colors.white)),
+        child: Semantics(
+          button: true,
+          label: 'Tirar foto',
+          child: GestureDetector(
+            onTap: _capture,
+            child: Container(
+              width: 76, height: 76,
+              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.brand, width: 4)),
+              padding: const EdgeInsets.all(5),
+              child: Container(
+                decoration: BoxDecoration(shape: BoxShape.circle, color: _taking ? AppColors.muted : AppColors.brand),
+                child: const Icon(Icons.camera_alt, color: Colors.white, size: 30),
+              ),
+            ),
           ),
         ),
       ),

@@ -1,3 +1,4 @@
+import '../entities/seat.dart';
 import '../../core/error/failures.dart';
 import '../entities/match.dart';
 import '../entities/payment.dart';
@@ -18,6 +19,8 @@ abstract class AuthRepository {
   Future<Result<User>> enrollFace(String imagePath);
   Future<Result<User>> refreshUser();
   Future<Result<void>> deleteFace();
+  Future<Result<User>> updateProfile({required String name, required String team});
+  Future<Result<void>> changePassword({required String current, required String next});
 
   /// [keepBiometricSession]: mantém o refresh token (protegido pela biometria) para o acesso rápido.
   Future<void> logout({required bool keepBiometricSession});
@@ -31,6 +34,7 @@ abstract class MatchRepository {
     String? search,
   });
   Future<Result<List<SectorAvailability>>> getSectors(int matchId);
+  Future<Result<SeatMap>> getSeats(int matchId, Sector sector);
 }
 
 abstract class PaymentRepository {
@@ -39,11 +43,14 @@ abstract class PaymentRepository {
     required Sector sector,
     required PaymentMethod method,
     String? memberCode,
+    int? seatRow,
+    int? seatNumber,
   });
 
   Future<Result<PurchaseResult>> confirm({
     required PaymentIntent intent,
     required String selfiePath,
+    String? livenessSelfiePath,
     String? cardToken,
   });
 

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 
+import '../accessibility/accessibility_settings.dart';
 import '../../data/datasources/local/token_local_ds.dart';
 import '../../data/datasources/remote/remote_datasources.dart';
 import '../../data/repositories/repositories_impl.dart';
@@ -26,6 +27,8 @@ void configureDependencies() {
         onSessionExpired: () => sl<SessionEvents>().notifyExpired(),
       ));
 
+  sl.registerLazySingleton<AccessibilitySettings>(AccessibilitySettings.new);
+
   // --- serviços do aparelho ---
   sl.registerLazySingleton<BiometricAuthenticator>(LocalAuthBiometric.new);
   sl.registerLazySingleton<CardTokenizer>(SandboxCardTokenizer.new);
@@ -48,6 +51,7 @@ void configureDependencies() {
   sl.registerLazySingleton(() => LogoutUseCase(sl()));
   sl.registerLazySingleton(() => GetMatchesUseCase(sl()));
   sl.registerLazySingleton(() => GetSectorsUseCase(sl()));
+  sl.registerLazySingleton(() => GetSeatsUseCase(sl()));
   sl.registerLazySingleton(() => CreatePaymentIntentUseCase(sl()));
   sl.registerLazySingleton(() => RequireBiometricUseCase(sl()));
   sl.registerLazySingleton(() => ConfirmPaymentUseCase(sl(), sl()));

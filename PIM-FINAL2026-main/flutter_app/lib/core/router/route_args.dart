@@ -13,10 +13,18 @@ class PlansArgs {
   final bool fromRegistration;
 }
 
-class CheckoutArgs {
-  const CheckoutArgs({required this.match, required this.sector});
+class SeatsArgs {
+  const SeatsArgs({required this.match, required this.sector});
   final Match match;
   final Sector sector;
+}
+
+class CheckoutArgs {
+  const CheckoutArgs({required this.match, required this.sector, this.seatRow, this.seatNumber});
+  final Match match;
+  final Sector sector;
+  final int? seatRow;
+  final int? seatNumber;
 }
 
 class ConfirmationArgs {

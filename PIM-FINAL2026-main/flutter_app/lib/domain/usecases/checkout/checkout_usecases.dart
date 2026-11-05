@@ -12,8 +12,11 @@ class CreatePaymentIntentUseCase {
     required Sector sector,
     required PaymentMethod method,
     String? memberCode,
+    int? seatRow,
+    int? seatNumber,
   }) =>
-      _repo.createIntent(matchId: matchId, sector: sector, method: method, memberCode: memberCode);
+      _repo.createIntent(
+          matchId: matchId, sector: sector, method: method, memberCode: memberCode, seatRow: seatRow, seatNumber: seatNumber);
 }
 
 /// Camada extra obrigatória ANTES de finalizar a compra: biometria nativa do aparelho.
@@ -38,6 +41,7 @@ class ConfirmPaymentUseCase {
   Future<Result<PurchaseResult>> call({
     required PaymentIntent intent,
     required String selfiePath,
+    String? livenessSelfiePath,
     CardInput? card,
   }) async {
     if (intent.isExpired) {
@@ -48,7 +52,7 @@ class ConfirmPaymentUseCase {
       if (card == null) return const Err(Failure('card_required', 'Informe os dados do cartão.'));
       token = await _tokenizer.tokenize(card);
     }
-    return _repo.confirm(intent: intent, selfiePath: selfiePath, cardToken: token);
+    return _repo.confirm(intent: intent, selfiePath: selfiePath, livenessSelfiePath: livenessSelfiePath, cardToken: token);
   }
 }
 

@@ -14,19 +14,29 @@ class FaceEnrollPage extends StatelessWidget {
   final FaceEnrollArgs args;
 
   Future<void> _capture(BuildContext context) async {
-    final path = await Navigator.of(context).push<String>(
+    final shots = await Navigator.of(context).push<List<String>>(
       MaterialPageRoute(builder: (_) => const FaceCapturePage(title: 'CADASTRO FACIAL')),
     );
-    if (path != null && context.mounted) context.read<AuthBloc>().add(FaceEnrollSubmitted(path));
+    final path = (shots == null || shots.isEmpty) ? null : shots.first;
+    if (path == null || !context.mounted) return;
+    final bloc = context.read<AuthBloc>();
+    final before = bloc.state.faceEnrolledSeq;
+    bloc.add(FaceEnrollSubmitted(path));
+    // Espera o resultado aqui (em vez de depender só do listener): sucesso fecha a tela, erro mostra o aviso.
+    final result = await bloc.stream.firstWhere((s) => s.faceEnrolledSeq != before || (!s.busy && s.failure != null));
+    if (!context.mounted) return;
+    if (result.faceEnrolledSeq != before) {
+      showAppSnack(context, 'Rosto cadastrado com sucesso!');
+      _next(context);
+    }
   }
 
   void _next(BuildContext context) {
     if (args.fromRegistration) {
       context.go(args.planPercent > 0 ? '/plans' : '/splash',
           extra: args.planPercent > 0 ? PlansArgs(initialPlan: args.planPercent, fromRegistration: true) : null);
-    } else if (context.canPop()) {
-      context.pop();
     } else {
+      // Vai direto às Partidas: o pop do roteador não fechava esta tela depois do cadastro.
       context.go('/matches');
     }
   }
@@ -41,13 +51,6 @@ class FaceEnrollPage extends StatelessWidget {
             BlocListener<AuthBloc, AuthState>(
               listenWhen: (p, c) => p.errorSeq != c.errorSeq && c.failure != null,
               listener: (context, s) => showAppSnack(context, s.failure!.message, error: true),
-            ),
-            BlocListener<AuthBloc, AuthState>(
-              listenWhen: (p, c) => p.faceEnrolledSeq != c.faceEnrolledSeq,
-              listener: (context, s) {
-                showAppSnack(context, 'Rosto cadastrado com sucesso!');
-                _next(context);
-              },
             ),
           ],
           child: BlocBuilder<AuthBloc, AuthState>(

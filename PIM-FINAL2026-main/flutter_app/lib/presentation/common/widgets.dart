@@ -8,7 +8,7 @@ void showAppSnack(BuildContext context, String message, {bool error = false}) {
   m.hideCurrentSnackBar();
   m.showSnackBar(SnackBar(
     content: Text(message),
-    backgroundColor: error ? const Color(0xFF3A1414) : AppColors.bgItem,
+    backgroundColor: error ? const Color(0xFF7A1C14) : AppColors.navy,
     duration: const Duration(seconds: 4),
   ));
 }
@@ -43,8 +43,8 @@ class AppCard extends StatelessWidget {
         padding: padding,
         decoration: BoxDecoration(
           color: AppColors.bgCard,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: borderColor ?? AppColors.border),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: borderColor ?? AppColors.borderSoft),
         ),
         child: child,
       );
@@ -61,7 +61,7 @@ class BusyButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final child = busy
-        ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5))
+        ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
         : Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -79,9 +79,11 @@ class SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 8, top: 4),
-        child: Text(text,
-            style: TextStyle(
-                color: Theme.of(context).colorScheme.primary, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 2)),
+        padding: const EdgeInsets.only(bottom: 12, top: 4),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(text, style: const TextStyle(color: AppColors.text, fontSize: 16, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 6),
+          Container(width: 28, height: 3, decoration: BoxDecoration(color: AppColors.brand, borderRadius: BorderRadius.circular(2))),
+        ]),
       );
 }

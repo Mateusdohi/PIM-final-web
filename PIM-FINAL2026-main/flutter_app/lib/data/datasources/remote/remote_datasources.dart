@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 
 import '../../../domain/entities/payment.dart';
 import '../../models/models.dart';
+import '../../models/seat_model.dart';
+import '../../../domain/entities/seat.dart';
 import '../../../domain/entities/match.dart';
 import '../../../domain/entities/user.dart';
 
@@ -49,6 +51,14 @@ class AuthRemoteDataSource {
   }
 
   Future<void> deleteFace() => _dio.delete('/api/auth/face');
+
+  Future<User> updateProfile(String name, String team) async {
+    final r = await _dio.put('/api/auth/me', data: {'name': name, 'team': team});
+    return UserModel.fromJson(r.data as Map<String, dynamic>);
+  }
+
+  Future<void> changePassword(String current, String next) =>
+      _dio.post('/api/auth/change-password', data: {'currentPassword': current, 'newPassword': next});
 }
 
 class MatchRemoteDataSource {
@@ -68,6 +78,11 @@ class MatchRemoteDataSource {
     final r = await _dio.get('/api/matches/$matchId/sectors');
     return (r.data as List).map((e) => SectorModel.fromJson(e as Map<String, dynamic>)).toList();
   }
+
+  Future<SeatMap> seats(int matchId, Sector sector) async {
+    final r = await _dio.get('/api/matches/$matchId/seats', queryParameters: {'sector': sector.apiValue});
+    return SeatMapModel.fromJson(r.data as Map<String, dynamic>);
+  }
 }
 
 class PaymentRemoteDataSource {
@@ -79,12 +94,16 @@ class PaymentRemoteDataSource {
     required Sector sector,
     required PaymentMethod method,
     String? memberCode,
+    int? seatRow,
+    int? seatNumber,
   }) async {
     final r = await _dio.post('/api/payments/intents', data: {
       'matchId': matchId,
       'sector': sector.apiValue,
       'method': method.apiValue,
       'memberCode': memberCode,
+      if (seatRow != null) 'seatRow': seatRow,
+      if (seatNumber != null) 'seatNumber': seatNumber,
     });
     return PaymentModel.intentFromJson(r.data as Map<String, dynamic>);
   }
@@ -92,12 +111,15 @@ class PaymentRemoteDataSource {
   Future<PurchaseResult> confirm({
     required PaymentIntent intent,
     required String selfiePath,
+    String? livenessSelfiePath,
     String? cardToken,
   }) async {
     final form = FormData.fromMap({
       'nonce': intent.nonce,
       if (cardToken != null) 'cardToken': cardToken,
       'selfie': await MultipartFile.fromFile(selfiePath, filename: 'selfie.jpg'),
+      if (livenessSelfiePath != null)
+        'livenessSelfie': await MultipartFile.fromFile(livenessSelfiePath, filename: 'liveness.jpg'),
     });
     final r = await _dio.post('/api/payments/intents/${intent.id}/confirm', data: form);
     final j = r.data as Map<String, dynamic>;

@@ -30,11 +30,11 @@ class StadiumSectorsView extends StatelessWidget {
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0E3B1E),
+                    color: const Color(0xFFD9F0E2),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF1F7A3D), width: 2),
+                    border: Border.all(color: AppColors.brand, width: 2),
                   ),
-                  child: const Center(child: Icon(Icons.sports_soccer, color: Color(0xFF1F7A3D), size: 40)),
+                  child: const Center(child: Icon(Icons.sports_soccer, color: AppColors.brand, size: 40)),
                 ),
               ),
               const SizedBox(width: 8),
