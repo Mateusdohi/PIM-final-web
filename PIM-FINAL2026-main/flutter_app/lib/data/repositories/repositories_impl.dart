@@ -159,3 +159,11 @@ class PaymentRepositoryImpl implements PaymentRepository {
   @override
   Future<Result<List<Ticket>>> tickets() => guard(_remote.tickets);
 }
+
+class ChatRepositoryImpl implements ChatRepository {
+  ChatRepositoryImpl(this._remote);
+  final ChatRemoteDataSource _remote;
+
+  @override
+  Future<Result<ChatReply>> send(String message) => guard(() => _remote.send(message));
+}

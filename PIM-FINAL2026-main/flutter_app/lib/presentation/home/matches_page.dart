@@ -100,6 +100,11 @@ class _MatchesViewState extends State<_MatchesView> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        tooltip: 'Assistente de dúvidas',
+        onPressed: () => context.push('/chat'),
+        child: const Icon(Icons.chat_bubble_outline),
+      ),
       body: RefreshIndicator(
         onRefresh: () => cubit.load(),
         child: BlocBuilder<MatchesCubit, MatchesState>(

@@ -73,3 +73,7 @@ abstract class BiometricAuthenticator {
 abstract class CardTokenizer {
   Future<String> tokenize(CardInput card);
 }
+
+abstract class ChatRepository {
+  Future<Result<ChatReply>> send(String message);
+}

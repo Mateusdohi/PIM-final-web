@@ -148,3 +148,17 @@ class PaymentRemoteDataSource {
     return (r.data as List).map((e) => PaymentModel.ticketFromJson(e as Map<String, dynamic>)).toList();
   }
 }
+
+class ChatRemoteDataSource {
+  ChatRemoteDataSource(this._dio);
+  final Dio _dio;
+
+  Future<ChatReply> send(String message) async {
+    final r = await _dio.post('/api/chat', data: {'message': message});
+    final data = r.data as Map<String, dynamic>;
+    return ChatReply(
+      reply: data['reply'] as String? ?? '',
+      suggestions: ((data['suggestions'] as List?) ?? const []).map((e) => e.toString()).toList(),
+    );
+  }
+}

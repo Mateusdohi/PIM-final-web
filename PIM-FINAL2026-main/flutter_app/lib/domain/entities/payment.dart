@@ -144,3 +144,13 @@ class RegisterData extends Equatable {
 enum MatchStatusFilter { all, scheduled, finished }
 
 enum MatchScope { mine, all }
+
+/// Resposta do assistente (POST /api/chat): texto e botões de dúvidas.
+class ChatReply extends Equatable {
+  const ChatReply({required this.reply, this.suggestions = const []});
+  final String reply;
+  final List<String> suggestions;
+
+  @override
+  List<Object?> get props => [reply, suggestions];
+}
