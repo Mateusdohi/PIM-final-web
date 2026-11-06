@@ -6,6 +6,10 @@ Esta pasta traz o que é preciso para ligar a API a um banco SQL Server.
 
 - `01-esquema.sql`: cria as 8 tabelas, as chaves e os índices, inclusive os 2 índices únicos filtrados de assento. Foi comparado coluna a coluna com o banco criado pelo Entity Framework Core.
 - `02-verificar.sql`: só lê o banco e mostra OK ou FALTA para o que o código usa. Não altera nada.
+- `03-regras-procedures-triggers.sql`: acrescenta restrições CHECK, chaves estrangeiras de usuário, 2 views, 5 procedures, 3 triggers (na tabela `Tickets`) e a tabela `TicketAudit`. Não muda nenhuma tabela nem coluna que a API usa. Pode ser executado mais de uma vez.
+- `00-script-completo.sql`: banco novo do zero (cria o banco, junta o `01` e o `03`).
+- `04-modelo-logico-fisico-MER.md`: MER, modelo lógico, modelo físico e lista de procedures e triggers (Etapa 7 do manual do PIM IV).
+- `05-testes-demonstracao.sql`: prova cada regra (6 testes) e apaga os dados de teste no fim.
 
 ## Segurança: o que NUNCA vai para o Git
 
