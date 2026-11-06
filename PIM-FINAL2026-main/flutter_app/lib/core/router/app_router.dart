@@ -8,6 +8,7 @@ import '../../presentation/auth/bloc/auth_bloc.dart';
 import '../../presentation/auth/face_enroll_page.dart';
 import '../../presentation/auth/login_page.dart';
 import '../../presentation/auth/register_page.dart';
+import '../../presentation/cart/cart_page.dart';
 import '../../presentation/checkout/checkout_page.dart';
 import '../../presentation/checkout/payment_confirmation_page.dart';
 import '../../presentation/checkout/plans_page.dart';
@@ -67,6 +68,7 @@ GoRouter buildRouter(AuthBloc auth) {
       GoRoute(path: '/splash', builder: (_, __) => const TeamSplashPage()),
       GoRoute(path: '/matches', builder: (_, __) => const MatchesPage()),
       GoRoute(path: '/tickets', builder: (_, __) => const TicketsPage()),
+      GoRoute(path: '/cart', builder: (_, __) => const CartPage()),
       GoRoute(path: '/profile', builder: (_, __) => const ProfilePage()),
       GoRoute(
         path: '/map',
