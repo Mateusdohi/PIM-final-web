@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 
 import '../accessibility/accessibility_settings.dart';
+import '../cart/cart_service.dart';
 import '../../data/datasources/local/token_local_ds.dart';
 import '../../data/datasources/remote/remote_datasources.dart';
 import '../../data/repositories/repositories_impl.dart';
@@ -28,6 +29,7 @@ void configureDependencies() {
       ));
 
   sl.registerLazySingleton<AccessibilitySettings>(AccessibilitySettings.new);
+  sl.registerLazySingleton<CartService>(CartService.new);
 
   // --- serviços do aparelho ---
   sl.registerLazySingleton<BiometricAuthenticator>(LocalAuthBiometric.new);

@@ -182,7 +182,7 @@ class _CheckoutViewState extends State<_CheckoutView> {
                 if (_method.isCard)
                   CardForm(controller: _card)
                 else
-                  _PixPanel(amount: state.intent?.amount ?? match.price),
+                  PixPanel(amount: state.intent?.amount ?? match.price),
                 const SizedBox(height: 20),
                 Row(children: [
                   const Icon(Icons.lock_outline, size: 16, color: AppColors.muted),
@@ -215,8 +215,8 @@ class _CheckoutViewState extends State<_CheckoutView> {
 
 /// Pagamento por Pix: o QR Code e a chave aparecem ANTES de confirmar a compra (igual ao web).
 /// Ambiente de teste: o pagamento é simulado, não há cobrança real.
-class _PixPanel extends StatelessWidget {
-  const _PixPanel({required this.amount});
+class PixPanel extends StatelessWidget {
+  const PixPanel({required this.amount});
   final double amount;
 
   static const _chave = 'ingressos@ticketfut.com.br';

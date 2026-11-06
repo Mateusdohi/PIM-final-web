@@ -12,7 +12,9 @@ import '../../domain/entities/payment.dart';
 import '../../domain/usecases/matches/match_usecases.dart';
 import '../auth/bloc/auth_bloc.dart';
 import '../accessibility/accessibility_sheet.dart';
+import '../cart/cart_button.dart';
 import '../common/widgets.dart';
+import '../../core/cart/cart_service.dart';
 import 'bloc/matches_cubit.dart';
 import 'widgets/match_card.dart';
 
@@ -52,6 +54,7 @@ class _MatchesViewState extends State<_MatchesView> {
     final user = context.select((AuthBloc b) => b.state.user);
     final team = TeamTheme.of(user?.team);
     final cubit = context.read<MatchesCubit>();
+    sl<CartService>().bindUser(user?.id); // carrinho não passa de um usuário para outro
 
     return Scaffold(
       appBar: AppBar(
@@ -62,6 +65,7 @@ class _MatchesViewState extends State<_MatchesView> {
           const Text('CHAMPIONS\nCARD', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1, height: 1.15, color: Colors.white)),
         ]),
         actions: [
+          const CartButton(),
           PopupMenuButton<String>(
             tooltip: 'Abrir menu',
             icon: const Icon(Icons.more_vert),
