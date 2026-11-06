@@ -84,7 +84,8 @@ public record FaceVerifyResult(
 public interface IFaceRecognitionClient
 {
     Task<FaceEnrollResult> EnrollAsync(byte[] image, CancellationToken ct = default);
-    Task<FaceVerifyResult> VerifyAsync(byte[] image, float[] storedEmbedding, string purpose, CancellationToken ct = default);
+    Task<FaceVerifyResult> VerifyAsync(byte[] image, float[] storedEmbedding, string purpose, CancellationToken ct = default,
+        byte[]? livenessImage = null, string? challenge = null);
 }
 
 public record ChargeRequest(decimal Amount, PaymentMethod Method, string? CardToken, string Reference, string Description);

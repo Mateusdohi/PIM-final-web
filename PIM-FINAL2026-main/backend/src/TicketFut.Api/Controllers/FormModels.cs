@@ -13,4 +13,6 @@ public class ConfirmForm
     public IFormFile Selfie { get; set; } = default!;
     public string Nonce { get; set; } = "";
     public string? CardToken { get; set; }
+    /// <summary>Segunda selfie (cabeca virada) da prova de vida. Opcional.</summary>
+    public IFormFile? LivenessSelfie { get; set; }
 }

@@ -62,7 +62,14 @@ public class PaymentsController : ControllerBase
     {
         await using var ms = new MemoryStream();
         await form.Selfie.CopyToAsync(ms, ct);
-        return Ok(await _svc.ConfirmAsync(User.GetUserId(), id, form.Nonce, ms.ToArray(), form.CardToken, ct));
+        byte[]? liveness = null;
+        if (form.LivenessSelfie is not null)
+        {
+            await using var ms2 = new MemoryStream();
+            await form.LivenessSelfie.CopyToAsync(ms2, ct);
+            liveness = ms2.ToArray();
+        }
+        return Ok(await _svc.ConfirmAsync(User.GetUserId(), id, form.Nonce, ms.ToArray(), form.CardToken, liveness, ct));
     }
     
     /// <summary>Confirmação para a WEB (sem biometria). JSON: nonce, password (reautenticação) e cardToken (opcional para Pix).</summary>

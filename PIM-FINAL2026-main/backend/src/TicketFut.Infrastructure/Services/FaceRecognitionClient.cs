@@ -18,7 +18,7 @@ public class FaceRecognitionClient : IFaceRecognitionClient
     public FaceRecognitionClient(HttpClient http) => _http = http;
 
     private record EnrollResponse(float[] Embedding, string ModelVersion);
-    private record LivenessDto(bool Checked, bool? Passed);
+    private record LivenessDto(bool Checked, bool? Passed, string? Reason = null);
     private record VerifyResponse(double Similarity, bool IsMatch, double Threshold, LivenessDto Liveness, string ModelVersion);
     private record ErrorBody(string? Code, string? Message);
 
@@ -30,10 +30,16 @@ public class FaceRecognitionClient : IFaceRecognitionClient
         return new FaceEnrollResult(body.Embedding, body.ModelVersion);
     }
 
-    public async Task<FaceVerifyResult> VerifyAsync(byte[] image, float[] storedEmbedding, string purpose, CancellationToken ct = default)
+    public async Task<FaceVerifyResult> VerifyAsync(byte[] image, float[] storedEmbedding, string purpose, CancellationToken ct = default,
+        byte[]? livenessImage = null, string? challenge = null)
     {
         var res = await PostAsync("/v1/faces/verify",
-            new { image_b64 = Convert.ToBase64String(image), embedding = storedEmbedding, purpose }, ct);
+            new
+            {
+                image_b64 = Convert.ToBase64String(image), embedding = storedEmbedding, purpose,
+                liveness_image_b64 = livenessImage is null ? null : Convert.ToBase64String(livenessImage),
+                challenge,
+            }, ct);
         var b = await res.Content.ReadFromJsonAsync<VerifyResponse>(Json, ct) ?? throw Unavailable();
         return new FaceVerifyResult(b.Similarity, b.IsMatch, b.Threshold, b.Liveness.Checked, b.Liveness.Passed, b.ModelVersion);
     }

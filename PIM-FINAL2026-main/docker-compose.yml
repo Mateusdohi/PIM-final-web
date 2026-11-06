@@ -15,6 +15,8 @@ services:
       ENVIRONMENT: ${ENVIRONMENT:-development}
       API_KEY: ${FACE_API_KEY}
       EMBEDDER: ${FACE_EMBEDDER:-insightface}
+      LIVENESS_PROVIDER: ${FACE_LIVENESS:-none}
+      LIVENESS_LEFT_SIGN: ${FACE_LEFT_SIGN:--1}
     # NÃO publicamos porta: só o backend enxerga este serviço (rede interna do compose)
     expose: ["8000"]
 
@@ -29,7 +31,9 @@ services:
       Face__BaseUrl: http://face-service:8000
       Face__ApiKey: ${FACE_API_KEY}
       Face__EncryptionKey: ${FACE_ENCRYPTION_KEY}
-    ports: ["8080:8080"]
+      Face__Policy__RequireLivenessForPayment: ${FACE_REQUIRE_LIVENESS:-false}
+    # 8080 = app mobile (emulador usa 10.0.2.2:8080); 5080 = site web (js/api.js usa localhost:5080)
+    ports: ["8080:8080", "5080:8080"]
 
 volumes:
   sqldata:

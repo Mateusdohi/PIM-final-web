@@ -20,7 +20,7 @@ async def lifespan(app: FastAPI):
     if s.is_production and s.api_key == "troque-esta-chave":
         raise RuntimeError("Defina API_KEY em produção")
     app.state.embedder = build_embedder(s.embedder, s.is_production)
-    app.state.liveness = build_liveness(s.liveness_provider)
+    app.state.liveness = build_liveness(s.liveness_provider, s)
     log.info("Embedder=%s liveness=%s", app.state.embedder.model_version, app.state.liveness.name)
     yield
 

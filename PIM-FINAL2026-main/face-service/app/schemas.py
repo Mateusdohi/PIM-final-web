@@ -19,6 +19,8 @@ class LivenessInfo(BaseModel):
     checked: bool
     passed: Optional[bool] = None
     provider: str = "none"
+    reason: Optional[str] = None  # motivo quando reprova (sem dados sensíveis)
+    yaw_delta: Optional[float] = None
 
 
 class EnrollResponse(BaseModel):
@@ -31,6 +33,8 @@ class VerifyRequest(BaseModel):
     image_b64: str
     embedding: list[float] = Field(..., description="Embedding cadastrado do usuário")
     purpose: Purpose = "payment"
+    liveness_image_b64: Optional[str] = Field(None, description="Segunda selfie, com a cabeça virada (prova de vida)")
+    challenge: Optional[Literal["left", "right"]] = Field(None, description="Lado pedido ao usuário")
 
 
 class VerifyResponse(BaseModel):

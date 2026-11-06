@@ -25,7 +25,7 @@ public record SeatDto(int Row, int Number, string Status);
 // [PIM-WEB Visual] RowSizes: cadeiras de cada fileira (fileira 1 primeiro). Campo novo e opcional: o app mobile ignora.
 public record SeatMapDto(string Sector, int Rows, int SeatsPerRow, bool Available, string? Reason, List<SeatDto> Taken, List<int>? RowSizes = null);// [PIM-WEB Cartão 4] SeatRow e SeatNumber são opcionais: o app mobile continua comprando só por setor.
 public record CreateIntentRequest(int MatchId, string Sector, string Method, string? MemberCode, int? SeatRow = null, int? SeatNumber = null);
-public record IntentDto(Guid IntentId, string Nonce, decimal Amount, decimal OriginalAmount, int DiscountPercent, DateTime ExpiresAt, string Method);
+public record IntentDto(Guid IntentId, string Nonce, decimal Amount, decimal OriginalAmount, int DiscountPercent, DateTime ExpiresAt, string Method, string? Challenge = null);
 
 // [PIM-WEB Cartão 4] O ingresso passa a informar o assento (quando houver).
 public record TicketDto(Guid Id, int MatchId, string MatchName, string Sector, string Code, decimal Amount, DateTime KickoffAt, DateTime IssuedAt, int? SeatRow = null, int? SeatNumber = null);

@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 from fastapi import APIRouter, Depends, Request
 
@@ -10,6 +12,7 @@ from ...services.image_utils import decode_image, sharpness
 from ...services.matcher import cosine_similarity
 
 router = APIRouter(prefix="/v1/faces", dependencies=[Depends(require_api_key)])
+log = logging.getLogger("face-service")
 
 
 def _analyze(request: Request, image_b64: str, settings: Settings):
@@ -40,7 +43,13 @@ def enroll(body: EnrollRequest, request: Request, settings: Settings = Depends(g
 @router.post("/verify", response_model=VerifyResponse)
 def verify(body: VerifyRequest, request: Request, settings: Settings = Depends(get_settings)):
     img, face, quality = _analyze(request, body.image_b64, settings)
-    liveness = request.app.state.liveness.check(img)
+    if body.liveness_image_b64:
+        _, turned, _ = _analyze(request, body.liveness_image_b64, settings)
+        liveness = request.app.state.liveness.check_turn(face, turned, body.challenge)
+    else:
+        liveness = request.app.state.liveness.check(img)
+    log.info("liveness provider=%s checked=%s passed=%s reason=%s yaw_delta=%s challenge=%s",
+             liveness.provider, liveness.checked, liveness.passed, liveness.reason, liveness.yaw_delta, body.challenge)
     try:
         sim = cosine_similarity(face.embedding, np.asarray(body.embedding, dtype=np.float32))
     except ValueError as e:

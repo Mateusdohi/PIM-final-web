@@ -11,6 +11,7 @@ from .errors import FaceError
 class FaceResult:
     embedding: np.ndarray
     face_size_px: int
+    yaw: float = 0.0  # giro horizontal da cabeça, em graus (usado na prova de vida)
 
 
 class Embedder(Protocol):
@@ -41,7 +42,9 @@ class InsightFaceEmbedder:
             raise FaceError("multiple_faces", "Mais de um rosto detectado. Envie uma selfie só sua")
         f = faces[0]
         x1, y1, x2, y2 = f.bbox
-        return FaceResult(np.asarray(f.normed_embedding, dtype=np.float32), int(min(x2 - x1, y2 - y1)))
+        pose = getattr(f, 'pose', None)  # [pitch, yaw, roll] estimado pelo modelo de pontos 3D
+        yaw = float(pose[1]) if pose is not None else 0.0
+        return FaceResult(np.asarray(f.normed_embedding, dtype=np.float32), int(min(x2 - x1, y2 - y1)), yaw)
 
 
 class MockEmbedder:

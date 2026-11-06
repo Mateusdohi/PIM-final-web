@@ -36,6 +36,9 @@ public class PaymentService
         _protector = protector; _gateway = gateway; _uow = uow; _clock = clock; _policy = policy; _hasher = hasher; _queue = queue;
     }
 
+    /// <summary>Lado que o usuário deve virar a cabeça nesta compra ("left"/"right"), derivado do id da intenção.</summary>
+    public static string ChallengeFor(Guid intentId) => (intentId.ToByteArray()[0] & 1) == 0 ? "left" : "right";
+
     /// <summary>Passo 1 do checkout: valida regras (setor, sócio), calcula o valor e emite o nonce.</summary>
     public async Task<IntentDto> CreateIntentAsync(Guid userId, CreateIntentRequest req, CancellationToken ct)
     {
@@ -101,13 +104,13 @@ public class PaymentService
         {
             throw AppException.Conflict("seat_taken", "Esse assento acabou de ser reservado por outra pessoa. Escolha outro.");
         }
-        return new IntentDto(intent.Id, intent.Nonce, intent.Amount, intent.OriginalAmount, intent.DiscountPercent, intent.ExpiresAt, method.ToString());
+        return new IntentDto(intent.Id, intent.Nonce, intent.Amount, intent.OriginalAmount, intent.DiscountPercent, intent.ExpiresAt, method.ToString(), ChallengeFor(intent.Id));
     }
 
     /// <summary>
     /// Passo 2: confirma com selfie. O servidor decide — nunca confia em "biometria OK" vinda do app.
     /// </summary>
-    public async Task<ConfirmResponse> ConfirmAsync(Guid userId, Guid intentId, string nonce, byte[] selfie, string? cardToken, CancellationToken ct)
+    public async Task<ConfirmResponse> ConfirmAsync(Guid userId, Guid intentId, string nonce, byte[] selfie, string? cardToken, byte[]? livenessSelfie, CancellationToken ct)
     {
         var now = _clock.UtcNow;
         var intent = await _payments.GetIntentAsync(intentId, ct);
@@ -122,6 +125,8 @@ public class PaymentService
         }
         if (!FixedTimeEquals(intent.Nonce, nonce))
             throw AppException.Forbidden("invalid_nonce", "Requisição inválida.");
+        if (livenessSelfie is not null && (livenessSelfie.Length == 0 || livenessSelfie.Length > _policy.MaxImageBytes))
+            throw AppException.Validation("invalid_image", "Selfie inválida ou grande demais.");
         if (selfie.Length == 0 || selfie.Length > _policy.MaxImageBytes)
             throw AppException.Validation("invalid_image", "Selfie inválida ou grande demais.");
         if (intent.Method != PaymentMethod.Pix && string.IsNullOrWhiteSpace(cardToken))
@@ -141,7 +146,8 @@ public class PaymentService
         intent.FaceAttempts++;
         await _uow.SaveChangesAsync(ct);
 
-        var verify = await _faceClient.VerifyAsync(selfie, _protector.Unprotect(template.EncryptedEmbedding), "payment", ct);
+        var verify = await _faceClient.VerifyAsync(selfie, _protector.Unprotect(template.EncryptedEmbedding), "payment", ct,
+            livenessSelfie, livenessSelfie is null ? null : ChallengeFor(intent.Id));
         await _payments.AddFaceLogAsync(new FaceVerificationLog
         {
             UserId = userId, PaymentIntentId = intent.Id, Purpose = "payment",
@@ -151,7 +157,14 @@ public class PaymentService
         if (_policy.RequireLivenessForPayment && !verify.LivenessChecked)
         {
             await _uow.SaveChangesAsync(ct);
-            throw new AppException(503, "liveness_unavailable", "Verificação de prova de vida indisponível. Tente mais tarde.");
+            throw livenessSelfie is null
+                ? AppException.Validation("liveness_required", "Faça a prova de vida: tire a segunda selfie virando a cabeça.")
+                : new AppException(503, "liveness_unavailable", "Verificação de prova de vida indisponível. Tente mais tarde.");
+        }
+        if (verify.LivenessChecked && verify.LivenessPassed == false)
+        {
+            await _uow.SaveChangesAsync(ct);
+            throw AppException.Forbidden("liveness_failed", "Não foi possível confirmar a prova de vida. Vire a cabeça para o lado pedido e tente de novo.");
         }
         if (!verify.IsMatch)
         {
