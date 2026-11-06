@@ -154,3 +154,28 @@ class ChatReply extends Equatable {
   @override
   List<Object?> get props => [reply, suggestions];
 }
+
+/// Linha da área admin (GET /api/admin/tickets): um ingresso vendido, sem e-mail nem CPF.
+class AdminTicket extends Equatable {
+  const AdminTicket({
+    required this.matchName,
+    required this.sector,
+    required this.code,
+    required this.amount,
+    required this.issuedAt,
+    required this.userId,
+    this.seatRow,
+    this.seatNumber,
+  });
+  final String matchName;
+  final String sector;
+  final String code;
+  final double amount;
+  final DateTime issuedAt;
+  final String userId;
+  final int? seatRow;
+  final int? seatNumber;
+
+  @override
+  List<Object?> get props => [code];
+}

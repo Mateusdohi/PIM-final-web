@@ -10,6 +10,7 @@ class User extends Equatable {
     required this.planName,
     required this.memberCode,
     required this.hasFace,
+    this.role = 'User',
   });
 
   final String id;
@@ -20,9 +21,11 @@ class User extends Equatable {
   final String planName;
   final String? memberCode;
   final bool hasFace;
+  final String role; // 'Admin' ou 'User'
 
   bool get isMember => planPercent > 0;
+  bool get isAdmin => role == 'Admin';
 
   @override
-  List<Object?> get props => [id, name, email, team, planPercent, planName, memberCode, hasFace];
+  List<Object?> get props => [id, name, email, team, planPercent, planName, memberCode, hasFace, role];
 }

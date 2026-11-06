@@ -162,3 +162,25 @@ class ChatRemoteDataSource {
     );
   }
 }
+
+class AdminRemoteDataSource {
+  AdminRemoteDataSource(this._dio);
+  final Dio _dio;
+
+  Future<List<AdminTicket>> tickets() async {
+    final r = await _dio.get('/api/admin/tickets');
+    return (r.data as List).map((e) {
+      final j = e as Map<String, dynamic>;
+      return AdminTicket(
+        matchName: j['matchName'] as String,
+        sector: j['sector'] as String,
+        code: j['code'] as String,
+        amount: (j['amount'] as num).toDouble(),
+        issuedAt: DateTime.parse(j['issuedAt'] as String),
+        userId: j['userId'] as String,
+        seatRow: j['seatRow'] as int?,
+        seatNumber: j['seatNumber'] as int?,
+      );
+    }).toList();
+  }
+}

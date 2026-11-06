@@ -41,10 +41,12 @@ void configureDependencies() {
   sl.registerLazySingleton(() => MatchRemoteDataSource(sl()));
   sl.registerLazySingleton(() => PaymentRemoteDataSource(sl()));
   sl.registerLazySingleton(() => ChatRemoteDataSource(sl()));
+  sl.registerLazySingleton(() => AdminRemoteDataSource(sl()));
   sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl(), sl()));
   sl.registerLazySingleton<MatchRepository>(() => MatchRepositoryImpl(sl()));
   sl.registerLazySingleton<PaymentRepository>(() => PaymentRepositoryImpl(sl()));
   sl.registerLazySingleton<ChatRepository>(() => ChatRepositoryImpl(sl()));
+  sl.registerLazySingleton<AdminRepository>(() => AdminRepositoryImpl(sl()));
 
   // --- use cases ---
   sl.registerLazySingleton(() => LoginUseCase(sl()));

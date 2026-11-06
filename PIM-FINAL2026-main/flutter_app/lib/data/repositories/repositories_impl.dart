@@ -167,3 +167,11 @@ class ChatRepositoryImpl implements ChatRepository {
   @override
   Future<Result<ChatReply>> send(String message) => guard(() => _remote.send(message));
 }
+
+class AdminRepositoryImpl implements AdminRepository {
+  AdminRepositoryImpl(this._remote);
+  final AdminRemoteDataSource _remote;
+
+  @override
+  Future<Result<List<AdminTicket>>> tickets() => guard(_remote.tickets);
+}

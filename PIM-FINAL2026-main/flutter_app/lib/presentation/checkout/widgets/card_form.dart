@@ -3,7 +3,10 @@ import 'package:flutter/services.dart';
 
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/validators.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../domain/entities/payment.dart';
+import '../../auth/bloc/auth_bloc.dart';
 
 class CardFormController {
   final formKey = GlobalKey<FormState>();
@@ -29,11 +32,29 @@ class CardForm extends StatelessWidget {
   const CardForm({super.key, required this.controller});
   final CardFormController controller;
 
+  // Cartão de teste do gateway simulado (final 1111 aprova, 0000 recusa). Atalho só para o Admin.
+  void _fillTest(String holder) {
+    controller.number.text = '4111 1111 1111 1111';
+    controller.expiry.text = '10/30';
+    controller.cvv.text = '123';
+    if (controller.holder.text.trim().isEmpty) controller.holder.text = holder;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final user = context.select((AuthBloc b) => b.state.user);
     return Form(
       key: controller.formKey,
       child: Column(children: [
+        if (user != null && user.isAdmin)
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: () => _fillTest(user.name.toUpperCase()),
+              icon: const Icon(Icons.credit_card, size: 16),
+              label: const Text('PREENCHER COM O CARTÃO DE TESTE'),
+            ),
+          ),
         TextFormField(
           controller: controller.number,
           keyboardType: TextInputType.number,

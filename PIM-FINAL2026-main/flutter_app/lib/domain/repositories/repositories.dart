@@ -74,6 +74,10 @@ abstract class CardTokenizer {
   Future<String> tokenize(CardInput card);
 }
 
+abstract class AdminRepository {
+  Future<Result<List<AdminTicket>>> tickets();
+}
+
 abstract class ChatRepository {
   Future<Result<ChatReply>> send(String message);
 }

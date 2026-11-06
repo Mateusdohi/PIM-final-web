@@ -76,6 +76,10 @@ class _MatchesViewState extends State<_MatchesView> {
                   context.push('/tickets');
                 case 'profile':
                   context.push('/profile');
+                case 'about':
+                  context.push('/about');
+                case 'admin':
+                  context.push('/admin');
                 case 'access':
                   showAccessibilitySheet(context);
                 case 'plans':
@@ -91,6 +95,8 @@ class _MatchesViewState extends State<_MatchesView> {
             itemBuilder: (_) => [
               const PopupMenuItem(value: 'tickets', child: Text('Meus ingressos')),
               const PopupMenuItem(value: 'profile', child: Text('Perfil')),
+              const PopupMenuItem(value: 'about', child: Text('Quem somos')),
+              if (user != null && user.isAdmin) const PopupMenuItem(value: 'admin', child: Text('Área Admin')),
               const PopupMenuItem(value: 'access', child: Text('Acessibilidade')),
               if (user != null && !user.isMember) const PopupMenuItem(value: 'plans', child: Text('Quero ser sócio')),
               PopupMenuItem(value: 'face', child: Text(user?.hasFace == true ? 'Refazer cadastro facial' : 'Cadastrar rosto')),

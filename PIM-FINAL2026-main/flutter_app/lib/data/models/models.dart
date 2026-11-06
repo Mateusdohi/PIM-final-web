@@ -14,6 +14,7 @@ class UserModel {
         planName: j['planName'] as String,
         memberCode: j['memberCode'] as String?,
         hasFace: j['hasFace'] as bool,
+        role: j['role'] as String? ?? 'User',
       );
 }
 
