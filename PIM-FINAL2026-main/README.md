@@ -16,7 +16,7 @@ O sistema tem um **site**, um **aplicativo Android (Flutter)**, uma **API .NET 8
 
 ## Estrutura do repositório
 
-Tudo fica na pasta `PIM-FINAL2026-main`.
+Estas são as pastas do projeto.
 
 | Pasta ou arquivo | O que é |
 |---|---|
@@ -30,7 +30,7 @@ Tudo fica na pasta `PIM-FINAL2026-main`.
 
 ## Como rodar
 
-**1. Servidor (banco, API e serviço facial)**, na pasta `PIM-FINAL2026-main`:
+**1. Servidor (banco, API e serviço facial)**, nesta pasta:
 
 ```bash
 cp .env.example .env        # troque as senhas e as chaves
@@ -102,17 +102,17 @@ Flutter App ──HTTPS/JWT──▶ Backend C# (.NET 8) ──rede interna + AP
 ## Rodar sem Docker
 
 ```bash
-cd PIM-FINAL2026-main/face-service
+cd face-service
 pip install -r requirements-dev.txt
 EMBEDDER=mock uvicorn app.main:app          # "mock" não reconhece rostos de verdade; só para desenvolvimento
 ```
 
 ```bash
-cd PIM-FINAL2026-main/backend/src/TicketFut.Api
+cd backend/src/TicketFut.Api
 dotnet run                                  # veja appsettings.Development.json
 ```
 
-Depois configure o Flutter em `PIM-FINAL2026-main/flutter_app/platform_setup/README.md`.
+Depois configure o Flutter em `flutter_app/platform_setup/README.md`.
 
 ## Como as regras do site foram levadas para o aplicativo
 
