@@ -82,3 +82,64 @@ cd face-service && pytest                   # testes do serviço facial
 | 8 – Nuvem e DevOps | plano descrito no relatório (`docker-compose.yml` e os Dockerfiles são a base) |
 
 As demais etapas (organização, planejamento, responsabilidade social e gerenciamento ágil) estão no documento do PIM, e não neste repositório.
+
+---
+
+# Detalhes técnicos do servidor e do aplicativo
+
+## Como as peças se falam
+
+```
+Flutter App ──HTTPS/JWT──▶ Backend C# (.NET 8) ──rede interna + API key──▶ Microsserviço Python (FastAPI)
+                                │                                              │
+                           SQL Server                                  compara rostos (ArcFace)
+                    (usuários, partidas, pagamentos,                   não guarda nada
+                     embedding faciais criptografados)
+```
+
+**O aplicativo nunca fala com o Python.** Só a API em C# chama o serviço de reconhecimento facial e decide o resultado. O site usa a mesma API.
+
+## Rodar sem Docker
+
+```bash
+cd PIM-FINAL2026-main/face-service
+pip install -r requirements-dev.txt
+EMBEDDER=mock uvicorn app.main:app          # "mock" não reconhece rostos de verdade; só para desenvolvimento
+```
+
+```bash
+cd PIM-FINAL2026-main/backend/src/TicketFut.Api
+dotnet run                                  # veja appsettings.Development.json
+```
+
+Depois configure o Flutter em `PIM-FINAL2026-main/flutter_app/platform_setup/README.md`.
+
+## Como as regras do site foram levadas para o aplicativo
+
+- Times, cores, textos de boas-vindas e notícias por time ficam em `flutter_app/lib/core/theme/team_theme.dart`.
+- Partidas, preços e horários vêm do `DbSeeder` (as datas de maio de 2026 já passaram; o seed reaproveita o espaçamento a partir do próximo domingo).
+- Planos Bronze, Prata e Ouro dão 5%, 10% e 20% de desconto; o **código de sócio** (3 letras e 3 dígitos) é exigido na compra.
+- Mapa da arena: **o mandante nunca fica no setor Leste, e o visitante só fica no Leste** (aplicado no servidor e na tela).
+- A aba do estádio mostra a localização (OpenStreetMap) e abre a rota.
+
+## Biometria: o que cada camada garante
+
+| Fluxo | Mecanismo | Observação |
+|---|---|---|
+| Login rápido | `local_auth` destrava o refresh token guardado no Keychain ou Keystore | Conveniência; o servidor não "vê" a biometria |
+| Cadastro facial | selfie → API em C# → Python → **embedding** criptografado (AES-GCM) | A foto não é armazenada |
+| Confirmar compra | biometria nativa **+ selfie verificada no servidor** | O servidor decide; o aplicativo não consegue "forjar" a aprovação |
+
+Em compras, o servidor exige o `nonce` da intenção, limita as tentativas (5), expira a intenção em 10 minutos e só então cobra.
+
+## Antes de ir para produção
+
+1. **Prova de vida:** o serviço facial tem um provedor por giro de cabeça (`LIVENESS_PROVIDER=head_turn`), mas ele vem **desligado** (`none`). Ele barra foto impressa ou imagem parada, mas não um vídeo gravado. Para ligar: `FACE_LIVENESS=head_turn` e `FACE_REQUIRE_LIVENESS=true` no `.env`.
+2. **Gateway de pagamento é sandbox** (`SandboxPaymentGateway`), e o aplicativo usa `SandboxCardTokenizer`. Troque pelo SDK de um gateway real (tokenização no aplicativo); número do cartão e CVV nunca devem chegar ao servidor. Cartões terminados em `0000` simulam recusa.
+3. **Limiares** (`THRESHOLD_LOGIN` e `THRESHOLD_PAYMENT`) precisam ser calibrados com dados reais (falsa aceitação contra falsa rejeição). A "porcentagem" devolvida é a similaridade de cosseno, não a probabilidade de ser a mesma pessoa.
+4. **LGPD:** dado biométrico é sensível. Há consentimento no cadastro e a rota `DELETE /api/auth/face` para exclusão; revise política de privacidade, retenção e base legal.
+5. HTTPS obrigatório, segredos fora do repositório (`.env` e user-secrets), migrações do EF Core em vez de `EnsureCreated`. Os preços dos planos (`MemberPlans`) são valores de exemplo.
+
+## Melhorias em relação ao site original
+
+Senhas com hash (o original guardava em texto puro), nenhum dado de cartão ou CVV armazenado, validação de CPF, limite de requisições no login, JWT com renovação rotativa e tratamento de e-mail e CPF duplicados no servidor.
