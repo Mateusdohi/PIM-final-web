@@ -1,7 +1,7 @@
 # TicketFut — Flutter + .NET + Python (reconhecimento facial)
 
-Versão mobile do projeto web `PIM-FINAL2026`: login, partidas, mapa da arena, pagamento e **biometria**
-(login rápido, cadastro facial e confirmação de compra).
+Servidor (API + banco + serviço facial) e aplicativo mobile do projeto `PIM-FINAL2026`: login, partidas, mapa da arena, pagamento e **biometria**
+(login rápido, cadastro facial e confirmação de compra). Para a visão geral do sistema, veja o `README.md` da raiz do repositório.
 
 ```
 Flutter App ──HTTPS/JWT──▶ Backend C# (.NET 8) ──rede interna + API key──▶ Microsserviço Python (FastAPI)
@@ -49,8 +49,8 @@ Sem Docker: `cd face-service && pip install -r requirements-dev.txt && EMBEDDER=
 Em compras, o backend exige o `nonce` da intenção, limita tentativas (5), expira a intenção em 10 min e só então cobra.
 
 ## ⚠️ Antes de ir para produção
-1. **Prova de vida (liveness) NÃO está implementada** (`face-service/app/services/liveness.py` é um ponto de extensão).
-   Sem ela, uma foto impressa ou na tela pode passar. Implemente um provedor e ligue `Face__Policy__RequireLivenessForPayment=true`.
+1. **Prova de vida:** o serviço facial tem um provedor por giro de cabeça (`LIVENESS_PROVIDER=head_turn`), mas ele vem **desligado** (`none`).
+   Ele barra foto impressa ou imagem parada, mas não um vídeo gravado. Para ligar: `FACE_LIVENESS=head_turn` e `FACE_REQUIRE_LIVENESS=true` no `.env`.
 2. **Gateway de pagamento é sandbox** (`SandboxPaymentGateway`) e o app usa `SandboxCardTokenizer`. Troque pelo SDK de um
    gateway real (tokenização no app); cartão/CVV nunca devem chegar ao seu backend. Cartões terminados em `0000` simulam recusa.
 3. **Limiares** (`THRESHOLD_LOGIN/PAYMENT`) precisam ser calibrados com dados reais (falsa aceitação × falsa rejeição).

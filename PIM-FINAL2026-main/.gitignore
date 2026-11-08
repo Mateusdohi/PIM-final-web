@@ -7,3 +7,9 @@ build/
 __pycache__/
 .pytest_cache/
 .venv/
+
+# Arquivos de IDE
+.vs/
+.idea/
+*.suo
+*.user
