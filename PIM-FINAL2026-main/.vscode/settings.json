@@ -1,0 +1,15 @@
+{
+  "liveServer.settings.root": "/aplicação web",
+  "liveServer.settings.port": 5500,
+  "liveServer.settings.ignoreFiles": [
+    ".vscode/**",
+    "backend/**",
+    "flutter_app/**",
+    "banco/**",
+    "ferramentas/**",
+    "**/*.cs",
+    "**/*.dart",
+    "**/*.sql",
+    "**/*.md"
+  ]
+}
