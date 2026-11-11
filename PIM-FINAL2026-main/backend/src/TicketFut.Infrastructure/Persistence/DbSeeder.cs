@@ -24,11 +24,10 @@ public static class DbSeeder
             var s = await db.Stadiums.ToDictionaryAsync(x => x.TeamSlug, x => x.Id);
 
             // Mesmas partidas, preços e horários do app web. As datas originais (maio/2026) já passaram,
-            // então reaproveitamos o espaçamento a partir do próximo domingo. Horários em Brasília (UTC-3).
-            var today = DateTime.UtcNow.Date;
-            var daysToSunday = (7 - (int)today.DayOfWeek) % 7;
-            var nextSunday = today.AddDays(daysToSunday == 0 ? 7 : daysToSunday);
-            DateTime At(int dayOffset, int hour, int minute) => nextSunday.AddDays(dayOffset).AddHours(hour + 3).AddMinutes(minute);
+            // então usamos datas fixas em dezembro de 2026. Horários em Brasília (UTC-3).
+            // Jogos em dezembro de 2026: dias 15, 16, 22, 23, 29 e 30.
+            var baseDate = new DateTime(2026, 12, 15, 0, 0, 0, DateTimeKind.Utc);
+            DateTime At(int dayOffset, int hour, int minute) => baseDate.AddDays(dayOffset).AddHours(hour + 3).AddMinutes(minute);
 
             db.Matches.AddRange(
                 new Match { HomeTeam = "palmeiras", AwayTeam = "flamengo", BasePrice = 180, KickoffAt = At(0, 16, 0), StadiumId = s["palmeiras"] },

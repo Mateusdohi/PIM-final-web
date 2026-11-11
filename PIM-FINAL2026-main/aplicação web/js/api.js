@@ -1,9 +1,19 @@
 // [PIM-WEB Cartão 8] Cliente da API. Token só em memória (sem localStorage).
 // Endereço da API. Para testar contra outra porta: abra o site com ?api=http://localhost:5081
-const API_URL = (() => {
-  const p = new URLSearchParams(location.search).get('api');
-  return p && /^http:\/\/(localhost|127\.0\.0\.1):\d{2,5}$/.test(p) ? p : 'http://localhost:5080';
-})();
+// Sem ?api=, o site procura sozinho a API que tem captcha (5080 ou 5081), então abre direto no Live Server.
+const _apiParam = new URLSearchParams(location.search).get('api');
+let API_URL = _apiParam && /^http:\/\/(localhost|127\.0\.0\.1):\d{2,5}$/.test(_apiParam) ? _apiParam : null;
+let _apiPronta = null;
+async function _descobrirApi() {
+  if (API_URL) return;
+  for (const base of ['http://localhost:5080', 'http://localhost:5081']) {
+    try {
+      const r = await fetch(base + '/api/auth/captcha', { signal: AbortSignal.timeout(2500) });
+      if (r.ok) { API_URL = base; return; }
+    } catch { /* tenta a próxima */ }
+  }
+  API_URL = 'http://localhost:5080';
+}
 let _accessToken = null;
 
 class ApiErro extends Error {
@@ -23,6 +33,8 @@ async function apiFetch(caminho, { metodo = 'GET', corpo } = {}) {
 
   let resp;
   try {
+    _apiPronta = _apiPronta || _descobrirApi();
+    await _apiPronta;
     resp = await fetch(API_URL + caminho, {
       method: metodo,
       headers,

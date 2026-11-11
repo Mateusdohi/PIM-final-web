@@ -108,11 +108,10 @@ Entidades, atributos e relacionamentos, sem detalhes de SQL Server.
 |---|---|---|
 | Estádio | nome, cidade, time, latitude, longitude | 1 estádio recebe N partidas |
 | Partida | time da casa, visitante, preço base, data e hora | pertence a 1 estádio; tem N pagamentos e N ingressos |
-| Usuário | nome, CPF, e-mail, senha (hash), time, plano de sócio, papel, código de sócio | faz N pagamentos; possui N ingressos; tem 0 ou 1 rosto cadastrado; tem N tokens |
+| Usuário | nome, CPF, e-mail, senha (hash), time, plano de sócio, papel, código de sócio, dados do autenticador (MFA) | faz N pagamentos; possui N ingressos; tem N códigos de recuperação do MFA; tem N tokens |
 | Pagamento (intenção) | setor, fileira, cadeira, forma, valor original, desconto, valor final, status, validade | de 1 usuário, para 1 partida; emite 0 ou 1 ingresso |
 | Ingresso | código, setor, fileira, cadeira, valor, data de emissão | de 1 usuário, para 1 partida; vem de 1 pagamento |
-| Rosto cadastrado | vetor facial criptografado, versão do modelo, data do consentimento | de 1 usuário |
-| Registro de verificação facial | finalidade, similaridade, acertou ou não | de 1 usuário |
+| Código de recuperação do MFA | hash do código, data de uso, data de criação | de 1 usuário |
 | Token de renovação | hash, validade, data de revogação | de 1 usuário |
 | Auditoria de ingresso | ingresso, ação, data | registra cada ingresso emitido |
 

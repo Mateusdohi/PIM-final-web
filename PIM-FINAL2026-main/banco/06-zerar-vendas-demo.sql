@@ -1,6 +1,6 @@
 -- Champions Card / TicketFut - ZERAR AS VENDAS (so para preparar a demonstracao)
--- Apaga: ingressos, pagamentos, auditoria e registros de verificacao facial.
--- Mantem: usuarios (logins), rosto cadastrado, estadios e partidas.
+-- Apaga: ingressos, pagamentos e auditoria.
+-- Mantem: usuarios (logins e MFA), estadios e partidas.
 -- Faca um backup antes (BACKUP DATABASE). NAO use em banco com dados reais.
 -- Executar com: sqlcmd -S <servidor> -E -d <banco> -I -b -i 06-zerar-vendas-demo.sql
 SET QUOTED_IDENTIFIER ON;
