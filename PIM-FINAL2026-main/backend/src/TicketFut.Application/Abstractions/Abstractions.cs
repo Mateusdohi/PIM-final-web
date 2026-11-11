@@ -16,11 +16,12 @@ public interface IUserRepository
     Task AddAsync(User user, CancellationToken ct = default);
 }
 
-public interface IFaceTemplateRepository
+public interface IMfaRecoveryRepository
 {
-    Task<FaceTemplate?> GetByUserAsync(Guid userId, CancellationToken ct = default);
-    Task UpsertAsync(FaceTemplate template, CancellationToken ct = default);
-    Task DeleteByUserAsync(Guid userId, CancellationToken ct = default);
+    Task<List<MfaRecoveryCode>> ListUnusedAsync(Guid userId, CancellationToken ct = default);
+    /// <summary>Apaga todos os códigos do usuário e grava os novos (hashes).</summary>
+    Task ReplaceAllAsync(Guid userId, IEnumerable<string> hashes, CancellationToken ct = default);
+    Task DeleteAllAsync(Guid userId, CancellationToken ct = default);
 }
 
 public interface IRefreshTokenRepository
@@ -44,10 +45,11 @@ public interface IPaymentRepository
     Task<List<Ticket>> ListTicketsAsync(Guid userId, CancellationToken ct = default);
     // [PIM-WEB Admin] Lista todos os ingressos vendidos, para a área admin.
     Task<List<Ticket>> ListAllTicketsAsync(CancellationToken ct = default);
-    Task AddFaceLogAsync(FaceVerificationLog log, CancellationToken ct = default);
     // [PIM-WEB Cartão 4] Consultas de assentos: lista os ocupados, confere se um assento está tomado e libera reservas vencidas.
     Task<List<TakenSeat>> ListTakenSeatsAsync(int matchId, Sector sector, DateTime now, CancellationToken ct = default);
     Task<bool> IsSeatTakenAsync(int matchId, Sector sector, int row, int number, DateTime now, CancellationToken ct = default);
+    /// <summary>Cancela a reserva pendente da PRÓPRIA pessoa para este assento (ex.: errou o código e tenta de novo).</summary>
+    Task CancelOwnPendingSeatIntentsAsync(Guid userId, int matchId, Sector sector, int row, int number, CancellationToken ct = default);
     Task ExpireStaleSeatIntentsAsync(int matchId, Sector sector, int row, int number, DateTime now, CancellationToken ct = default);
 }
 
@@ -70,22 +72,25 @@ public interface ITokenService
     string HashRefreshToken(string plain);
 }
 
-public interface IEmbeddingProtector
+/// <summary>Protege (AES-256-GCM) o segredo do autenticador guardado no banco.</summary>
+public interface ISecretProtector
 {
-    byte[] Protect(float[] embedding);
-    float[] Unprotect(byte[] protectedData);
+    byte[] Protect(string secret);
+    string Unprotect(byte[] protectedData);
 }
 
-public record FaceEnrollResult(float[] Embedding, string ModelVersion);
-public record FaceVerifyResult(
-    double Similarity, bool IsMatch, double Threshold,
-    bool LivenessChecked, bool? LivenessPassed, string ModelVersion);
+/// <summary>Gera o QR Code (SVG em data URI) a partir do texto otpauth://. Feito no servidor: o segredo não sai para serviços externos.</summary>
+public interface IQrService { string ToSvgDataUri(string text); }
 
-public interface IFaceRecognitionClient
+public record CaptchaChallenge(string Id, string ImageDataUri);
+
+/// <summary>Captcha próprio: imagem SVG gerada pela API, resposta guardada na memória por poucos minutos e de uso único.</summary>
+public interface ICaptchaService
 {
-    Task<FaceEnrollResult> EnrollAsync(byte[] image, CancellationToken ct = default);
-    Task<FaceVerifyResult> VerifyAsync(byte[] image, float[] storedEmbedding, string purpose, CancellationToken ct = default,
-        byte[]? livenessImage = null, string? challenge = null);
+    bool Enabled { get; }
+    CaptchaChallenge Generate();
+    /// <summary>Confere e consome o desafio (vale uma única vez). Com o captcha desligado, sempre devolve true.</summary>
+    bool Validate(string? id, string? answer);
 }
 
 public record ChargeRequest(decimal Amount, PaymentMethod Method, string? CardToken, string Reference, string Description);
@@ -94,11 +99,10 @@ public record ChargeResult(bool Approved, string Reference, string? PixPayload, 
 /// <summary>Dados de cartão NUNCA chegam ao backend: só um token gerado pelo SDK do gateway.</summary>
 public interface IPaymentGateway { Task<ChargeResult> ChargeAsync(ChargeRequest request, CancellationToken ct = default); }
 
-public class FacePolicy
+public class PaymentPolicy
 {
-    public bool RequireLivenessForPayment { get; set; }
-    public int MaxFaceAttemptsPerIntent { get; set; } = 5;
-    public int MaxImageBytes { get; set; } = 5 * 1024 * 1024;
+    /// <summary>Tentativas de código MFA por compra antes de a compra ser cancelada.</summary>
+    public int MaxConfirmAttemptsPerIntent { get; set; } = 5;
 }
 
 // [PIM-WEB Cartão 7] Portão da fila virtual: com a fila ligada, só compra quem foi liberado para a partida.

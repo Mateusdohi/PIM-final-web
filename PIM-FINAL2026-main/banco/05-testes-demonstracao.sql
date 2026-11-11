@@ -18,7 +18,7 @@ SET @match = SCOPE_IDENTITY();
 INSERT INTO Users (Id, Name, Cpf, Email, PasswordHash, Team, [Plan], Role, MemberCode, CreatedAt)
 VALUES (@user, N'Usuario Teste Banco', N'99999999999', N'zz-teste-banco@teste.local', N'x', N'TimeA', 10, N'User', NULL, SYSUTCDATETIME());
 INSERT INTO PaymentIntents (Id, UserId, MatchId, Sector, SeatRow, SeatNumber, Method, OriginalAmount, DiscountPercent, Amount,
-                            Status, Nonce, ExpiresAt, FaceAttempts, CreatedAt)
+                            Status, Nonce, ExpiresAt, ConfirmAttempts, CreatedAt)
 VALUES (@intent, @user, @match, N'Norte', 3, 7, N'Pix', 100, 10, 90, N'Pending', N'n1', DATEADD(minute, 10, SYSUTCDATETIME()), 0, SYSUTCDATETIME());
 
 -- ---------- 1) trigger de auditoria ----------

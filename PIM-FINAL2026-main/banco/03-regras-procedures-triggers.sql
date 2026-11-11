@@ -85,8 +85,6 @@ IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_Tickets_Users_Us
     ALTER TABLE dbo.Tickets ADD CONSTRAINT FK_Tickets_Users_UserId FOREIGN KEY (UserId) REFERENCES dbo.Users (Id);
 IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_RefreshTokens_Users_UserId')
     ALTER TABLE dbo.RefreshTokens ADD CONSTRAINT FK_RefreshTokens_Users_UserId FOREIGN KEY (UserId) REFERENCES dbo.Users (Id) ON DELETE CASCADE;
-IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_FaceVerificationLogs_Users_UserId')
-    ALTER TABLE dbo.FaceVerificationLogs ADD CONSTRAINT FK_FaceVerificationLogs_Users_UserId FOREIGN KEY (UserId) REFERENCES dbo.Users (Id);
 GO
 
 -- =====================================================================

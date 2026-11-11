@@ -7,12 +7,13 @@ SET NOCOUNT ON;
 SELECT 'Tabela' AS tipo, v.n AS item,
        CASE WHEN OBJECT_ID(v.n, 'U') IS NULL THEN 'FALTA' ELSE 'OK' END AS situacao
 FROM (VALUES ('Users'),('Stadiums'),('Matches'),('PaymentIntents'),('Tickets'),
-             ('FaceTemplates'),('RefreshTokens'),('FaceVerificationLogs')) v(n);
+             ('MfaRecoveryCodes'),('RefreshTokens')) v(n);
 
 -- 2) Colunas acrescentadas pelo projeto web (papel, plano, assento)
 SELECT 'Coluna' AS tipo, v.t + '.' + v.c AS item,
        CASE WHEN COL_LENGTH(v.t, v.c) IS NULL THEN 'FALTA' ELSE 'OK' END AS situacao
 FROM (VALUES ('Users','Role'),('Users','Plan'),('Users','MemberCode'),
+             ('Users','MfaEnabled'),('Users','MfaSecretProtected'),('Users','MfaLastStep'),('PaymentIntents','ConfirmAttempts'),
              ('PaymentIntents','SeatRow'),('PaymentIntents','SeatNumber'),
              ('Tickets','SeatRow'),('Tickets','SeatNumber')) v(t, c);
 

@@ -19,7 +19,8 @@ public class PaymentIntent
     /// <summary>Segredo entregue ao app ao criar a intenção e exigido na confirmação.</summary>
     public string Nonce { get; set; } = "";
     public DateTime ExpiresAt { get; set; }
-    public int FaceAttempts { get; set; }
+    /// <summary>Tentativas de código MFA nesta compra (limite por intenção).</summary>
+    public int ConfirmAttempts { get; set; }
     public string? GatewayReference { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? PaidAt { get; set; }
@@ -40,16 +41,4 @@ public class Ticket
     public decimal Amount { get; set; }
     public DateTime IssuedAt { get; set; } = DateTime.UtcNow;
     public Match Match { get; set; } = null!;
-}
-
-/// <summary>Trilha de auditoria das verificações faciais (sem imagens).</summary>
-public class FaceVerificationLog
-{
-    public Guid Id { get; set; } = Guid.NewGuid();
-    public Guid UserId { get; set; }
-    public Guid? PaymentIntentId { get; set; }
-    public string Purpose { get; set; } = "";
-    public double Similarity { get; set; }
-    public bool IsMatch { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

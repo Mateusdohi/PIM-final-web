@@ -9,13 +9,12 @@ import '../../core/utils/validators.dart';
 import '../../domain/entities/payment.dart';
 import '../../domain/usecases/checkout/checkout_usecases.dart';
 import '../auth/bloc/auth_bloc.dart';
-import '../auth/face_capture_page.dart';
 import '../checkout/checkout_page.dart' show PixPanel;
 import '../checkout/widgets/card_form.dart';
 import '../common/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Carrinho: vários assentos, uma biometria e uma selfie, e cada assento vira uma compra na API.
+/// Carrinho: vários assentos, um código do autenticador (MFA), e cada assento vira uma compra na API.
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
 
@@ -28,6 +27,7 @@ class _CartPageState extends State<CartPage> {
   final _card = CardFormController();
   final _memberCode = TextEditingController();
   final _memberKey = GlobalKey<FormState>();
+  final _mfaCode = TextEditingController();
   PaymentMethod _method = PaymentMethod.credit;
   bool _busy = false;
   String _status = '';
@@ -39,6 +39,7 @@ class _CartPageState extends State<CartPage> {
   void dispose() {
     _card.dispose();
     _memberCode.dispose();
+    _mfaCode.dispose();
     super.dispose();
   }
 
@@ -49,27 +50,23 @@ class _CartPageState extends State<CartPage> {
     if (!okMember || !okCard) return;
     FocusScope.of(context).unfocus();
 
+    final user = context.read<AuthBloc>().state.user;
+    if (!(user?.mfaEnabled ?? false)) {
+      showAppSnack(context, 'Ative o autenticador (MFA) no perfil para comprar.', error: true);
+      context.push('/mfa');
+      return;
+    }
+    final code = _mfaCode.text.trim();
+    if (code.isEmpty) {
+      showAppSnack(context, 'Digite o código de 6 dígitos do seu autenticador.', error: true);
+      return;
+    }
     setState(() {
       _busy = true;
-      _status = 'Confirme com sua biometria';
+      _status = 'Conferindo o código...';
     });
 
-    // 1) biometria e 2) selfie: uma vez só para todo o carrinho
-    final bio = await sl<RequireBiometricUseCase>()();
-    final bioFailure = bio.failureOrNull;
-    if (bioFailure != null) return _stop(bioFailure.message);
-    if (!mounted) return;
-
-    setState(() => _status = 'Tire uma selfie para confirmar');
-    final shots = await Navigator.of(context).push<List<String>>(MaterialPageRoute(
-      builder: (_) => const FaceCapturePage(
-        title: 'CONFIRME SUA IDENTIDADE',
-        hint: 'Tire uma selfie agora para confirmar a compra',
-      ),
-    ));
-    if (shots == null || shots.isEmpty || !mounted) return _stop(null);
-
-    // 3) uma compra por assento
+    // Uma compra por assento; o mesmo código vale para todos (o servidor aceita repeti-lo dentro dos mesmos 30 s).
     final card = _method.isCard ? _card.read() : null;
     final memberCode = isMember ? _memberCode.text.trim().toUpperCase() : null;
     var bought = 0;
@@ -89,7 +86,7 @@ class _CartPageState extends State<CartPage> {
       );
       var failure = intent.failureOrNull;
       if (failure == null) {
-        final done = await sl<ConfirmPaymentUseCase>()(intent: intent.valueOrNull!, selfiePath: shots.first, card: card);
+        final done = await sl<ConfirmPaymentUseCase>()(intent: intent.valueOrNull!, code: code, card: card);
         failure = done.failureOrNull;
       }
       if (failure == null) {
@@ -99,6 +96,7 @@ class _CartPageState extends State<CartPage> {
       }
       item.error = failure.message;
       _cart.touch();
+      if (failure.code == 'invalid_mfa_code') _mfaCode.clear();
       if (!_keepGoing.contains(failure.code)) {
         fatal = failure.message;
         break;
@@ -170,16 +168,22 @@ class _CartPageState extends State<CartPage> {
                 const SizedBox(height: 16),
                 if (_method.isCard) CardForm(controller: _card) else PixPanel(amount: _cart.total),
                 const SizedBox(height: 20),
-                const Row(children: [
-                  Icon(Icons.lock_outline, size: 16, color: AppColors.muted),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text('Vamos confirmar com a biometria do aparelho e uma selfie, uma vez para todo o carrinho.',
-                        style: TextStyle(color: AppColors.muted, fontSize: 12)),
+                const SectionLabel('CÓDIGO DO AUTENTICADOR'),
+                TextField(
+                  controller: _mfaCode,
+                  enabled: !_busy,
+                  keyboardType: TextInputType.number,
+                  maxLength: 14,
+                  autofillHints: const [AutofillHints.oneTimeCode],
+                  style: const TextStyle(fontSize: 20, letterSpacing: 4, fontWeight: FontWeight.w800),
+                  decoration: const InputDecoration(
+                    labelText: 'CÓDIGO DE 6 DÍGITOS',
+                    helperText: 'Um único código confirma todos os ingressos do carrinho',
+                    counterText: '',
                   ),
-                ]),
+                ),
                 const SizedBox(height: 12),
-                BusyButton(label: 'FINALIZAR COMPRA', icon: Icons.fingerprint, busy: _busy, onPressed: () => _submit(isMember)),
+                BusyButton(label: 'FINALIZAR COMPRA', icon: Icons.verified_user, busy: _busy, onPressed: () => _submit(isMember)),
                 if (_status.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 12),

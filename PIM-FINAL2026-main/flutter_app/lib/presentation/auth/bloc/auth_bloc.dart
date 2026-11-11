@@ -22,9 +22,11 @@ class AuthStarted extends AuthEvent {
 }
 
 class LoginSubmitted extends AuthEvent {
-  const LoginSubmitted(this.email, this.password, {this.enableBiometric = false});
+  const LoginSubmitted(this.email, this.password, this.captchaId, this.captchaAnswer, {this.enableBiometric = false});
   final String email;
   final String password;
+  final String captchaId;
+  final String captchaAnswer;
   final bool enableBiometric;
 }
 
@@ -37,11 +39,6 @@ class RegisterSubmitted extends AuthEvent {
   final RegisterData data;
 }
 
-class FaceEnrollSubmitted extends AuthEvent {
-  const FaceEnrollSubmitted(this.imagePath);
-  final String imagePath;
-}
-
 class UserUpdated extends AuthEvent {
   const UserUpdated(this.user);
   final User user;
@@ -49,7 +46,7 @@ class UserUpdated extends AuthEvent {
 
 class LogoutRequested extends AuthEvent {
   const LogoutRequested({this.forgetDevice = false});
-  final bool forgetDevice; // true = apaga também o acesso rápido por biometria
+  final bool forgetDevice; // true = apaga também o acesso rápido por biometria do aparelho
 }
 
 class SessionExpiredEvent extends AuthEvent {
@@ -66,7 +63,6 @@ class AuthState extends Equatable {
     this.errorSeq = 0,
     this.biometricReady = false,
     this.justRegistered = false,
-    this.faceEnrolledSeq = 0,
     this.promptBiometric = false,
   });
 
@@ -77,7 +73,6 @@ class AuthState extends Equatable {
   final int errorSeq; // incrementa a cada erro, para a UI reagir mesmo ao mesmo erro repetido
   final bool biometricReady; // há sessão guardada protegida por biometria
   final bool justRegistered;
-  final int faceEnrolledSeq;
   final bool promptBiometric; // abre o prompt sozinho (só na abertura do app)
 
   AuthState copyWith({
@@ -90,7 +85,6 @@ class AuthState extends Equatable {
     int? errorSeq,
     bool? biometricReady,
     bool? justRegistered,
-    int? faceEnrolledSeq,
     bool? promptBiometric,
   }) =>
       AuthState(
@@ -101,12 +95,11 @@ class AuthState extends Equatable {
         errorSeq: errorSeq ?? this.errorSeq,
         biometricReady: biometricReady ?? this.biometricReady,
         justRegistered: justRegistered ?? this.justRegistered,
-        faceEnrolledSeq: faceEnrolledSeq ?? this.faceEnrolledSeq,
         promptBiometric: promptBiometric ?? this.promptBiometric,
       );
 
   @override
-  List<Object?> get props => [status, user, busy, failure, errorSeq, biometricReady, justRegistered, faceEnrolledSeq, promptBiometric];
+  List<Object?> get props => [status, user, busy, failure, errorSeq, biometricReady, justRegistered, promptBiometric];
 }
 
 // ---------- bloc ----------
@@ -114,7 +107,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   AuthBloc({
     required LoginUseCase login,
     required RegisterUseCase register,
-    required EnrollFaceUseCase enrollFace,
     required BiometricLoginUseCase biometricLogin,
     required RestoreSessionUseCase restoreSession,
     required LogoutUseCase logout,
@@ -122,7 +114,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required SessionEvents sessionEvents,
   })  : _login = login,
         _register = register,
-        _enrollFace = enrollFace,
         _biometricLogin = biometricLogin,
         _restore = restoreSession,
         _logout = logout,
@@ -132,7 +123,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LoginSubmitted>(_onLogin);
     on<BiometricLoginRequested>(_onBiometricLogin);
     on<RegisterSubmitted>(_onRegister);
-    on<FaceEnrollSubmitted>(_onEnrollFace);
     on<UserUpdated>((e, emit) => emit(state.copyWith(user: e.user)));
     on<LogoutRequested>(_onLogout);
     on<SessionExpiredEvent>(_onExpired);
@@ -141,7 +131,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   final LoginUseCase _login;
   final RegisterUseCase _register;
-  final EnrollFaceUseCase _enrollFace;
   final BiometricLoginUseCase _biometricLogin;
   final RestoreSessionUseCase _restore;
   final LogoutUseCase _logout;
@@ -175,7 +164,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   Future<void> _onLogin(LoginSubmitted e, Emitter<AuthState> emit) async {
     emit(state.copyWith(busy: true, clearFailure: true));
-    final r = await _login(email: e.email, password: e.password, enableBiometric: e.enableBiometric);
+    final r = await _login(
+        email: e.email,
+        password: e.password,
+        captchaId: e.captchaId,
+        captchaAnswer: e.captchaAnswer,
+        enableBiometric: e.enableBiometric);
     r.fold(
       (f) => emit(_fail(f)),
       (u) => emit(state.copyWith(
@@ -207,15 +201,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       (f) => emit(_fail(f)),
       (u) => emit(state.copyWith(
           status: AuthStatus.authenticated, user: u, busy: false, justRegistered: true)),
-    );
-  }
-
-  Future<void> _onEnrollFace(FaceEnrollSubmitted e, Emitter<AuthState> emit) async {
-    emit(state.copyWith(busy: true, clearFailure: true));
-    final r = await _enrollFace(e.imagePath);
-    r.fold(
-      (f) => emit(_fail(f)),
-      (u) => emit(state.copyWith(user: u, busy: false, faceEnrolledSeq: state.faceEnrolledSeq + 1)),
     );
   }
 

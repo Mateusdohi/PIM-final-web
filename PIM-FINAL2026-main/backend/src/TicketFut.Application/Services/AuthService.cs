@@ -10,22 +10,24 @@ namespace TicketFut.Application.Services;
 public class AuthService
 {
     private readonly IUserRepository _users;
-    private readonly IFaceTemplateRepository _faces;
     private readonly IRefreshTokenRepository _refreshTokens;
     private readonly IPasswordHasher _hasher;
     private readonly ITokenService _tokens;
-    private readonly IFaceRecognitionClient _faceClient;
-    private readonly IEmbeddingProtector _protector;
+    private readonly ICaptchaService _captcha;
     private readonly IUnitOfWork _uow;
     private readonly IClock _clock;
-    private readonly FacePolicy _policy;
 
-    public AuthService(IUserRepository users, IFaceTemplateRepository faces, IRefreshTokenRepository refreshTokens,
-        IPasswordHasher hasher, ITokenService tokens, IFaceRecognitionClient faceClient,
-        IEmbeddingProtector protector, IUnitOfWork uow, IClock clock, FacePolicy policy)
+    public AuthService(IUserRepository users, IRefreshTokenRepository refreshTokens, IPasswordHasher hasher,
+        ITokenService tokens, ICaptchaService captcha, IUnitOfWork uow, IClock clock)
     {
-        _users = users; _faces = faces; _refreshTokens = refreshTokens; _hasher = hasher; _tokens = tokens;
-        _faceClient = faceClient; _protector = protector; _uow = uow; _clock = clock; _policy = policy;
+        _users = users; _refreshTokens = refreshTokens; _hasher = hasher; _tokens = tokens;
+        _captcha = captcha; _uow = uow; _clock = clock;
+    }
+
+    public CaptchaDto NewCaptcha()
+    {
+        var c = _captcha.Generate();
+        return new CaptchaDto(c.Id, c.ImageDataUri);
     }
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest req, CancellationToken ct)
@@ -50,7 +52,7 @@ public class AuthService
         // [PIM-WEB Cartão 2] A senha nunca é guardada em texto puro: só o hash (PBKDF2 com salt aleatório, do ASP.NET Identity).
         var user = new User { Name = name, Email = email, Cpf = cpf, Team = team, PasswordHash = _hasher.Hash(req.Password) };
         await _users.AddAsync(user, ct);
-        var response = await IssueTokensAsync(user, hasFace: false, ct);
+        var response = await IssueTokensAsync(user, ct);
         await _uow.SaveChangesAsync(ct);
         return response;
     }
@@ -58,6 +60,10 @@ public class AuthService
     public async Task<AuthResponse> LoginAsync(LoginRequest req, CancellationToken ct)
 {
     // [PIM-WEB Cartão 2] Login: limita o tamanho da senha antes de qualquer cálculo pesado.
+    // Captcha primeiro: robô barrado aqui nem chega a gastar o cálculo do hash da senha. O desafio é de uso único.
+    if (!_captcha.Validate(req.CaptchaId, req.CaptchaAnswer))
+        throw AppException.Validation("captcha_invalid", "Captcha incorreto. Digite os caracteres da nova imagem.");
+
     var password = req.Password ?? "";
     if (password.Length > 128) throw AppException.Unauthorized("E-mail ou senha incorretos.");
 
@@ -71,8 +77,7 @@ public class AuthService
     if (!_hasher.Verify(user.PasswordHash, password))
         throw AppException.Unauthorized("E-mail ou senha incorretos.");
 
-    var hasFace = await _faces.GetByUserAsync(user.Id, ct) is not null;
-    var response = await IssueTokensAsync(user, hasFace, ct);
+    var response = await IssueTokensAsync(user, ct);
     await _uow.SaveChangesAsync(ct);
     return response;
 }
@@ -87,8 +92,7 @@ public class AuthService
 
         var user = await _users.GetByIdAsync(stored.UserId, ct) ?? throw AppException.Unauthorized();
         stored.RevokedAt = now;
-        var hasFace = await _faces.GetByUserAsync(user.Id, ct) is not null;
-        var response = await IssueTokensAsync(user, hasFace, ct);
+        var response = await IssueTokensAsync(user, ct);
         await _uow.SaveChangesAsync(ct);
         return response;
     }
@@ -102,29 +106,7 @@ public class AuthService
     public async Task<UserDto> GetMeAsync(Guid userId, CancellationToken ct)
     {
         var user = await _users.GetByIdAsync(userId, ct) ?? throw AppException.NotFound("Usuário não encontrado.");
-        return Mapping.ToDto(user, await _faces.GetByUserAsync(userId, ct) is not null);
-    }
-
-    /// <summary>Cadastro facial: a selfie vai ao microsserviço Python; guardamos só o embedding criptografado.</summary>
-    public async Task<UserDto> EnrollFaceAsync(Guid userId, byte[] image, bool consent, CancellationToken ct)
-    {
-        if (!consent)
-            throw AppException.Validation("consent_required", "É necessário autorizar o uso da biometria facial.");
-        if (image.Length == 0 || image.Length > _policy.MaxImageBytes)
-            throw AppException.Validation("invalid_image", "Imagem inválida ou grande demais.");
-
-        var user = await _users.GetByIdAsync(userId, ct) ?? throw AppException.NotFound("Usuário não encontrado.");
-        var result = await _faceClient.EnrollAsync(image, ct);
-
-        await _faces.UpsertAsync(new FaceTemplate
-        {
-            UserId = userId,
-            EncryptedEmbedding = _protector.Protect(result.Embedding),
-            ModelVersion = result.ModelVersion,
-            ConsentAt = _clock.UtcNow,
-        }, ct);
-        await _uow.SaveChangesAsync(ct);
-        return Mapping.ToDto(user, hasFace: true);
+        return Mapping.ToDto(user);
     }
 
     // [PIM-WEB Perfil] Atualiza nome e time do próprio usuário. Mesma validação do cadastro. Não mexe em e-mail, CPF, plano nem papel.
@@ -140,7 +122,7 @@ public class AuthService
         user.Name = name;
         user.Team = team;
         await _uow.SaveChangesAsync(ct);
-        return Mapping.ToDto(user, await _faces.GetByUserAsync(userId, ct) is not null);
+        return Mapping.ToDto(user);
     }
 
     // [PIM-WEB Perfil] Troca de senha: exige a senha atual, aplica a mesma regra do cadastro e revoga os tokens de renovação.
@@ -163,19 +145,12 @@ public class AuthService
         await _refreshTokens.RevokeAllForUserAsync(userId, _clock.UtcNow, ct);
         await _uow.SaveChangesAsync(ct);
     }
-    /// <summary>LGPD: o usuário pode apagar o próprio dado biométrico.</summary>
-    public async Task DeleteFaceAsync(Guid userId, CancellationToken ct)
-    {
-        await _faces.DeleteByUserAsync(userId, ct);
-        await _uow.SaveChangesAsync(ct);
-    }
-
-    private async Task<AuthResponse> IssueTokensAsync(User user, bool hasFace, CancellationToken ct)
+    private async Task<AuthResponse> IssueTokensAsync(User user, CancellationToken ct)
     {
         var access = _tokens.CreateAccessToken(user);
         var (plain, hash, expires) = _tokens.CreateRefreshToken();
         await _refreshTokens.AddAsync(new RefreshToken { UserId = user.Id, TokenHash = hash, ExpiresAt = expires }, ct);
-        return new AuthResponse(access.Value, plain, access.ExpiresInSeconds, Mapping.ToDto(user, hasFace));
+        return new AuthResponse(access.Value, plain, access.ExpiresInSeconds, Mapping.ToDto(user));
     }
 
     private static bool IsValidEmail(string email)

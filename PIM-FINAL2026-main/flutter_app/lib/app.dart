@@ -23,7 +23,6 @@ class _AppState extends State<App> {
   late final AuthBloc _auth = AuthBloc(
     login: sl<LoginUseCase>(),
     register: sl<RegisterUseCase>(),
-    enrollFace: sl<EnrollFaceUseCase>(),
     biometricLogin: sl<BiometricLoginUseCase>(),
     restoreSession: sl<RestoreSessionUseCase>(),
     logout: sl<LogoutUseCase>(),

@@ -14,8 +14,7 @@ erDiagram
     Matches ||--o{ Tickets : "tem"
     Users ||--o{ PaymentIntents : "faz"
     Users ||--o{ Tickets : "possui"
-    Users ||--o| FaceTemplates : "cadastra"
-    Users ||--o{ FaceVerificationLogs : "gera"
+    Users ||--o{ MfaRecoveryCodes : "possui"
     Users ||--o{ RefreshTokens : "tem"
     PaymentIntents ||--o| Tickets : "emite"
     Tickets ||--o{ TicketAudit : "audita"
@@ -43,6 +42,9 @@ erDiagram
         nvarchar Email UK
         nvarchar PasswordHash
         nvarchar Team
+        bit MfaEnabled
+        varbinary MfaSecretProtected
+        bigint MfaLastStep
         int Plan
         nvarchar Role
         nvarchar MemberCode UK
@@ -75,20 +77,11 @@ erDiagram
         decimal Amount
         datetime2 IssuedAt
     }
-    FaceTemplates {
+    MfaRecoveryCodes {
         guid Id PK
         guid UserId FK
-        varbinary EncryptedEmbedding
-        nvarchar ModelVersion
-        datetime2 ConsentAt
-    }
-    FaceVerificationLogs {
-        guid Id PK
-        guid UserId FK
-        guid PaymentIntentId
-        nvarchar Purpose
-        float Similarity
-        bit IsMatch
+        nvarchar CodeHash
+        datetime2 UsedAt
     }
     RefreshTokens {
         guid Id PK
@@ -140,14 +133,13 @@ O dicionário completo (tipos, tamanhos, chaves e índices) está no script `01-
 | Stadiums | Id (int, identity) | n/a | n/a |
 | Matches | Id (int, identity) | StadiumId → Stadiums | n/a |
 | Users | Id (uniqueidentifier) | n/a | Cpf, Email, MemberCode (filtrado: não nulo) |
-| FaceTemplates | Id | UserId → Users (cascata) | UserId |
-| FaceVerificationLogs | Id | UserId → Users | n/a |
+| MfaRecoveryCodes | Id | UserId → Users (cascata) | n/a (índice comum em UserId) |
 | PaymentIntents | Id | MatchId → Matches; UserId → Users | (MatchId, Sector, SeatRow, SeatNumber) filtrado: assento informado e status diferente de Failed e Expired |
 | RefreshTokens | Id | UserId → Users (cascata) | TokenHash |
 | Tickets | Id | MatchId → Matches; UserId → Users | Code; PaymentIntentId; (MatchId, Sector, SeatRow, SeatNumber) filtrado: assento informado |
 | TicketAudit | Id (bigint, identity) | n/a | n/a |
 
-Observação: `Tickets.PaymentIntentId` e `FaceVerificationLogs.PaymentIntentId` não têm chave estrangeira. A API grava o pagamento e o ingresso na mesma transação e o Entity Framework não garante a ordem entre os dois. A unicidade fica garantida pelo índice único.
+Observação: `Tickets.PaymentIntentId` não tem chave estrangeira. A API grava o pagamento e o ingresso na mesma transação e o Entity Framework não garante a ordem entre os dois. A unicidade fica garantida pelo índice único.
 
 ## 4. Restrições CHECK (arquivo `03`)
 

@@ -6,27 +6,18 @@ import '../../../domain/entities/match.dart';
 import '../../../domain/entities/payment.dart';
 import '../../../domain/usecases/checkout/checkout_usecases.dart';
 
-enum CheckoutStep { idle, creatingIntent, biometric, awaitingSelfie, confirming, success, failure }
+enum CheckoutStep { idle, creatingIntent, confirming, success, failure }
 
 sealed class CheckoutEvent {
   const CheckoutEvent();
 }
 
 class CheckoutSubmitted extends CheckoutEvent {
-  const CheckoutSubmitted({required this.method, this.memberCode, this.card});
+  const CheckoutSubmitted({required this.method, required this.code, this.memberCode, this.card});
   final PaymentMethod method;
+  final String code; // código de 6 dígitos do autenticador (ou de recuperação)
   final String? memberCode;
   final CardInput? card;
-}
-
-class SelfieCaptured extends CheckoutEvent {
-  const SelfieCaptured(this.path, {this.livenessPath});
-  final String path;
-  final String? livenessPath; // segunda selfie (cabeça virada), quando há prova de vida
-}
-
-class SelfieCancelled extends CheckoutEvent {
-  const SelfieCancelled();
 }
 
 class CheckoutState extends Equatable {
@@ -44,13 +35,11 @@ class CheckoutState extends Equatable {
   final int errorSeq;
   final PurchaseResult? result;
 
-  bool get busy => step == CheckoutStep.creatingIntent || step == CheckoutStep.biometric || step == CheckoutStep.confirming;
+  bool get busy => step == CheckoutStep.creatingIntent || step == CheckoutStep.confirming;
 
   String get statusText => switch (step) {
         CheckoutStep.creatingIntent => 'Validando sua compra...',
-        CheckoutStep.biometric => 'Confirme com sua biometria',
-        CheckoutStep.awaitingSelfie => 'Tire uma selfie para confirmar',
-        CheckoutStep.confirming => 'Verificando identidade e processando pagamento...',
+        CheckoutStep.confirming => 'Conferindo o código e processando o pagamento...',
         _ => '',
       };
 
@@ -75,10 +64,8 @@ class CheckoutState extends Equatable {
 }
 
 /// Fluxo da compra:
-///  1) cria a intenção (backend valida setor/sócio e devolve nonce)
-///  2) biometria nativa obrigatória
-///  3) selfie (UI abre a câmera)
-///  4) backend verifica o rosto no microsserviço Python e só então cobra
+///  1) cria a intenção (backend valida setor/sócio, calcula o valor e devolve o nonce)
+///  2) envia o código de 6 dígitos do autenticador (MFA); o backend confere o código e só então cobra
 class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
   CheckoutBloc({
     required this.match,
@@ -86,15 +73,11 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
     this.seatRow,
     this.seatNumber,
     required CreatePaymentIntentUseCase createIntent,
-    required RequireBiometricUseCase requireBiometric,
     required ConfirmPaymentUseCase confirm,
   })  : _createIntent = createIntent,
-        _requireBiometric = requireBiometric,
         _confirm = confirm,
         super(const CheckoutState()) {
     on<CheckoutSubmitted>(_onSubmitted);
-    on<SelfieCaptured>(_onSelfie);
-    on<SelfieCancelled>((e, emit) => emit(state.copyWith(step: CheckoutStep.idle)));
   }
 
   final Match match;
@@ -102,7 +85,6 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
   final int? seatRow;
   final int? seatNumber;
   final CreatePaymentIntentUseCase _createIntent;
-  final RequireBiometricUseCase _requireBiometric;
   final ConfirmPaymentUseCase _confirm;
 
   CardInput? _card; // só em memória; nunca vai para o estado/log
@@ -136,22 +118,10 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
       emit(state.copyWith(intent: intent));
     }
 
-    // Biometria nativa IMEDIATAMENTE antes de finalizar (a cada tentativa)
-    emit(state.copyWith(step: CheckoutStep.biometric));
-    final bio = await _requireBiometric();
-    final bioFailure = bio.failureOrNull;
-    if (bioFailure != null) {
-      emit(_fail(bioFailure));
-      return;
-    }
-    emit(state.copyWith(step: CheckoutStep.awaitingSelfie));
-  }
-
-  Future<void> _onSelfie(SelfieCaptured e, Emitter<CheckoutState> emit) async {
-    final intent = state.intent;
-    if (intent == null) return;
+    final current = intent;
+    if (current == null) return;
     emit(state.copyWith(step: CheckoutStep.confirming));
-    final r = await _confirm(intent: intent, selfiePath: e.path, livenessSelfiePath: e.livenessPath, card: _card);
+    final r = await _confirm(intent: current, code: e.code, card: _card);
     r.fold(
       (f) => emit(_fail(f, dropIntent: _terminalCodes.contains(f.code))),
       (result) {

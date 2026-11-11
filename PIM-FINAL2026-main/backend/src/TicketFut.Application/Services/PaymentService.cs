@@ -16,33 +16,29 @@ public class PaymentService
     private readonly IUserRepository _users;
     private readonly IMatchRepository _matches;
     private readonly IPaymentRepository _payments;
-    private readonly IFaceTemplateRepository _faces;
-    private readonly IFaceRecognitionClient _faceClient;
-    private readonly IEmbeddingProtector _protector;
     private readonly IPaymentGateway _gateway;
     private readonly IUnitOfWork _uow;
     private readonly IClock _clock;
-    private readonly FacePolicy _policy;
-    // [PIM-WEB Cartão 5] Usado para conferir a senha na confirmação pela web.
-    private readonly IPasswordHasher _hasher;
+    private readonly PaymentPolicy _policy;
+    // MFA: o código de 6 dígitos do autenticador confirma a compra (no lugar da selfie do app e da senha do site).
+    private readonly MfaService _mfa;
     // [PIM-WEB Cartão 7] Consulta a fila virtual antes de criar a compra.
     private readonly IQueueGate _queue;
 
     public PaymentService(IUserRepository users, IMatchRepository matches, IPaymentRepository payments,
-        IFaceTemplateRepository faces, IFaceRecognitionClient faceClient, IEmbeddingProtector protector,
-        IPaymentGateway gateway, IUnitOfWork uow, IClock clock, FacePolicy policy, IPasswordHasher hasher, IQueueGate queue)
+        IPaymentGateway gateway, IUnitOfWork uow, IClock clock, PaymentPolicy policy, MfaService mfa, IQueueGate queue)
     {
-        _users = users; _matches = matches; _payments = payments; _faces = faces; _faceClient = faceClient;
-        _protector = protector; _gateway = gateway; _uow = uow; _clock = clock; _policy = policy; _hasher = hasher; _queue = queue;
+        _users = users; _matches = matches; _payments = payments; _gateway = gateway; _uow = uow;
+        _clock = clock; _policy = policy; _mfa = mfa; _queue = queue;
     }
-
-    /// <summary>Lado que o usuário deve virar a cabeça nesta compra ("left"/"right"), derivado do id da intenção.</summary>
-    public static string ChallengeFor(Guid intentId) => (intentId.ToByteArray()[0] & 1) == 0 ? "left" : "right";
 
     /// <summary>Passo 1 do checkout: valida regras (setor, sócio), calcula o valor e emite o nonce.</summary>
     public async Task<IntentDto> CreateIntentAsync(Guid userId, CreateIntentRequest req, CancellationToken ct)
     {
         var user = await _users.GetByIdAsync(userId, ct) ?? throw AppException.NotFound("Usuário não encontrado.");
+        // Sem autenticador ativado não há compra: o app/site leva a pessoa ao perfil para ativar (código mfa_required).
+        if (!user.MfaEnabled)
+            throw AppException.Forbidden("mfa_required", "Para comprar, ative o autenticador (MFA) no seu perfil.");
         var match = await _matches.GetAsync(req.MatchId, ct) ?? throw AppException.NotFound("Partida não encontrada.");
         // [PIM-WEB Cartão 7] Fila virtual: com a fila ligada, só compra quem foi liberado para esta partida (403 queue_required).
         if (!_queue.IsAdmitted(userId, req.MatchId))
@@ -84,6 +80,8 @@ public class PaymentService
 
             // libera reservas antigas (expiradas) desse assento antes de checar
             await _payments.ExpireStaleSeatIntentsAsync(match.Id, sector, row, number, now, ct);
+            // Tentar de novo (ex.: errou o código MFA) não pode esbarrar na reserva que a própria pessoa fez antes.
+            await _payments.CancelOwnPendingSeatIntentsAsync(userId, match.Id, sector, row, number, ct);
             await _uow.SaveChangesAsync(ct);
             if (await _payments.IsSeatTakenAsync(match.Id, sector, row, number, now, ct))
                 throw AppException.Conflict("seat_taken", "Esse assento já foi reservado ou vendido. Escolha outro.");
@@ -104,13 +102,14 @@ public class PaymentService
         {
             throw AppException.Conflict("seat_taken", "Esse assento acabou de ser reservado por outra pessoa. Escolha outro.");
         }
-        return new IntentDto(intent.Id, intent.Nonce, intent.Amount, intent.OriginalAmount, intent.DiscountPercent, intent.ExpiresAt, method.ToString(), ChallengeFor(intent.Id));
+        return new IntentDto(intent.Id, intent.Nonce, intent.Amount, intent.OriginalAmount, intent.DiscountPercent, intent.ExpiresAt, method.ToString());
     }
 
     /// <summary>
-    /// Passo 2: confirma com selfie. O servidor decide — nunca confia em "biometria OK" vinda do app.
+    /// Passo 2: confirma a compra com o código de 6 dígitos do autenticador (ou um código de recuperação).
+    /// O servidor decide: expiração, nonce, limite de tentativas e conferência do código.
     /// </summary>
-    public async Task<ConfirmResponse> ConfirmAsync(Guid userId, Guid intentId, string nonce, byte[] selfie, string? cardToken, byte[]? livenessSelfie, CancellationToken ct)
+    public async Task<ConfirmResponse> ConfirmAsync(Guid userId, Guid intentId, ConfirmRequest req, CancellationToken ct)
     {
         var now = _clock.UtcNow;
         var intent = await _payments.GetIntentAsync(intentId, ct);
@@ -123,105 +122,37 @@ public class PaymentService
             await _uow.SaveChangesAsync(ct);
             throw new AppException(410, "intent_expired", "O tempo para confirmar a compra expirou. Inicie novamente.");
         }
-        if (!FixedTimeEquals(intent.Nonce, nonce))
+        if (!FixedTimeEquals(intent.Nonce, req.Nonce ?? ""))
             throw AppException.Forbidden("invalid_nonce", "Requisição inválida.");
-        if (livenessSelfie is not null && (livenessSelfie.Length == 0 || livenessSelfie.Length > _policy.MaxImageBytes))
-            throw AppException.Validation("invalid_image", "Selfie inválida ou grande demais.");
-        if (selfie.Length == 0 || selfie.Length > _policy.MaxImageBytes)
-            throw AppException.Validation("invalid_image", "Selfie inválida ou grande demais.");
-        if (intent.Method != PaymentMethod.Pix && string.IsNullOrWhiteSpace(cardToken))
+        if (intent.Method != PaymentMethod.Pix && string.IsNullOrWhiteSpace(req.CardToken))
             throw AppException.Validation("card_required", "Informe os dados do cartão.");
 
-        var template = await _faces.GetByUserAsync(userId, ct)
-            ?? throw AppException.Conflict("face_not_enrolled", "Cadastre seu rosto para confirmar compras.");
+        var user = await _users.GetByIdAsync(userId, ct) ?? throw AppException.Unauthorized();
+        if (!user.MfaEnabled)
+            throw AppException.Forbidden("mfa_required", "Para comprar, ative o autenticador (MFA) no seu perfil.");
 
-        if (intent.FaceAttempts >= _policy.MaxFaceAttemptsPerIntent)
-        {
-            intent.Status = PaymentStatus.Failed;
-            await _uow.SaveChangesAsync(ct);
-            throw new AppException(429, "too_many_attempts", "Muitas tentativas de verificação. Inicie a compra novamente.");
-        }
-
-        // Conta a tentativa ANTES de verificar, para que abortar a requisição não dê tentativas grátis.
-        intent.FaceAttempts++;
-        await _uow.SaveChangesAsync(ct);
-
-        var verify = await _faceClient.VerifyAsync(selfie, _protector.Unprotect(template.EncryptedEmbedding), "payment", ct,
-            livenessSelfie, livenessSelfie is null ? null : ChallengeFor(intent.Id));
-        await _payments.AddFaceLogAsync(new FaceVerificationLog
-        {
-            UserId = userId, PaymentIntentId = intent.Id, Purpose = "payment",
-            Similarity = verify.Similarity, IsMatch = verify.IsMatch,
-        }, ct);
-
-        if (_policy.RequireLivenessForPayment && !verify.LivenessChecked)
-        {
-            await _uow.SaveChangesAsync(ct);
-            throw livenessSelfie is null
-                ? AppException.Validation("liveness_required", "Faça a prova de vida: tire a segunda selfie virando a cabeça.")
-                : new AppException(503, "liveness_unavailable", "Verificação de prova de vida indisponível. Tente mais tarde.");
-        }
-        if (verify.LivenessChecked && verify.LivenessPassed == false)
-        {
-            await _uow.SaveChangesAsync(ct);
-            throw AppException.Forbidden("liveness_failed", "Não foi possível confirmar a prova de vida. Vire a cabeça para o lado pedido e tente de novo.");
-        }
-        if (!verify.IsMatch)
-        {
-            await _uow.SaveChangesAsync(ct);
-            // Não devolvemos a similaridade ao app: não ajuda o usuário legítimo e ajuda um atacante.
-            throw AppException.Forbidden("face_mismatch", "Não foi possível confirmar sua identidade. Tente novamente.");
-        }
-
-        return await ChargeAndIssueAsync(intent, cardToken, now, ct);
-    }
-
-    /// <summary>
-    /// Confirmação para a WEB (sem biometria): o usuário digita a senha de novo (reautenticação), além do nonce
-    /// da intenção. Mesmas travas da confirmação por selfie: expiração, limite de tentativas e gateway.
-    /// </summary>
-    // [PIM-WEB Cartão 5] Pagamento pela web: reautentica com a senha (a biometria é do app mobile). Mantém nonce, expiração de 10 min e limite de tentativas.
-    public async Task<ConfirmResponse> ConfirmWithPasswordAsync(Guid userId, Guid intentId, string nonce, string password, string? cardToken, CancellationToken ct)
-    {
-        var now = _clock.UtcNow;
-        var intent = await _payments.GetIntentAsync(intentId, ct);
-        if (intent is null || intent.UserId != userId) throw AppException.NotFound("Intenção de pagamento não encontrada.");
-        if (intent.Status != PaymentStatus.Pending)
-            throw AppException.Conflict("intent_closed", "Esta compra já foi finalizada ou cancelada.");
-        if (intent.ExpiresAt <= now)
-        {
-            intent.Status = PaymentStatus.Expired;
-            await _uow.SaveChangesAsync(ct);
-            throw new AppException(410, "intent_expired", "O tempo para confirmar a compra expirou. Inicie novamente.");
-        }
-        if (!FixedTimeEquals(intent.Nonce, nonce ?? ""))
-            throw AppException.Forbidden("invalid_nonce", "Requisição inválida.");
-        if (string.IsNullOrEmpty(password) || password.Length > 128)
-            throw AppException.Forbidden("invalid_password", "Senha incorreta.");
-        if (intent.Method != PaymentMethod.Pix && string.IsNullOrWhiteSpace(cardToken))
-            throw AppException.Validation("card_required", "Informe os dados do cartão.");
-
-        if (intent.FaceAttempts >= _policy.MaxFaceAttemptsPerIntent)
+        if (intent.ConfirmAttempts >= _policy.MaxConfirmAttemptsPerIntent)
         {
             intent.Status = PaymentStatus.Failed;
             await _uow.SaveChangesAsync(ct);
             throw new AppException(429, "too_many_attempts", "Muitas tentativas. Inicie a compra novamente.");
         }
 
-        // Conta a tentativa ANTES de verificar (o campo FaceAttempts é reaproveitado como "tentativas de confirmação").
-        intent.FaceAttempts++;
+        // Conta a tentativa ANTES de verificar, para que abortar a requisição não dê tentativas grátis.
+        intent.ConfirmAttempts++;
         await _uow.SaveChangesAsync(ct);
 
-        var user = await _users.GetByIdAsync(userId, ct) ?? throw AppException.Unauthorized();
-        // [PIM-WEB Cartão 5] Senha errada devolve 403 (e não 401), para o site não achar que o login expirou.
-        if (!_hasher.Verify(user.PasswordHash, password))
-            throw AppException.Forbidden("invalid_password", "Senha incorreta.");
+        // Código errado devolve 403 (e não 401), para o app/site não achar que o login expirou.
+        if (!await _mfa.VerifyAsync(user, req.Code, ct, allowSameStep: true))
+        {
+            await _uow.SaveChangesAsync(ct);
+            throw AppException.Forbidden("invalid_mfa_code", "Código incorreto ou já usado. Digite o código de 6 dígitos que aparece agora no autenticador.");
+        }
 
-        return await ChargeAndIssueAsync(intent, cardToken, now, ct);
+        return await ChargeAndIssueAsync(intent, req.CardToken, now, ct);
     }
 
-    /// <summary>Cobra no gateway e emite o ingresso. Usado pelos fluxos com selfie (mobile) e com senha (web).</summary>
-    // [PIM-WEB Cartão 5] Cobrança e emissão do ingresso, compartilhadas pelo fluxo com selfie (mobile) e pelo fluxo com senha (web).
+    /// <summary>Cobra no gateway e emite o ingresso. Usada após a conferência do código MFA.</summary>
     private async Task<ConfirmResponse> ChargeAndIssueAsync(PaymentIntent intent, string? cardToken, DateTime now, CancellationToken ct)
     {
         var charge = await _gateway.ChargeAsync(new ChargeRequest(

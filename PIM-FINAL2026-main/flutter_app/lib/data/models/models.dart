@@ -13,7 +13,7 @@ class UserModel {
         planPercent: j['planPercent'] as int,
         planName: j['planName'] as String,
         memberCode: j['memberCode'] as String?,
-        hasFace: j['hasFace'] as bool,
+        mfaEnabled: j['mfaEnabled'] as bool? ?? false,
         role: j['role'] as String? ?? 'User',
       );
 }
@@ -75,7 +75,6 @@ class PaymentModel {
         method: PaymentMethod.values.firstWhere(
           (m) => m.apiValue.toLowerCase() == (j['method'] as String).toLowerCase(),
         ),
-        challenge: j['challenge'] as String?,
       );
 
   static Ticket ticketFromJson(Map<String, dynamic> j) => Ticket(

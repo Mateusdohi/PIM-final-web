@@ -7,7 +7,7 @@ import '../../domain/entities/match.dart';
 import '../../presentation/auth/bloc/auth_bloc.dart';
 import '../../presentation/about/about_page.dart';
 import '../../presentation/admin/admin_page.dart';
-import '../../presentation/auth/face_enroll_page.dart';
+import '../../presentation/auth/mfa_page.dart';
 import '../../presentation/auth/login_page.dart';
 import '../../presentation/auth/register_page.dart';
 import '../../presentation/cart/cart_page.dart';
@@ -39,7 +39,7 @@ class GoRouterRefreshStream extends ChangeNotifier {
 
 GoRouter buildRouter(AuthBloc auth) {
   // Rotas acessíveis sem login. /register NÃO redireciona quando já autenticado:
-  // a própria tela leva o usuário ao cadastro facial logo após criar a conta.
+  // a própria tela leva o usuário aos planos/ao app logo após criar a conta.
   const publicRoutes = {'/login', '/register'};
 
   return GoRouter(
@@ -60,10 +60,7 @@ GoRouter buildRouter(AuthBloc auth) {
       GoRoute(path: '/boot', builder: (_, __) => const Scaffold(body: Center(child: CircularProgressIndicator()))),
       GoRoute(path: '/login', builder: (_, __) => const LoginPage()),
       GoRoute(path: '/register', builder: (_, __) => const RegisterPage()),
-      GoRoute(
-        path: '/face-enroll',
-        builder: (_, state) => FaceEnrollPage(args: state.extra is FaceEnrollArgs ? state.extra! as FaceEnrollArgs : const FaceEnrollArgs()),
-      ),
+      GoRoute(path: '/mfa', builder: (_, __) => const MfaPage()),
       GoRoute(
         path: '/plans',
         builder: (_, state) => PlansPage(args: state.extra is PlansArgs ? state.extra! as PlansArgs : const PlansArgs()),

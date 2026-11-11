@@ -26,7 +26,6 @@ class _RegisterPageState extends State<RegisterPage> {
   final _password = TextEditingController();
   String? _team;
   int _plan = 0;
-  bool _consent = false;
 
   static const _plans = <int, String>{
     0: 'SEM PLANO (SÓ INGRESSO)',
@@ -45,10 +44,6 @@ class _RegisterPageState extends State<RegisterPage> {
 
   void _submit() {
     if (!_form.currentState!.validate()) return;
-    if (!_consent) {
-      showAppSnack(context, 'Autorize o uso da biometria facial para continuar.', error: true);
-      return;
-    }
     context.read<AuthBloc>().add(RegisterSubmitted(RegisterData(
           name: _name.text.trim(),
           cpf: Validators.digits(_cpf.text),
@@ -67,8 +62,9 @@ class _RegisterPageState extends State<RegisterPage> {
           listenWhen: (p, c) => p.errorSeq != c.errorSeq || (!p.justRegistered && c.justRegistered),
           listener: (context, s) {
             if (s.justRegistered) {
-              // Próximo passo obrigatório do cadastro: selfie para o reconhecimento facial
-              context.go('/face-enroll', extra: FaceEnrollArgs(planPercent: _plan, fromRegistration: true));
+              // Próximo passo: escolher o plano (se pediu) ou entrar no app. O autenticador (MFA) é ativado no perfil.
+              context.go(_plan > 0 ? '/plans' : '/splash',
+                  extra: _plan > 0 ? PlansArgs(initialPlan: _plan, fromRegistration: true) : null);
             } else if (s.failure != null) {
               showAppSnack(context, s.failure!.message, error: true);
             }
@@ -127,18 +123,6 @@ class _RegisterPageState extends State<RegisterPage> {
                       decoration: const InputDecoration(labelText: 'PLANO DE SÓCIO'),
                       items: [for (final e in _plans.entries) DropdownMenuItem(value: e.key, child: Text(e.value, overflow: TextOverflow.ellipsis))],
                       onChanged: (v) => setState(() => _plan = v ?? 0),
-                    ),
-                    const SizedBox(height: 8),
-                    CheckboxListTile(
-                      value: _consent,
-                      onChanged: (v) => setState(() => _consent = v ?? false),
-                      contentPadding: EdgeInsets.zero,
-                      controlAffinity: ListTileControlAffinity.leading,
-                      title: const Text(
-                        'Autorizo o uso da minha biometria facial para confirmar compras. '
-                        'Guardamos apenas uma representação matemática do rosto (não a foto) e você pode excluí-la quando quiser.',
-                        style: TextStyle(fontSize: 12),
-                      ),
                     ),
                     const SizedBox(height: 12),
                     BusyButton(label: 'CONTINUAR', busy: state.busy, onPressed: _submit),

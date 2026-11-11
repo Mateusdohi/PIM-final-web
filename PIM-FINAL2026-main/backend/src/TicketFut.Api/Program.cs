@@ -19,13 +19,14 @@ var config = builder.Configuration;
 var jwtKey = config["Jwt:Key"];
 if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32)
     throw new InvalidOperationException("Configure Jwt:Key com 32+ caracteres (user-secrets ou variável de ambiente Jwt__Key).");
-if (string.IsNullOrWhiteSpace(config["Face:EncryptionKey"]))
-    throw new InvalidOperationException("Configure Face:EncryptionKey (base64, 32 bytes). Gere com: openssl rand -base64 32");
+if (string.IsNullOrWhiteSpace(config["Mfa:EncryptionKey"]))
+    throw new InvalidOperationException("Configure Mfa:EncryptionKey (base64, 32 bytes). Gere com: openssl rand -base64 32");
 
 builder.Services.AddInfrastructure(config);
 
 // ---- Application ----
-builder.Services.AddSingleton(config.GetSection("Face:Policy").Get<FacePolicy>() ?? new FacePolicy());
+builder.Services.AddSingleton(config.GetSection("Payment:Policy").Get<PaymentPolicy>() ?? new PaymentPolicy());
+builder.Services.AddScoped<MfaService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<MembershipService>();
 builder.Services.AddScoped<MatchService>();
@@ -72,7 +73,7 @@ builder.Services.AddSingleton<IUserIdProvider, SubUserIdProvider>();
 builder.Services.AddSignalR();
 builder.Services.AddHostedService<QueueWorker>();
 
-// ---- Rate limiting (anti força-bruta em login e verificação facial) ----
+// ---- Rate limiting (anti força-bruta em login, captcha e código MFA) ----
 builder.Services.AddRateLimiter(o =>
 {
     o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -85,7 +86,11 @@ builder.Services.AddRateLimiter(o =>
     o.AddPolicy("auth", ctx => RateLimitPartition.GetFixedWindowLimiter(
         ctx.Connection.RemoteIpAddress?.ToString() ?? "anon",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) }));
-    o.AddPolicy("face", ctx => RateLimitPartition.GetFixedWindowLimiter(
+    // Captcha: quem pede imagens demais é barrado (30 por minuto por IP).
+    o.AddPolicy("captcha", ctx => RateLimitPartition.GetFixedWindowLimiter(
+        ctx.Connection.RemoteIpAddress?.ToString() ?? "anon",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 30, Window = TimeSpan.FromMinutes(1) }));
+    o.AddPolicy("confirm", ctx => RateLimitPartition.GetFixedWindowLimiter(
         ctx.User.FindFirst("sub")?.Value ?? ctx.Connection.RemoteIpAddress?.ToString() ?? "anon",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) }));
             // [PIM-WEB Cartão 10] Chat: 15 mensagens por minuto por usuário. Motivo: limita abuso e custo de um provedor real.
@@ -177,7 +182,7 @@ else
 }
 app.UseCors("web");             // antes da autenticação: o preflight (OPTIONS) não leva token
 app.UseAuthentication();
-app.UseRateLimiter();           // depois do auth: a política "face" particiona por usuário
+app.UseRateLimiter();           // depois do auth: a política "confirm" particiona por usuário
 app.UseAuthorization();
 app.MapControllers();
 // [PIM-WEB Cartão 7] Endereço do hub da fila virtual (WebSocket).

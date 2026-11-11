@@ -41,29 +41,23 @@ public class UserRepository : IUserRepository
     public async Task AddAsync(User user, CancellationToken ct = default) => await _db.Users.AddAsync(user, ct);
 }
 
-public class FaceTemplateRepository : IFaceTemplateRepository
+public class MfaRecoveryRepository : IMfaRecoveryRepository
 {
     private readonly AppDbContext _db;
-    public FaceTemplateRepository(AppDbContext db) => _db = db;
+    public MfaRecoveryRepository(AppDbContext db) => _db = db;
 
-    public Task<FaceTemplate?> GetByUserAsync(Guid userId, CancellationToken ct = default) =>
-        _db.FaceTemplates.FirstOrDefaultAsync(f => f.UserId == userId, ct);
+    public Task<List<MfaRecoveryCode>> ListUnusedAsync(Guid userId, CancellationToken ct = default) =>
+        _db.MfaRecoveryCodes.Where(c => c.UserId == userId && c.UsedAt == null).ToListAsync(ct);
 
-    public async Task UpsertAsync(FaceTemplate template, CancellationToken ct = default)
+    public async Task ReplaceAllAsync(Guid userId, IEnumerable<string> hashes, CancellationToken ct = default)
     {
-        var existing = await GetByUserAsync(template.UserId, ct);
-        if (existing is null) { await _db.FaceTemplates.AddAsync(template, ct); return; }
-        existing.EncryptedEmbedding = template.EncryptedEmbedding;
-        existing.ModelVersion = template.ModelVersion;
-        existing.ConsentAt = template.ConsentAt;
-        existing.CreatedAt = DateTime.UtcNow;
+        var old = await _db.MfaRecoveryCodes.Where(c => c.UserId == userId).ToListAsync(ct);
+        _db.MfaRecoveryCodes.RemoveRange(old);
+        foreach (var h in hashes) await _db.MfaRecoveryCodes.AddAsync(new MfaRecoveryCode { UserId = userId, CodeHash = h }, ct);
     }
 
-    public async Task DeleteByUserAsync(Guid userId, CancellationToken ct = default)
-    {
-        var existing = await GetByUserAsync(userId, ct);
-        if (existing is not null) _db.FaceTemplates.Remove(existing);
-    }
+    public async Task DeleteAllAsync(Guid userId, CancellationToken ct = default) =>
+        _db.MfaRecoveryCodes.RemoveRange(await _db.MfaRecoveryCodes.Where(c => c.UserId == userId).ToListAsync(ct));
 }
 
 public class RefreshTokenRepository : IRefreshTokenRepository
@@ -119,9 +113,6 @@ public class PaymentRepository : IPaymentRepository
         _db.Tickets.AsNoTracking().Include(t => t.Match)
             .OrderByDescending(t => t.IssuedAt).Take(500).ToListAsync(ct);
 
-        public async Task AddFaceLogAsync(FaceVerificationLog log, CancellationToken ct = default) =>
-        await _db.FaceVerificationLogs.AddAsync(log, ct);
-
     // [PIM-WEB Cartão 4] Assentos vendidos (ingressos) e reservados (compras em andamento que ainda não expiraram).
     public async Task<List<TakenSeat>> ListTakenSeatsAsync(int matchId, Sector sector, DateTime now, CancellationToken ct = default)
     {
@@ -149,6 +140,15 @@ public class PaymentRepository : IPaymentRepository
         return await _db.PaymentIntents.AnyAsync(i =>
             i.MatchId == matchId && i.Sector == sector && i.SeatRow == row && i.SeatNumber == number
             && (i.Status == PaymentStatus.Paid || (i.Status == PaymentStatus.Pending && i.ExpiresAt > now)), ct);
+    }
+
+    public async Task CancelOwnPendingSeatIntentsAsync(Guid userId, int matchId, Sector sector, int row, int number, CancellationToken ct = default)
+    {
+        var own = await _db.PaymentIntents
+            .Where(i => i.UserId == userId && i.MatchId == matchId && i.Sector == sector && i.SeatRow == row && i.SeatNumber == number
+                        && i.Status == PaymentStatus.Pending)
+            .ToListAsync(ct);
+        foreach (var i in own) i.Status = PaymentStatus.Expired;
     }
 
     // [PIM-WEB Cartão 4] Reservas vencidas (10 min) são marcadas como Expired para liberar o assento.

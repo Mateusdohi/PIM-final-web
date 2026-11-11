@@ -2,6 +2,7 @@ import '../entities/seat.dart';
 import '../../core/error/failures.dart';
 import '../entities/match.dart';
 import '../entities/payment.dart';
+import '../entities/mfa.dart';
 import '../entities/user.dart';
 
 abstract class AuthRepository {
@@ -14,13 +15,28 @@ abstract class AuthRepository {
   /// Tenta retomar a sessão guardada (renovando o token se preciso).
   Future<Result<User>> restoreSession();
 
-  Future<Result<User>> login({required String email, required String password, required bool enableBiometric});
+  /// Captcha novo para o login (vale uma tentativa).
+  Future<Result<Captcha>> captcha();
+
+  Future<Result<User>> login({
+    required String email,
+    required String password,
+    required String captchaId,
+    required String captchaAnswer,
+    required bool enableBiometric,
+  });
   Future<Result<User>> register(RegisterData data);
-  Future<Result<User>> enrollFace(String imagePath);
   Future<Result<User>> refreshUser();
-  Future<Result<void>> deleteFace();
   Future<Result<User>> updateProfile({required String name, required String team});
   Future<Result<void>> changePassword({required String current, required String next});
+
+  // ---- Autenticador (MFA) ----
+  Future<Result<MfaStatus>> mfaStatus();
+  Future<Result<MfaSetup>> mfaSetup();
+  /// Confirma o primeiro código e ativa. Devolve os códigos de recuperação (aparecem só agora).
+  Future<Result<List<String>>> mfaEnable(String code);
+  Future<Result<void>> mfaDisable(String password);
+  Future<Result<List<String>>> mfaNewRecoveryCodes(String password);
 
   /// [keepBiometricSession]: mantém o refresh token (protegido pela biometria) para o acesso rápido.
   Future<void> logout({required bool keepBiometricSession});
@@ -49,8 +65,7 @@ abstract class PaymentRepository {
 
   Future<Result<PurchaseResult>> confirm({
     required PaymentIntent intent,
-    required String selfiePath,
-    String? livenessSelfiePath,
+    required String code,
     String? cardToken,
   });
 
@@ -63,7 +78,7 @@ abstract class PaymentRepository {
   Future<Result<List<Ticket>>> tickets();
 }
 
-/// Biometria nativa do aparelho (Face ID / digital). Só devolve "ok ou não" localmente.
+/// Biometria nativa do aparelho (digital / Face ID do celular), usada só no acesso rápido ao app. Só devolve "ok ou não" localmente.
 abstract class BiometricAuthenticator {
   Future<bool> get isAvailable;
   Future<bool> authenticate(String reason);

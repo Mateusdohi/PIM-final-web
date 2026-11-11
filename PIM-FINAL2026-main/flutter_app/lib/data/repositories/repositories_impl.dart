@@ -3,6 +3,7 @@ import '../../core/error/failures.dart';
 import '../../core/network/guard.dart';
 import '../../domain/entities/match.dart';
 import '../../domain/entities/payment.dart';
+import '../../domain/entities/mfa.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/repositories.dart';
 import '../datasources/local/token_local_ds.dart';
@@ -39,8 +40,17 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Result<User>> login({required String email, required String password, required bool enableBiometric}) async {
-    final r = await guard(() => _remote.login(email, password));
+  Future<Result<Captcha>> captcha() => guard(_remote.captcha);
+
+  @override
+  Future<Result<User>> login({
+    required String email,
+    required String password,
+    required String captchaId,
+    required String captchaAnswer,
+    required bool enableBiometric,
+  }) async {
+    final r = await guard(() => _remote.login(email, password, captchaId, captchaAnswer));
     return r.fold((f) async => Err<User>(f), (auth) async {
       await _tokens.saveSession(accessToken: auth.accessToken, refreshToken: auth.refreshToken);
       await _tokens.setBiometricEnabled(enableBiometric);
@@ -58,13 +68,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Result<User>> enrollFace(String imagePath) => guard(() => _remote.enrollFace(imagePath));
-
-  @override
   Future<Result<User>> refreshUser() => guard(_remote.me);
-
-  @override
-  Future<Result<void>> deleteFace() => guard(_remote.deleteFace);
 
   @override
   Future<Result<User>> updateProfile({required String name, required String team}) =>
@@ -73,6 +77,21 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Result<void>> changePassword({required String current, required String next}) =>
       guard(() => _remote.changePassword(current, next));
+
+  @override
+  Future<Result<MfaStatus>> mfaStatus() => guard(_remote.mfaStatus);
+
+  @override
+  Future<Result<MfaSetup>> mfaSetup() => guard(_remote.mfaSetup);
+
+  @override
+  Future<Result<List<String>>> mfaEnable(String code) => guard(() => _remote.mfaEnable(code));
+
+  @override
+  Future<Result<void>> mfaDisable(String password) => guard(() => _remote.mfaDisable(password));
+
+  @override
+  Future<Result<List<String>>> mfaNewRecoveryCodes(String password) => guard(() => _remote.mfaNewRecoveryCodes(password));
 
   @override
   Future<void> logout({required bool keepBiometricSession}) async {
@@ -137,16 +156,10 @@ class PaymentRepositoryImpl implements PaymentRepository {
   @override
   Future<Result<PurchaseResult>> confirm({
     required PaymentIntent intent,
-    required String selfiePath,
-    String? livenessSelfiePath,
+    required String code,
     String? cardToken,
   }) =>
-      guard(() => _remote.confirm(
-            intent: intent,
-            selfiePath: selfiePath,
-            livenessSelfiePath: livenessSelfiePath,
-            cardToken: cardToken,
-          ));
+      guard(() => _remote.confirm(intent: intent, code: code, cardToken: cardToken));
 
   @override
   Future<Result<SubscriptionResult>> subscribe({

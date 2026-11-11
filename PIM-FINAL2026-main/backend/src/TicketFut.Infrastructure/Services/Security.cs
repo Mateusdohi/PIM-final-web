@@ -63,29 +63,26 @@ public class TokenService : ITokenService
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(plain))).ToLowerInvariant();
 }
 
-public class FaceOptions
+public class MfaOptions
 {
-    public string BaseUrl { get; set; } = "http://localhost:8000";
-    public string ApiKey { get; set; } = "";
-    /// <summary>Chave AES-256 em base64 (32 bytes). Gere com: openssl rand -base64 32</summary>
+    /// <summary>Chave AES-256 em base64 (32 bytes) que protege o segredo do autenticador. Gere com: openssl rand -base64 32</summary>
     public string EncryptionKey { get; set; } = "";
 }
 
 /// <summary>AES-256-GCM. Formato: nonce(12) | tag(16) | ciphertext.</summary>
-public class AesEmbeddingProtector : IEmbeddingProtector
+public class AesSecretProtector : ISecretProtector
 {
     private readonly byte[] _key;
 
-    public AesEmbeddingProtector(IOptions<FaceOptions> opt)
+    public AesSecretProtector(IOptions<MfaOptions> opt)
     {
         _key = Convert.FromBase64String(opt.Value.EncryptionKey);
-        if (_key.Length != 32) throw new InvalidOperationException("Face:EncryptionKey deve ter 32 bytes (base64).");
+        if (_key.Length != 32) throw new InvalidOperationException("Mfa:EncryptionKey deve ter 32 bytes (base64).");
     }
 
-    public byte[] Protect(float[] embedding)
+    public byte[] Protect(string secret)
     {
-        var plain = new byte[embedding.Length * sizeof(float)];
-        Buffer.BlockCopy(embedding, 0, plain, 0, plain.Length);
+        var plain = Encoding.UTF8.GetBytes(secret);
         var nonce = RandomNumberGenerator.GetBytes(12);
         var cipher = new byte[plain.Length];
         var tag = new byte[16];
@@ -94,7 +91,7 @@ public class AesEmbeddingProtector : IEmbeddingProtector
         return nonce.Concat(tag).Concat(cipher).ToArray();
     }
 
-    public float[] Unprotect(byte[] data)
+    public string Unprotect(byte[] data)
     {
         var nonce = data[..12];
         var tag = data[12..28];
@@ -102,8 +99,6 @@ public class AesEmbeddingProtector : IEmbeddingProtector
         var plain = new byte[cipher.Length];
         using var aes = new AesGcm(_key, 16);
         aes.Decrypt(nonce, cipher, tag, plain);
-        var result = new float[plain.Length / sizeof(float)];
-        Buffer.BlockCopy(plain, 0, result, 0, plain.Length);
-        return result;
+        return Encoding.UTF8.GetString(plain);
     }
 }

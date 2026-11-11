@@ -2,14 +2,14 @@
 
 Sistema de venda de ingressos de futebol com planos de sócio-torcedor, feito para o **PIM IV** do curso de Análise e Desenvolvimento de Sistemas da UNIP.
 
-O sistema tem um **site**, um **aplicativo Android (Flutter)**, uma **API .NET 8**, um **banco SQL Server** e um **serviço de reconhecimento facial em Python**. O site e o aplicativo usam a mesma API e o mesmo banco.
+O sistema tem um **site**, um **aplicativo Android (Flutter)**, uma **API .NET 8**, e um **banco SQL Server**. O site e o aplicativo usam a mesma API e o mesmo banco. O login tem **captcha** e a compra é confirmada com um **aplicativo autenticador (MFA)**.
 
 ## O que o sistema faz
 
-- Cadastro e login (JWT com renovação de token).
+- Cadastro e login com **captcha** (JWT com renovação de token).
 - Lista de partidas, mapa do estádio por setor e escolha da cadeira.
 - Carrinho (até 5 cadeiras) e pagamento por cartão ou Pix. **O pagamento é simulado.**
-- Confirmação da compra: senha no site; biometria do aparelho e selfie no aplicativo.
+- Confirmação da compra no site **e** no aplicativo: código de 6 dígitos do **aplicativo autenticador** (Microsoft Authenticator, Google Authenticator, Authy...). O autenticador é ativado no perfil, com QR Code e chave em texto, e tem códigos de recuperação.
 - Meus ingressos, perfil, planos de sócio (5%, 10% e 20% de desconto) e assistente de dúvidas.
 - Área Admin (só para o administrador) com a lista dos ingressos vendidos.
 - Acessibilidade no aplicativo: tamanho do texto e alto contraste.
@@ -23,14 +23,13 @@ Estas são as pastas do projeto.
 | `aplicação web/` | Site em HTML, CSS e JavaScript |
 | `flutter_app/` | Aplicativo Flutter (camadas `core`, `data`, `domain` e `presentation`) |
 | `backend/` | API .NET 8 em camadas: `Domain`, `Application`, `Infrastructure` e `Api`, mais os testes do domínio |
-| `face-service/` | Serviço FastAPI de reconhecimento facial (só a API o acessa) |
 | `banco/` | Scripts do banco SQL Server: esquema, regras, procedures, triggers, MER, testes e script completo |
-| `docker-compose.yml` | Sobe o banco, a API e o serviço facial |
+| `docker-compose.yml` | Sobe o banco e a API |
 | `.env.example` | Modelo das variáveis de ambiente (copie para `.env`) |
 
 ## Como rodar
 
-**1. Servidor (banco, API e serviço facial)**, nesta pasta:
+**1. Servidor (banco e API)**, nesta pasta:
 
 ```bash
 cp .env.example .env        # troque as senhas e as chaves
@@ -58,18 +57,17 @@ A pasta `banco/` tem o necessário para criar e conferir o banco. O arquivo `00-
 ## Testes
 
 ```bash
-cd backend && dotnet test TicketFut.sln     # 18 testes das regras de domínio
-cd flutter_app && flutter test              # 11 testes (validadores e casos de uso do pagamento)
-cd face-service && pytest                   # testes do serviço facial
+cd backend && dotnet test TicketFut.sln     # 33 testes das regras de domínio (inclui os vetores da RFC 6238 do TOTP)
+cd flutter_app && flutter test              # validadores, casos de uso do pagamento e modelos do MFA
 ```
 
 ## O que é simulado ou ainda não existe
 
 - O gateway de pagamento é simulado (cartão terminado em `0000` simula recusa).
-- A prova de vida por giro de cabeça existe no serviço facial, mas vem **desligada** por padrão (`FACE_LIVENESS=none`). Ela não barra um vídeo gravado.
+- O captcha é próprio (imagem SVG gerada pela API, de uso único) e serve para barrar robôs simples; não substitui um serviço dedicado (reCAPTCHA, hCaptcha) contra ataques mais fortes.
 - O aplicativo foi testado apenas em emulador Android, por HTTP. Em produção, o HTTPS é obrigatório.
 - Não há implantação em nuvem nem esteira de CI/CD: ambas estão só como plano no relatório da Etapa 8.
-- Segredos (senha do banco, chave do JWT e chaves do serviço facial) ficam no arquivo `.env`, que **não** vai para o repositório.
+- Segredos (senha do banco, chave do JWT e chave de criptografia do MFA) ficam no arquivo `.env`, que **não** vai para o repositório.
 
 ## Etapas do PIM IV e onde estão
 
@@ -90,22 +88,16 @@ As demais etapas (organização, planejamento, responsabilidade social e gerenci
 ## Como as peças se falam
 
 ```
-Flutter App ──HTTPS/JWT──▶ Backend C# (.NET 8) ──rede interna + API key──▶ Microsserviço Python (FastAPI)
-                                │                                              │
-                           SQL Server                                  compara rostos (ArcFace)
-                    (usuários, partidas, pagamentos,                   não guarda nada
-                     embedding faciais criptografados)
+Site / Flutter App ──HTTPS/JWT──▶ Backend C# (.NET 8) ──▶ SQL Server
+                                     │                    (usuários, partidas, pagamentos,
+                                     │                     segredo do MFA criptografado)
+                                     ├─ captcha (imagem SVG gerada na API, resposta só na memória)
+                                     └─ MFA TOTP (RFC 6238): confere o código de 6 dígitos
 ```
 
-**O aplicativo nunca fala com o Python.** Só a API em C# chama o serviço de reconhecimento facial e decide o resultado. O site usa a mesma API.
+Quem decide é sempre a API em C#. O site e o aplicativo usam a mesma API.
 
 ## Rodar sem Docker
-
-```bash
-cd face-service
-pip install -r requirements-dev.txt
-EMBEDDER=mock uvicorn app.main:app          # "mock" não reconhece rostos de verdade; só para desenvolvimento
-```
 
 ```bash
 cd backend/src/TicketFut.Api
@@ -122,22 +114,24 @@ Depois configure o Flutter em `flutter_app/platform_setup/README.md`.
 - Mapa da arena: **o mandante nunca fica no setor Leste, e o visitante só fica no Leste** (aplicado no servidor e na tela).
 - A aba do estádio mostra a localização (OpenStreetMap) e abre a rota.
 
-## Biometria: o que cada camada garante
+## Segurança do login e da compra: o que cada camada garante
 
 | Fluxo | Mecanismo | Observação |
 |---|---|---|
-| Login rápido | `local_auth` destrava o refresh token guardado no Keychain ou Keystore | Conveniência; o servidor não "vê" a biometria |
-| Cadastro facial | selfie → API em C# → Python → **embedding** criptografado (AES-GCM) | A foto não é armazenada |
-| Confirmar compra | biometria nativa **+ selfie verificada no servidor** | O servidor decide; o aplicativo não consegue "forjar" a aprovação |
+| Login | e-mail + senha + **captcha** | O captcha é uma imagem SVG desenhada em pontos (sem texto no código da imagem), vale 3 minutos e uma única tentativa. `GET /api/auth/captcha` |
+| Login rápido (app) | `local_auth` destrava o refresh token guardado no Keychain ou Keystore | Conveniência do aparelho; o servidor não "vê" a biometria |
+| Ativar o MFA | perfil → QR Code **e** a mesma chave em texto → primeiro código de 6 dígitos | O segredo fica criptografado (AES-GCM) no banco; os 8 códigos de recuperação aparecem só uma vez (só o hash é guardado) |
+| Confirmar compra | código de 6 dígitos do autenticador (site e app) | Sem MFA ativo a compra é bloqueada (`mfa_required`) e a pessoa é levada ao perfil. O mesmo código vale para todos os ingressos do carrinho dentro dos mesmos 30 s |
+| Gerar novos códigos / desativar o MFA | senha atual | Senha errada devolve 403 |
 
-Em compras, o servidor exige o `nonce` da intenção, limita as tentativas (5), expira a intenção em 10 minutos e só então cobra.
+Em compras, o servidor exige o `nonce` da intenção, limita as tentativas de código (5 por compra, mais 10 por minuto por usuário), expira a intenção em 10 minutos e só então cobra. O mesmo passo de 30 s nunca vale para um código mais antigo que o último aceito.
 
 ## Antes de ir para produção
 
-1. **Prova de vida:** o serviço facial tem um provedor por giro de cabeça (`LIVENESS_PROVIDER=head_turn`), mas ele vem **desligado** (`none`). Ele barra foto impressa ou imagem parada, mas não um vídeo gravado. Para ligar: `FACE_LIVENESS=head_turn` e `FACE_REQUIRE_LIVENESS=true` no `.env`.
+1. **Captcha:** o captcha próprio barra robôs simples. Em produção considere um serviço dedicado (reCAPTCHA, hCaptcha ou Turnstile) e/ou bloqueio progressivo por conta.
 2. **Gateway de pagamento é sandbox** (`SandboxPaymentGateway`), e o aplicativo usa `SandboxCardTokenizer`. Troque pelo SDK de um gateway real (tokenização no aplicativo); número do cartão e CVV nunca devem chegar ao servidor. Cartões terminados em `0000` simulam recusa.
-3. **Limiares** (`THRESHOLD_LOGIN` e `THRESHOLD_PAYMENT`) precisam ser calibrados com dados reais (falsa aceitação contra falsa rejeição). A "porcentagem" devolvida é a similaridade de cosseno, não a probabilidade de ser a mesma pessoa.
-4. **LGPD:** dado biométrico é sensível. Há consentimento no cadastro e a rota `DELETE /api/auth/face` para exclusão; revise política de privacidade, retenção e base legal.
+3. **Chave do MFA:** `Mfa__EncryptionKey` (base64, 32 bytes; `openssl rand -base64 32`) protege os segredos dos autenticadores. Se for trocada, todos os usuários precisarão ativar o MFA de novo. Guarde-a fora do repositório.
+4. **Banco já existente** (criado pela versão com reconhecimento facial): rode `banco/07-migracao-mfa.sql` (ele apaga as tabelas de biometria facial). Banco novo: `00-script-completo.sql`.
 5. HTTPS obrigatório, segredos fora do repositório (`.env` e user-secrets), migrações do EF Core em vez de `EnsureCreated`. Os preços dos planos (`MemberPlans`) são valores de exemplo.
 
 ## Melhorias em relação ao site original

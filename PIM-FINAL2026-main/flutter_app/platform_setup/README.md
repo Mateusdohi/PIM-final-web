@@ -16,11 +16,9 @@ Depois aplique os ajustes abaixo.
 **`android/app/src/main/AndroidManifest.xml`** (dentro de `<manifest>`, antes de `<application>`):
 ```xml
 <uses-permission android:name="android.permission.INTERNET"/>
-<uses-permission android:name="android.permission.CAMERA"/>
 <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
 <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-<uses-feature android:name="android.hardware.camera" android:required="false"/>
 ```
 Para falar com o backend em `http://` durante o desenvolvimento, adicione em `<application ...>`:
 `android:usesCleartextTraffic="true"` (**remova em produção** e use HTTPS).
@@ -34,16 +32,14 @@ import io.flutter.embedding.android.FlutterFragmentActivity
 class MainActivity : FlutterFragmentActivity()
 ```
 
-**`android/app/build.gradle(.kts)`**: `minSdk = 23` (exigido por `flutter_secure_storage` e `camera`).
+**`android/app/build.gradle(.kts)`**: `minSdk = 23` (exigido por `flutter_secure_storage`).
 
 ## iOS
 
 **`ios/Runner/Info.plist`** (dentro do `<dict>` principal):
 ```xml
-<key>NSCameraUsageDescription</key>
-<string>Usamos a câmera frontal para o seu cadastro facial e para confirmar compras.</string>
 <key>NSFaceIDUsageDescription</key>
-<string>Usamos o Face ID para confirmar suas compras com segurança.</string>
+<string>Usamos o Face ID do aparelho só para o acesso rápido ao aplicativo.</string>
 <key>NSLocationWhenInUseUsageDescription</key>
 <string>Usamos sua localização para mostrar a distância até o estádio.</string>
 <key>LSApplicationQueriesSchemes</key>

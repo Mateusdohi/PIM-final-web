@@ -12,7 +12,6 @@ import '../../core/utils/validators.dart';
 import '../../domain/entities/payment.dart';
 import '../../domain/usecases/checkout/checkout_usecases.dart';
 import '../auth/bloc/auth_bloc.dart';
-import '../auth/face_capture_page.dart';
 import '../common/widgets.dart';
 import 'bloc/checkout_bloc.dart';
 import 'widgets/card_form.dart';
@@ -29,7 +28,6 @@ class CheckoutPage extends StatelessWidget {
           seatRow: args.seatRow,
           seatNumber: args.seatNumber,
           createIntent: sl<CreatePaymentIntentUseCase>(),
-          requireBiometric: sl<RequireBiometricUseCase>(),
           confirm: sl<ConfirmPaymentUseCase>(),
         ),
         child: _CheckoutView(args: args),
@@ -48,12 +46,14 @@ class _CheckoutViewState extends State<_CheckoutView> {
   final _card = CardFormController();
   final _memberCode = TextEditingController();
   final _memberKey = GlobalKey<FormState>();
+  final _mfaCode = TextEditingController();
   PaymentMethod _method = PaymentMethod.credit;
 
   @override
   void dispose() {
     _card.dispose();
     _memberCode.dispose();
+    _mfaCode.dispose();
     super.dispose();
   }
 
@@ -61,47 +61,37 @@ class _CheckoutViewState extends State<_CheckoutView> {
     final okMember = !isMember || (_memberKey.currentState?.validate() ?? false);
     final okCard = !_method.isCard || _card.validate();
     if (!okMember || !okCard) return;
+    if (_mfaCode.text.trim().isEmpty) {
+      showAppSnack(context, 'Digite o código de 6 dígitos do seu autenticador.', error: true);
+      return;
+    }
     FocusScope.of(context).unfocus();
     context.read<CheckoutBloc>().add(CheckoutSubmitted(
           method: _method,
+          code: _mfaCode.text.trim(),
           memberCode: isMember ? _memberCode.text.trim().toUpperCase() : null,
           card: _method.isCard ? _card.read() : null,
         ));
   }
 
-  Future<void> _openCamera() async {
-    final bloc = context.read<CheckoutBloc>();
-    // Uma única selfie confirma a compra (a prova de vida com duas fotos está desativada).
-    final shots = await Navigator.of(context).push<List<String>>(MaterialPageRoute(
-      builder: (_) => const FaceCapturePage(
-        title: 'CONFIRME SUA IDENTIDADE',
-        hint: 'Tire uma selfie agora para confirmar a compra',
-      ),
-    ));
-    if (shots == null || shots.isEmpty || !mounted) {
-      bloc.add(const SelfieCancelled());
-      return;
-    }
-    bloc.add(SelfieCaptured(shots.first));
-  }
-
   Future<void> _onFailure(BuildContext context, CheckoutState s) async {
     final f = s.failure!;
-    if (f.isFaceNotEnrolled) {
+    if (f.isMfaRequired) {
       final go = await showDialog<bool>(
         context: context,
         builder: (_) => AlertDialog(
-          title: const Text('Cadastre seu rosto'),
-          content: const Text('Para confirmar compras precisamos do seu cadastro facial.'),
+          title: const Text('Ative o autenticador'),
+          content: const Text('Para comprar ingressos é preciso ativar o autenticador (MFA) no seu perfil.'),
           actions: [
             TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('AGORA NÃO')),
-            FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('CADASTRAR')),
+            FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('ATIVAR')),
           ],
         ),
       );
-      if (go == true && context.mounted) context.push('/face-enroll', extra: const FaceEnrollArgs());
+      if (go == true && context.mounted) context.push('/mfa');
       return;
     }
+    if (f.code == 'invalid_mfa_code') _mfaCode.clear();
     showAppSnack(context, f.message, error: true);
   }
 
@@ -118,10 +108,6 @@ class _CheckoutViewState extends State<_CheckoutView> {
       body: SafeArea(
         child: MultiBlocListener(
           listeners: [
-            BlocListener<CheckoutBloc, CheckoutState>(
-              listenWhen: (p, c) => p.step != c.step && c.step == CheckoutStep.awaitingSelfie,
-              listener: (_, __) => _openCamera(),
-            ),
             BlocListener<CheckoutBloc, CheckoutState>(
               listenWhen: (p, c) => p.errorSeq != c.errorSeq && c.failure != null,
               listener: _onFailure,
@@ -184,20 +170,38 @@ class _CheckoutViewState extends State<_CheckoutView> {
                 else
                   PixPanel(amount: state.intent?.amount ?? match.price),
                 const SizedBox(height: 20),
-                Row(children: [
-                  const Icon(Icons.lock_outline, size: 16, color: AppColors.muted),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text('Para sua segurança, vamos confirmar a compra com a biometria do aparelho e uma selfie.',
-                        style: TextStyle(color: AppColors.muted, fontSize: 12)),
+                if (!(user?.mfaEnabled ?? false)) ...[
+                  AppCard(
+                    borderColor: AppColors.warning,
+                    child: Row(children: [
+                      const Icon(Icons.shield_outlined, color: AppColors.warning),
+                      const SizedBox(width: 12),
+                      const Expanded(child: Text('Ative o autenticador (MFA) para poder comprar.', style: TextStyle(fontSize: 13))),
+                      TextButton(onPressed: () => context.push('/mfa'), child: const Text('ATIVAR')),
+                    ]),
                   ),
-                ]),
+                  const SizedBox(height: 12),
+                ],
+                const SectionLabel('CÓDIGO DO AUTENTICADOR'),
+                TextField(
+                  controller: _mfaCode,
+                  enabled: !state.busy,
+                  keyboardType: TextInputType.number,
+                  maxLength: 14,
+                  autofillHints: const [AutofillHints.oneTimeCode],
+                  style: const TextStyle(fontSize: 20, letterSpacing: 4, fontWeight: FontWeight.w800),
+                  decoration: const InputDecoration(
+                    labelText: 'CÓDIGO DE 6 DÍGITOS',
+                    helperText: 'Abra o aplicativo autenticador e digite o código que aparece agora',
+                    counterText: '',
+                  ),
+                ),
                 const SizedBox(height: 12),
                 BusyButton(
                   label: 'CONFIRMAR COMPRA',
-                  icon: Icons.fingerprint,
+                  icon: Icons.verified_user,
                   busy: state.busy,
-                  onPressed: () => _submit(isMember),
+                  onPressed: (user?.mfaEnabled ?? false) ? () => _submit(isMember) : () => context.push('/mfa'),
                 ),
                 if (state.statusText.isNotEmpty)
                   Padding(

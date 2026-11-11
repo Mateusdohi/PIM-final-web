@@ -140,5 +140,6 @@ function sair() {
   aplicarTema('default');
   document.getElementById('login-email').value = '';
   document.getElementById('login-senha').value = '';
+  carregarCaptcha(); // captcha novo para o próximo login
   irPara('screen-login');
 }

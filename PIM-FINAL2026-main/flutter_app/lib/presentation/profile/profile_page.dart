@@ -6,6 +6,8 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/validators.dart';
 import '../../domain/entities/team.dart';
 import '../../domain/repositories/repositories.dart';
+import 'package:go_router/go_router.dart';
+
 import '../auth/bloc/auth_bloc.dart';
 import '../common/widgets.dart';
 
@@ -107,8 +109,13 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 if (user?.memberCode != null)
                   Text('Código de sócio: ${user!.memberCode}', style: const TextStyle(color: AppColors.muted, fontSize: 13)),
-                Text(user?.hasFace == true ? 'Cadastro facial feito' : 'Cadastro facial pendente',
+                Text(user?.mfaEnabled == true ? 'Autenticador (MFA) ativado' : 'Autenticador (MFA) desativado',
                     style: const TextStyle(color: AppColors.muted, fontSize: 13)),
+                TextButton(
+                  style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 32), alignment: Alignment.centerLeft),
+                  onPressed: () => context.push('/mfa'),
+                  child: Text(user?.mfaEnabled == true ? 'GERENCIAR AUTENTICADOR' : 'ATIVAR AUTENTICADOR'),
+                ),
               ]),
             ),
           ]),

@@ -51,7 +51,6 @@ void configureDependencies() {
   // --- use cases ---
   sl.registerLazySingleton(() => LoginUseCase(sl()));
   sl.registerLazySingleton(() => RegisterUseCase(sl()));
-  sl.registerLazySingleton(() => EnrollFaceUseCase(sl()));
   sl.registerLazySingleton(() => BiometricLoginUseCase(sl(), sl()));
   sl.registerLazySingleton(() => RestoreSessionUseCase(sl()));
   sl.registerLazySingleton(() => LogoutUseCase(sl()));
@@ -59,7 +58,6 @@ void configureDependencies() {
   sl.registerLazySingleton(() => GetSectorsUseCase(sl()));
   sl.registerLazySingleton(() => GetSeatsUseCase(sl()));
   sl.registerLazySingleton(() => CreatePaymentIntentUseCase(sl()));
-  sl.registerLazySingleton(() => RequireBiometricUseCase(sl()));
   sl.registerLazySingleton(() => ConfirmPaymentUseCase(sl(), sl()));
   sl.registerLazySingleton(() => SubscribePlanUseCase(sl(), sl()));
 }

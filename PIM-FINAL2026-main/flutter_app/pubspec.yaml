@@ -1,5 +1,5 @@
 name: ticketfut
-description: TicketFut - ingressos de futebol com autenticação biométrica e reconhecimento facial.
+description: TicketFut - ingressos de futebol com captcha no login e confirmação da compra por aplicativo autenticador (MFA).
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -17,15 +17,14 @@ dependencies:
   go_router: ^14.2.7
   get_it: ^7.7.0
   local_auth: ^2.3.0
-  camera: ^0.11.0+2
   flutter_secure_storage: ^9.2.2
   qr_flutter: ^4.1.0
+  flutter_svg: ^2.0.10+1
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
   geolocator: ^13.0.1
   url_launcher: ^6.3.0
   intl: 0.20.3
-  camera_android: ^0.10.12
 
 dev_dependencies:
   flutter_test:

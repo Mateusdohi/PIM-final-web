@@ -13,7 +13,7 @@ Esta pasta traz o que é preciso para ligar a API a um banco SQL Server.
 
 ## Segurança: o que NUNCA vai para o Git
 
-A connection string, a `Jwt:Key` e a `Face:EncryptionKey` ficam em variáveis de ambiente, só no terminal que roda a API. Se o repositório for público, troque a `Jwt:Key` por uma nova.
+A connection string, a `Jwt:Key` e a `Mfa:EncryptionKey` ficam em variáveis de ambiente, só no terminal que roda a API. Se o repositório for público, troque a `Jwt:Key` por uma nova.
 
 ## Cenário A: banco novo e vazio
 
@@ -42,7 +42,7 @@ Na pasta `backend\src\TicketFut.Api`, no terminal que vai rodar a API:
     $env:Jwt__Key = "<texto aleatório com 32 caracteres ou mais>"
     dotnet run
 
-Se a API recusar iniciar por falta de `Face:EncryptionKey`, gere uma chave de 32 bytes em base64 e defina `$env:Face__EncryptionKey`:
+Se a API recusar iniciar por falta de `Mfa:EncryptionKey`, gere uma chave de 32 bytes em base64 e defina `$env:Mfa__EncryptionKey`:
 
     $b = New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); [Convert]::ToBase64String($b)
 
@@ -80,4 +80,4 @@ O app precisa ignorar campos que não conhece. Vale testar o app com a API nova 
 ## O que foi e o que não foi testado
 
 - Testado em SQL Server 2025 Express (LocalDB): criação do esquema, compra com assento, bloqueio de assento duplicado e ingresso gravado.
-- Não testado: o banco CHAMPIONS-CARD, o app mobile, o face-service, e duas reservas simultâneas do mesmo assento.
+- Não testado: o banco CHAMPIONS-CARD, o app mobile (testado só em Flutter Web), e duas reservas simultâneas do mesmo assento.

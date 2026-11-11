@@ -8,13 +8,12 @@ public class AppDbContext : DbContext
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     public DbSet<User> Users => Set<User>();
-    public DbSet<FaceTemplate> FaceTemplates => Set<FaceTemplate>();
+    public DbSet<MfaRecoveryCode> MfaRecoveryCodes => Set<MfaRecoveryCode>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Stadium> Stadiums => Set<Stadium>();
     public DbSet<Match> Matches => Set<Match>();
     public DbSet<PaymentIntent> PaymentIntents => Set<PaymentIntent>();
     public DbSet<Ticket> Tickets => Set<Ticket>();
-    public DbSet<FaceVerificationLog> FaceVerificationLogs => Set<FaceVerificationLog>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -33,14 +32,14 @@ public class AppDbContext : DbContext
             e.HasIndex(x => x.Email).IsUnique();
             e.HasIndex(x => x.Cpf).IsUnique();
             e.HasIndex(x => x.MemberCode).IsUnique().HasFilter("[MemberCode] IS NOT NULL");
-            e.HasOne(x => x.FaceTemplate).WithOne().HasForeignKey<FaceTemplate>(f => f.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        b.Entity<FaceTemplate>(e =>
+        b.Entity<MfaRecoveryCode>(e =>
         {
-            e.ToTable("FaceTemplates");
-            e.HasIndex(x => x.UserId).IsUnique();
-            e.Property(x => x.ModelVersion).HasMaxLength(60);
+            e.ToTable("MfaRecoveryCodes");
+            e.Property(x => x.CodeHash).HasMaxLength(64).IsRequired();
+            e.HasIndex(x => x.UserId);
+            e.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         b.Entity<RefreshToken>(e =>
@@ -49,6 +48,8 @@ public class AppDbContext : DbContext
             e.Property(x => x.TokenHash).HasMaxLength(64).IsRequired();
             e.HasIndex(x => x.TokenHash).IsUnique();
             e.HasIndex(x => x.UserId);
+            // Declara a relação com Users para o EF gravar o usuário ANTES do token (o script do banco tem essa chave estrangeira).
+            e.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         b.Entity<Stadium>(e =>
@@ -80,6 +81,7 @@ public class AppDbContext : DbContext
             e.Property(x => x.Status).HasConversion<string>().HasMaxLength(10);
             e.HasOne(x => x.Match).WithMany().HasForeignKey(x => x.MatchId).OnDelete(DeleteBehavior.Restrict);
             e.HasIndex(x => x.UserId);
+            e.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
                         // [PIM-WEB Cartão 4] Índice único filtrado: o banco recusa a segunda compra ativa do mesmo assento (garantia final contra venda dupla).
                         // 1 assento = no máximo 1 compra ativa (reservada ou paga) por partida
             e.HasIndex(x => new { x.MatchId, x.Sector, x.SeatRow, x.SeatNumber })
@@ -96,18 +98,12 @@ public class AppDbContext : DbContext
             e.HasIndex(x => x.Code).IsUnique();
             e.HasIndex(x => x.PaymentIntentId).IsUnique();   // 1 ingresso por pagamento (idempotência)
             e.HasIndex(x => x.UserId);
+            e.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
             // [PIM-WEB Cartão 4] Mesma garantia nos ingressos: um assento só pode ter um ingresso por partida.
             e.HasIndex(x => new { x.MatchId, x.Sector, x.SeatRow, x.SeatNumber })
                 .IsUnique()
                 .HasFilter("[SeatRow] IS NOT NULL");
             e.HasOne(x => x.Match).WithMany().HasForeignKey(x => x.MatchId).OnDelete(DeleteBehavior.Restrict);
-        });
-
-        b.Entity<FaceVerificationLog>(e =>
-        {
-            e.ToTable("FaceVerificationLogs");
-            e.Property(x => x.Purpose).HasMaxLength(20);
-            e.HasIndex(x => x.UserId);
         });
     }
 }

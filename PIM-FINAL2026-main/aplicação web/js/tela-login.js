@@ -3,6 +3,38 @@
 // [PIM-WEB Cartão 8] Login e assinatura de sócio pela API. Sem localStorage.
 // ===========================
 
+// Captcha próprio: a API gera a imagem e guarda a resposta (3 min, uma tentativa). Qualquer tentativa de login pede imagem nova.
+let captchaIdAtual = null;
+
+async function carregarCaptcha() {
+  const img = document.getElementById('login-captcha-img');
+  const campo = document.getElementById('login-captcha');
+  if (campo) campo.value = '';
+  try {
+    const c = await Api.captcha();
+    captchaIdAtual = c.captchaId;
+    if (img) img.src = c.image;
+  } catch (e) {
+    captchaIdAtual = null;
+    if (img) img.removeAttribute('src');
+    mostrarToast(e instanceof ApiErro ? e.message : 'Não foi possível carregar o captcha.', 'error');
+  }
+}
+
+// Faz o login mandando o captcha digitado. Depois de qualquer tentativa troca a imagem (o captcha é de uso único).
+async function loginComCaptcha(email, senha) {
+  const resposta = (document.getElementById('login-captcha')?.value || '').trim();
+  if (!captchaIdAtual || !resposta) { throw new ApiErro(0, 'captcha_empty', 'Digite os caracteres da imagem de verificação.'); }
+  const id = captchaIdAtual;
+  captchaIdAtual = null;
+  try {
+    return await Api.login(email, senha, id, resposta);
+  } catch (e) {
+    carregarCaptcha();
+    throw e;
+  }
+}
+
 // [PIM-WEB Cartão 8] Login pela API (POST /api/auth/login). Senha não é guardada.
 async function fazerLogin() {
   const email = document.getElementById('login-email').value.trim();
@@ -10,9 +42,10 @@ async function fazerLogin() {
   if (!email || !senha) { mostrarToast('Preencha e-mail e senha.', 'warning'); return; }
 
   try {
-    const resp = await Api.login(email, senha);
+    const resp = await loginComCaptcha(email, senha);
     iniciarSessao(resp);
     document.getElementById('login-senha').value = '';
+    document.getElementById('login-captcha').value = '';
     mostrarSplashTime(estado.timeDoUsuario, () => {
       carregarPartidas();
       irPara('screen-partidas');
@@ -97,9 +130,10 @@ async function confirmarSocioLogin() {
   }
 
   try {
-    const auth = await Api.login(email, senha);
+    const auth = await loginComCaptcha(email, senha);
     iniciarSessao(auth);
     document.getElementById('login-senha').value = '';
+    document.getElementById('login-captcha').value = '';
     document.querySelectorAll('#login-campos-cartao-adesao input').forEach(i => i.value = '');
 
     const sub = await Api.assinar(planoLoginSelecionado, metodo, cardToken);

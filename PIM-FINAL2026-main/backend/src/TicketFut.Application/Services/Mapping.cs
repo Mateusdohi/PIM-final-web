@@ -6,8 +6,8 @@ namespace TicketFut.Application.Services;
 
 internal static class Mapping
 {
-       public static UserDto ToDto(User u, bool hasFace) => new(
-        u.Id, u.Name, u.Email, u.Team, (int)u.Plan, MemberPlans.DisplayName(u.Plan), u.MemberCode, hasFace, u.Role);
+       public static UserDto ToDto(User u) => new(
+        u.Id, u.Name, u.Email, u.Team, (int)u.Plan, MemberPlans.DisplayName(u.Plan), u.MemberCode, u.MfaEnabled, u.Role);
 
     public static MatchDto ToDto(Match m, User user, DateTime utcNow)
     {

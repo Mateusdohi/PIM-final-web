@@ -14,7 +14,8 @@ class Failure extends Equatable {
       'biometric_unavailable', 'Cadastre uma biometria ou Face ID nas configurações do aparelho para continuar.');
   static const sessionExpired = Failure('unauthorized', 'Sessão expirada. Faça login novamente.');
 
-  bool get isFaceNotEnrolled => code == 'face_not_enrolled';
+  /// Compra bloqueada: o usuário ainda não ativou o autenticador (MFA).
+  bool get isMfaRequired => code == 'mfa_required';
 
   @override
   List<Object?> get props => [code, message];

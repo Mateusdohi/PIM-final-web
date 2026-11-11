@@ -51,7 +51,7 @@ class AuthInterceptor extends QueuedInterceptor {
       final opts = err.requestOptions
         ..headers['Authorization'] = 'Bearer $newAccess'
         ..extra['retried'] = true;
-      // FormData só pode ser enviado uma vez: clona antes de repetir (upload da selfie)
+      // FormData só pode ser enviado uma vez: clona antes de repetir (corpo enviado uma única vez)
       if (opts.data is FormData) opts.data = (opts.data as FormData).clone();
       handler.resolve(await mainClient().fetch(opts));
     } catch (_) {

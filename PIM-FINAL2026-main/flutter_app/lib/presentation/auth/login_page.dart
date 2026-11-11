@@ -9,6 +9,7 @@ import '../../domain/repositories/repositories.dart';
 import '../accessibility/accessibility_sheet.dart';
 import '../common/widgets.dart';
 import 'bloc/auth_bloc.dart';
+import 'captcha_field.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -21,6 +22,7 @@ class _LoginPageState extends State<LoginPage> {
   final _form = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();
+  final _captcha = CaptchaController();
   bool _obscure = true;
   bool _enableBiometric = false;
   bool _deviceHasBiometric = false;
@@ -29,6 +31,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
+    _captcha.load();
     sl<BiometricAuthenticator>().isAvailable.then((v) {
       if (mounted) setState(() => _deviceHasBiometric = v);
     });
@@ -48,13 +51,19 @@ class _LoginPageState extends State<LoginPage> {
   void dispose() {
     _email.dispose();
     _password.dispose();
+    _captcha.dispose();
     super.dispose();
   }
 
   void _submit() {
     if (!_form.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
-    context.read<AuthBloc>().add(LoginSubmitted(_email.text, _password.text, enableBiometric: _enableBiometric));
+    final id = _captcha.captcha?.id;
+    if (id == null) {
+      showAppSnack(context, 'Carregue a imagem de verificação e digite os caracteres.', error: true);
+      return;
+    }
+    context.read<AuthBloc>().add(LoginSubmitted(_email.text, _password.text, id, _captcha.answer.text.trim(), enableBiometric: _enableBiometric));
   }
 
   @override
@@ -64,7 +73,11 @@ class _LoginPageState extends State<LoginPage> {
       body: SafeArea(
         child: BlocConsumer<AuthBloc, AuthState>(
           listenWhen: (p, c) => p.errorSeq != c.errorSeq && c.failure != null,
-          listener: (context, s) => showAppSnack(context, s.failure!.message, error: true),
+          listener: (context, s) {
+            showAppSnack(context, s.failure!.message, error: true);
+            // O captcha vale uma única tentativa: depois de qualquer erro de login troca a imagem.
+            _captcha.load();
+          },
           builder: (context, state) {
             return SingleChildScrollView(
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -129,13 +142,15 @@ class _LoginPageState extends State<LoginPage> {
                         validator: (v) => Validators.required(v, 'Informe a senha'),
                         onFieldSubmitted: (_) => _submit(),
                       ),
+                      const SizedBox(height: 14),
+                      CaptchaField(controller: _captcha, enabled: !state.busy),
                       if (_deviceHasBiometric)
                         CheckboxListTile(
                           value: _enableBiometric,
                           onChanged: (v) => setState(() => _enableBiometric = v ?? false),
                           contentPadding: EdgeInsets.zero,
                           controlAffinity: ListTileControlAffinity.leading,
-                          title: const Text('Ativar acesso rápido com biometria / Face ID', style: TextStyle(fontSize: 13)),
+                          title: const Text('Ativar acesso rápido com a biometria do aparelho', style: TextStyle(fontSize: 13)),
                         ),
                       const SizedBox(height: 18),
                       BusyButton(label: 'FAZER LOGIN', busy: state.busy, onPressed: _submit),

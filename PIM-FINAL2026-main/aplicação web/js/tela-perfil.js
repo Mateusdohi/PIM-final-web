@@ -21,14 +21,14 @@ async function abrirPerfil() {
     irPara('screen-login', false);
     return;
   }
-  ['pf-msg-dados', 'pf-msg-senha', 'pf-msg-face'].forEach(id => pfMsg(id, ''));
-  ['pf-senha-atual', 'pf-senha-nova', 'pf-senha-confirma'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+  ['pf-msg-dados', 'pf-msg-senha', 'pf-msg-mfa'].forEach(id => pfMsg(id, ''));
+  esconderSetupMfa();
+  ['pf-senha-atual', 'pf-mfa-senha', 'pf-senha-nova', 'pf-senha-confirma'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
   pfCodigoVisivel = false;
   irPara('screen-perfil');
   try {
     const u = await apiFetch('/api/auth/me');
     estado.usuarioLogado = usuarioDaApi(u);
-    estado.temFace = !!u.hasFace;
     preencherPerfil(u);
   } catch (e) {
     mostrarToast(e instanceof ApiErro ? e.message : 'Erro inesperado.', 'error');
@@ -60,10 +60,7 @@ function preencherPerfil(u) {
   document.getElementById('pf-btn-codigo').textContent = 'Mostrar';
   document.getElementById('pf-codigo').dataset.valor = u.memberCode || '';
 
-  document.getElementById('pf-face').textContent = u.hasFace
-    ? 'Há uma biometria facial cadastrada na sua conta.'
-    : 'Você não tem biometria facial cadastrada.';
-  document.getElementById('pf-btn-face').style.display = u.hasFace ? 'inline-block' : 'none';
+  renderizarMfa(!!u.mfaEnabled, null);
 }
 
 // [PIM-WEB Perfil] Mostra ou esconde o código de sócio.
@@ -121,18 +118,111 @@ async function trocarSenhaPerfil() {
     pfMsg('pf-msg-senha', e instanceof ApiErro ? e.message : 'Erro inesperado.', 'erro');
   }
 }
-// [PIM-WEB Perfil] Remove a biometria (LGPD). Pede confirmação antes. O endpoint já existia.
-async function removerBiometriaPerfil() {
-  pfMsg('pf-msg-face', '');
-  const ok = window.confirm('Remover sua biometria facial? Você poderá cadastrá-la de novo depois.');
-  if (!ok) return;
+// ---------------------------------------------------------------
+// Autenticador (MFA, TOTP): ativação com QR Code + chave, códigos de recuperação, desativar e gerar novos (pedem a senha atual).
+// O segredo só existe na tela durante a ativação; textContent/src, nunca innerHTML com dados da API.
+// ---------------------------------------------------------------
+function esconderSetupMfa() {
+  const setup = document.getElementById('pf-mfa-setup');
+  if (setup) setup.style.display = 'none';
+  const qr = document.getElementById('pf-mfa-qr');
+  if (qr) qr.removeAttribute('src');
+  ['pf-mfa-chave'].forEach(id => { const e = document.getElementById(id); if (e) e.textContent = ''; });
+  ['pf-mfa-codigo', 'pf-mfa-senha'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+  const rec = document.getElementById('pf-mfa-recuperacao');
+  if (rec) rec.style.display = 'none';
+  const lista = document.getElementById('pf-mfa-lista');
+  if (lista) lista.textContent = '';
+}
+
+// Mostra o estado do MFA. codigos: lista de códigos de recuperação recém-gerados (ou null).
+function renderizarMfa(ativo, codigos) {
+  if (estado.usuarioLogado) estado.usuarioLogado.mfaAtivo = ativo;
+  document.getElementById('pf-mfa-texto').textContent = ativo
+    ? 'Autenticador ATIVADO. A compra de ingressos pede o código de 6 dígitos do seu aplicativo.'
+    : 'Autenticador DESATIVADO. Para comprar ingressos é preciso ativar: a compra é confirmada com um código de 6 dígitos do seu aplicativo (Microsoft Authenticator, Google Authenticator, Authy...).';
+  document.getElementById('pf-mfa-ativar').style.display = ativo ? 'none' : 'block';
+  document.getElementById('pf-mfa-ativo').style.display = ativo ? 'block' : 'none';
+  document.getElementById('pf-mfa-btn-iniciar').style.display = 'inline-block';
+  document.getElementById('pf-mfa-setup').style.display = 'none';
+  const rec = document.getElementById('pf-mfa-recuperacao');
+  const lista = document.getElementById('pf-mfa-lista');
+  lista.textContent = '';
+  if (codigos && codigos.length) {
+    codigos.forEach(c => { const li = document.createElement('li'); li.textContent = c; lista.appendChild(li); });
+    rec.style.display = 'block';
+  } else {
+    rec.style.display = 'none';
+  }
+}
+
+// Passo 1: pede o segredo ao servidor e mostra QR Code e chave (o mesmo valor).
+async function iniciarMfaPerfil() {
+  pfMsg('pf-msg-mfa', '');
   try {
-    await apiFetch('/api/auth/face', { metodo: 'DELETE' });
-    document.getElementById('pf-face').textContent = 'Você não tem biometria facial cadastrada.';
-    document.getElementById('pf-btn-face').style.display = 'none';
-    pfMsg('pf-msg-face', 'Biometria removida.', 'ok');
+    const s = await Api.mfaSetup();
+    document.getElementById('pf-mfa-qr').src = s.qrSvg;
+    document.getElementById('pf-mfa-chave').textContent = s.secret;
+    document.getElementById('pf-mfa-codigo').value = '';
+    document.getElementById('pf-mfa-setup').style.display = 'block';
+    document.getElementById('pf-mfa-btn-iniciar').style.display = 'none';
   } catch (e) {
-    pfMsg('pf-msg-face', e instanceof ApiErro ? e.message : 'Erro inesperado.', 'erro');
+    pfMsg('pf-msg-mfa', e instanceof ApiErro ? e.message : 'Erro inesperado.', 'erro');
+  }
+}
+
+async function copiarChaveMfa() {
+  const chave = (document.getElementById('pf-mfa-chave').textContent || '').replace(/\s/g, '');
+  try {
+    await navigator.clipboard.writeText(chave);
+    pfMsg('pf-msg-mfa', 'Chave copiada.', 'ok');
+  } catch {
+    pfMsg('pf-msg-mfa', 'Não foi possível copiar. Selecione a chave e copie manualmente.', 'erro');
+  }
+}
+
+// Passo 2: confere o primeiro código; ao acertar o MFA liga e os códigos de recuperação aparecem (só agora).
+async function confirmarMfaPerfil() {
+  const codigo = document.getElementById('pf-mfa-codigo').value.trim();
+  pfMsg('pf-msg-mfa', '');
+  if (!codigo) { pfMsg('pf-msg-mfa', 'Digite o código de 6 dígitos do aplicativo.', 'erro'); return; }
+  try {
+    const r = await Api.mfaAtivar(codigo);
+    esconderSetupMfa();
+    renderizarMfa(true, r.recoveryCodes);
+    pfMsg('pf-msg-mfa', 'Autenticador ativado. Guarde os códigos de recuperação abaixo.', 'ok');
+    mostrarToast('Autenticador ativado.', 'success');
+  } catch (e) {
+    pfMsg('pf-msg-mfa', e instanceof ApiErro ? e.message : 'Erro inesperado.', 'erro');
+  }
+}
+
+async function novosCodigosMfaPerfil() {
+  const senha = document.getElementById('pf-mfa-senha').value;
+  pfMsg('pf-msg-mfa', '');
+  if (!senha) { pfMsg('pf-msg-mfa', 'Digite sua senha atual.', 'erro'); return; }
+  try {
+    const r = await Api.mfaCodigos(senha);
+    document.getElementById('pf-mfa-senha').value = '';
+    renderizarMfa(true, r.recoveryCodes);
+    pfMsg('pf-msg-mfa', 'Novos códigos gerados. Os anteriores deixaram de valer.', 'ok');
+  } catch (e) {
+    pfMsg('pf-msg-mfa', e instanceof ApiErro ? e.message : 'Erro inesperado.', 'erro');
+  }
+}
+
+async function desativarMfaPerfil() {
+  const senha = document.getElementById('pf-mfa-senha').value;
+  pfMsg('pf-msg-mfa', '');
+  if (!senha) { pfMsg('pf-msg-mfa', 'Digite sua senha atual.', 'erro'); return; }
+  if (!window.confirm('Desativar o autenticador? Sem ele você não poderá comprar ingressos até ativar de novo.')) return;
+  try {
+    await Api.mfaDesativar(senha);
+    esconderSetupMfa();
+    renderizarMfa(false, null);
+    pfMsg('pf-msg-mfa', 'Autenticador desativado.', 'ok');
+  } catch (e) {
+    pfMsg('pf-msg-mfa', e instanceof ApiErro ? e.message : 'Erro inesperado.', 'erro');
   }
 }
 
@@ -141,10 +231,11 @@ async function removerBiometriaPerfil() {
   const sairOrig = sair;
   sair = function () {
     ['pf-nome', 'pf-email-leitura', 'pf-senha-atual', 'pf-senha-nova', 'pf-senha-confirma'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
-    ['pf-nome-titulo', 'pf-email', 'pf-avatar', 'pf-plano', 'pf-face'].forEach(id => { const e = document.getElementById(id); if (e) e.textContent = ''; });
+    ['pf-nome-titulo', 'pf-email', 'pf-avatar', 'pf-plano', 'pf-mfa-texto'].forEach(id => { const e = document.getElementById(id); if (e) e.textContent = ''; });
     const cod = document.getElementById('pf-codigo');
     if (cod) { cod.textContent = '••••••'; cod.dataset.valor = ''; }
-    ['pf-msg-dados', 'pf-msg-senha', 'pf-msg-face'].forEach(id => pfMsg(id, ''));
+    ['pf-msg-dados', 'pf-msg-senha', 'pf-msg-mfa'].forEach(id => pfMsg(id, ''));
+    esconderSetupMfa();
     sairOrig();
   };
 })();

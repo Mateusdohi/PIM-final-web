@@ -15,17 +15,21 @@ public class User
     public string Role { get; set; } = Rules.Roles.User;
     public string? MemberCode { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public FaceTemplate? FaceTemplate { get; set; }
+    // MFA por aplicativo autenticador (TOTP). O segredo fica criptografado (AES-GCM); nunca em texto puro.
+    public bool MfaEnabled { get; set; }
+    public byte[]? MfaSecretProtected { get; set; }
+    /// <summary>Último passo de 30 s já aceito: impede reutilizar o mesmo código.</summary>
+    public long MfaLastStep { get; set; }
+    public DateTime? MfaEnabledAt { get; set; }
 }
 
-public class FaceTemplate
+/// <summary>Código de recuperação do MFA: guardamos só o hash (SHA-256); cada um vale uma vez.</summary>
+public class MfaRecoveryCode
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid UserId { get; set; }
-    /// <summary>Embedding criptografado (AES-GCM). Nunca armazenamos a foto.</summary>
-    public byte[] EncryptedEmbedding { get; set; } = Array.Empty<byte>();
-    public string ModelVersion { get; set; } = "";
-    public DateTime ConsentAt { get; set; }
+    public string CodeHash { get; set; } = "";
+    public DateTime? UsedAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 

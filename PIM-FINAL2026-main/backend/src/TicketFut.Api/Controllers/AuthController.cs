@@ -18,6 +18,10 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<AuthResponse>> Register(RegisterRequest req, CancellationToken ct) =>
         Ok(await _auth.RegisterAsync(req, ct));
 
+    /// <summary>Gera um captcha novo (imagem SVG em data URI + id). Vale 3 minutos e uma única tentativa.</summary>
+    [HttpGet("captcha"), EnableRateLimiting("captcha")]
+    public ActionResult<CaptchaDto> Captcha() => Ok(_auth.NewCaptcha());
+
     [HttpPost("login"), EnableRateLimiting("auth")]
     public async Task<ActionResult<AuthResponse>> Login(LoginRequest req, CancellationToken ct) =>
         Ok(await _auth.LoginAsync(req, ct));
@@ -49,20 +53,39 @@ public class AuthController : ControllerBase
         await _auth.ChangePasswordAsync(User.GetUserId(), req, ct);
         return NoContent();
     }
-    /// <summary>Cadastro facial. multipart/form-data: selfie (arquivo) + consent (true).</summary>
-    [Authorize, HttpPost("face/enroll"), EnableRateLimiting("face"), RequestSizeLimit(6 * 1024 * 1024)]
-    public async Task<ActionResult<UserDto>> EnrollFace([FromForm] EnrollFaceForm form, CancellationToken ct)
-    {
-        await using var ms = new MemoryStream();
-        await form.Selfie.CopyToAsync(ms, ct);
-        return Ok(await _auth.EnrollFaceAsync(User.GetUserId(), ms.ToArray(), form.Consent, ct));
-    }
+}
 
-    /// <summary>LGPD: apaga o template facial do usuário.</summary>
-    [Authorize, HttpDelete("face")]
-    public async Task<IActionResult> DeleteFace(CancellationToken ct)
+/// <summary>MFA por aplicativo autenticador (TOTP): ativação, desativação e códigos de recuperação.</summary>
+[ApiController, Authorize, Route("api/mfa")]
+public class MfaController : ControllerBase
+{
+    private readonly MfaService _mfa;
+    public MfaController(MfaService mfa) => _mfa = mfa;
+
+    [HttpGet("status")]
+    public async Task<ActionResult<MfaStatusDto>> Status(CancellationToken ct) =>
+        Ok(await _mfa.StatusAsync(User.GetUserId(), ct));
+
+    /// <summary>Gera o segredo e devolve a chave em texto, o endereço otpauth:// e o QR Code (SVG). Só vale depois de confirmar um código.</summary>
+    [HttpPost("setup"), EnableRateLimiting("auth")]
+    public async Task<ActionResult<MfaSetupDto>> Setup(CancellationToken ct) =>
+        Ok(await _mfa.BeginSetupAsync(User.GetUserId(), ct));
+
+    /// <summary>Confirma o primeiro código, ativa o MFA e devolve os códigos de recuperação (aparecem só agora).</summary>
+    [HttpPost("enable"), EnableRateLimiting("auth")]
+    public async Task<ActionResult<MfaRecoveryCodesDto>> Enable(MfaCodeRequest req, CancellationToken ct) =>
+        Ok(await _mfa.EnableAsync(User.GetUserId(), req.Code, ct));
+
+    /// <summary>Desativa o MFA. Exige a senha atual.</summary>
+    [HttpPost("disable"), EnableRateLimiting("auth")]
+    public async Task<IActionResult> Disable(MfaPasswordRequest req, CancellationToken ct)
     {
-        await _auth.DeleteFaceAsync(User.GetUserId(), ct);
+        await _mfa.DisableAsync(User.GetUserId(), req.Password, ct);
         return NoContent();
     }
+
+    /// <summary>Gera novos códigos de recuperação (os antigos deixam de valer). Exige a senha atual.</summary>
+    [HttpPost("recovery-codes"), EnableRateLimiting("auth")]
+    public async Task<ActionResult<MfaRecoveryCodesDto>> RecoveryCodes(MfaPasswordRequest req, CancellationToken ct) =>
+        Ok(await _mfa.RegenerateRecoveryCodesAsync(User.GetUserId(), req.Password, ct));
 }

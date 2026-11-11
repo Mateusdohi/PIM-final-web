@@ -56,11 +56,7 @@ class PaymentIntent extends Equatable {
     required this.discountPercent,
     required this.expiresAt,
     required this.method,
-    this.challenge,
   });
-
-  /// Lado que o usuário deve virar a cabeça na prova de vida ("left" ou "right"); null = sem prova de vida.
-  final String? challenge;
 
   final String id;
   final String nonce;

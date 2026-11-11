@@ -1,6 +1,6 @@
 // ===========================
 // TELA 5: PAGAMENTO
-// [PIM-WEB Cartão 8] Compra pela API: intent (servidor calcula o preço) e confirm-web (senha + token do cartão).
+// [PIM-WEB Cartão 8] Compra pela API: intent (servidor calcula o preço) e confirm (código MFA + token do cartão).
 // Número e CVV do cartão nunca saem do navegador.
 // ===========================
 
@@ -12,21 +12,31 @@ function selecionarMetodoCompra(metodo, btn) {
   atualizarBotoesMetodo('metodos-compra', btn);
   alternarCamposPagamento('campos-cartao-compra', 'pix-compra', metodo);
   // [PIM-WEB Cartão 8] Removido preencherCartaoSalvo. Motivo: o site não guarda mais cartão do usuário.
-  garantirCampoSenha();
+  garantirCampoCodigo();
 }
 
-// [PIM-WEB Cartão 8] Cria o campo de senha por JS (o confirm-web exige reautenticação).
-// Motivo: evita mexer no index.html e mantém a senha fora de qualquer armazenamento.
-function garantirCampoSenha() {
-  if (document.getElementById('pag-senha')) return;
+// Cria o campo do código MFA por JS (a compra é confirmada com o código de 6 dígitos do autenticador).
+// Motivo: evita mexer no index.html e mantém o código fora de qualquer armazenamento.
+function garantirCampoCodigo() {
+  if (document.getElementById('pag-codigo')) return;
   const botao = document.querySelector('#screen-pagamento .btn-primary');
   const input = document.createElement('input');
-  input.type = 'password';
-  input.id = 'pag-senha';
+  input.type = 'text';
+  input.id = 'pag-codigo';
   input.className = 'input-field';
-  input.placeholder = 'SUA SENHA (CONFIRMAÇÃO)';
-  input.autocomplete = 'current-password';
+  input.placeholder = 'CÓDIGO DE 6 DÍGITOS DO AUTENTICADOR';
+  input.setAttribute('inputmode', 'numeric');
+  input.autocomplete = 'one-time-code';
+  input.maxLength = 14;
   botao.parentNode.insertBefore(input, botao);
+}
+
+// Sem autenticador ativado não há compra: leva a pessoa ao perfil para ativar.
+function exigirMfaAtivo() {
+  if (estado.usuarioLogado?.mfaAtivo) return true;
+  mostrarToast('Para comprar, ative o autenticador (MFA) no seu perfil.', 'warning');
+  abrirPerfil();
+  return false;
 }
 
 async function confirmarCompra() {
@@ -41,7 +51,7 @@ async function confirmarCompra() {
   const metodo = { credito: 'Credit', debito: 'Debit', pix: 'Pix' }[metodoUi];
   const partida = estado.partidaSelecionada;
   const setor = estado.setorSelecionado;
-  const senha = document.getElementById('pag-senha')?.value || '';
+  const codigo = document.getElementById('pag-codigo')?.value || '';
 
   // [PIM-WEB Cartão 8] Código de sócio vai ao servidor, que valida. Motivo: validar só no navegador não protege o desconto.
   let memberCode = null;
@@ -50,7 +60,8 @@ async function confirmarCompra() {
     if (!memberCode) { mostrarToast('Informe seu código de sócio para aplicar o desconto.', 'warning'); return; }
   }
 
-  if (!senha) { mostrarToast('Digite sua senha para confirmar a compra.', 'warning'); return; }
+  if (!exigirMfaAtivo()) return;
+  if (!codigo.trim()) { mostrarToast('Digite o código de 6 dígitos do seu autenticador para confirmar a compra.', 'warning'); return; }
 
   // [PIM-WEB Cartão 8] Token do cartão (gateway simulado). Pix não usa token.
   let cardToken = null;
@@ -71,14 +82,14 @@ async function confirmarCompra() {
     });
     intentAtual = intent;
 
-    // 2) Confirma com senha, nonce e token. O servidor cobra e emite o ingresso.
-    const resp = await apiFetch(`/api/payments/intents/${intent.intentId}/confirm-web`, {
+    // 2) Confirma com o código do autenticador, o nonce e o token. O servidor confere o código, cobra e emite o ingresso.
+    const resp = await apiFetch(`/api/payments/intents/${intent.intentId}/confirm`, {
       metodo: 'POST',
-      corpo: { nonce: intent.nonce, password: senha, cardToken },
+      corpo: { nonce: intent.nonce, code: codigo, cardToken },
     });
 
     // [PIM-WEB Cartão 8] Limpa dados sensíveis dos campos e da memória.
-    document.getElementById('pag-senha').value = '';
+    document.getElementById('pag-codigo').value = '';
     document.querySelectorAll('#campos-cartao-compra input').forEach(i => i.value = '');
     const inputCodigo = document.getElementById('input-codigo-socio');
     if (inputCodigo) inputCodigo.value = '';
@@ -94,6 +105,7 @@ async function confirmarCompra() {
       abrirAssentos(estado.setorSelecionado);
       return;
     }
+    if (e instanceof ApiErro && e.code === 'mfa_required') { exigirMfaAtivo(); return; }
     mostrarToast(e instanceof ApiErro ? e.message : 'Erro inesperado.', 'error');
   }
 }

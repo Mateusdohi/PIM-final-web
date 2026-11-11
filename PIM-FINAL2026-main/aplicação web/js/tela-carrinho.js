@@ -54,7 +54,7 @@ function removerDoCarrinho(i) {
 function limparCarrinho() {
   carrinho = [];
   metodoCarrinho = 'credito';
-  ['car-senha', 'car-codigo-socio', 'car-cartao-numero', 'car-validade', 'car-cvv'].forEach(id => {
+  ['car-codigo-mfa', 'car-codigo-socio', 'car-cartao-numero', 'car-validade', 'car-cvv'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -142,14 +142,15 @@ async function finalizarCarrinho() {
   if (carrinho.length === 0) { mostrarToast('O carrinho está vazio.', 'warning'); return; }
 
   const metodo = { credito: 'Credit', debito: 'Debit', pix: 'Pix' }[metodoCarrinho];
-  const senha = document.getElementById('car-senha').value;
+  const codigo = document.getElementById('car-codigo-mfa').value;
 
   let memberCode = null;
   if (estado.usuarioLogado?.plano > 0) {
     memberCode = (document.getElementById('car-codigo-socio').value || '').trim().toUpperCase();
     if (!memberCode) { mostrarToast('Informe seu código de sócio para aplicar o desconto.', 'warning'); return; }
   }
-  if (!senha) { mostrarToast('Digite sua senha para confirmar a compra.', 'warning'); return; }
+  if (!exigirMfaAtivo()) return;
+  if (!codigo.trim()) { mostrarToast('Digite o código de 6 dígitos do seu autenticador para confirmar a compra.', 'warning'); return; }
 
   // Número do cartão só é lido aqui, no navegador. Só o token vai à API.
   const numero = document.getElementById('car-cartao-numero').value;
@@ -179,9 +180,10 @@ async function finalizarCarrinho() {
         corpo: { matchId: item.matchId, sector: item.setor, method: metodo, memberCode,
                  seatRow: item.row, seatNumber: item.number },
       });
-      await apiFetch(`/api/payments/intents/${intent.intentId}/confirm-web`, {
+      // O mesmo código vale para todos os itens do carrinho (o servidor aceita repetir o código dentro dos mesmos 30 s).
+      await apiFetch(`/api/payments/intents/${intent.intentId}/confirm`, {
         metodo: 'POST',
-        corpo: { nonce: intent.nonce, password: senha, cardToken },
+        corpo: { nonce: intent.nonce, code: codigo, cardToken },
       });
       comprados++;
       totalCobrado += intent.amount;
@@ -198,7 +200,7 @@ async function finalizarCarrinho() {
   finalizandoCarrinho = false;
   botao.disabled = false;
   botao.textContent = 'FINALIZAR COMPRA';
-  document.getElementById('car-senha').value = '';
+  document.getElementById('car-codigo-mfa').value = '';
   atualizarContadorCarrinho();
 
   if (sessaoExpirou) {

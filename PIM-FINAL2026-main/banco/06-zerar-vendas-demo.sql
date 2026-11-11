@@ -15,7 +15,6 @@ ENABLE TRIGGER dbo.TR_Tickets_NaoApagar ON dbo.Tickets;
 
 DELETE FROM dbo.TicketAudit;
 DELETE FROM dbo.PaymentIntents;
-DELETE FROM dbo.FaceVerificationLogs;
 
 COMMIT TRANSACTION;
 
@@ -23,6 +22,6 @@ SELECT (SELECT COUNT(*) FROM dbo.Tickets) AS Ingressos,
        (SELECT COUNT(*) FROM dbo.PaymentIntents) AS Pagamentos,
        (SELECT COUNT(*) FROM dbo.TicketAudit) AS Auditoria,
        (SELECT COUNT(*) FROM dbo.Users) AS UsuariosMantidos,
-       (SELECT COUNT(*) FROM dbo.FaceTemplates) AS RostosMantidos,
+       (SELECT COUNT(*) FROM dbo.Users WHERE MfaEnabled = 1) AS UsuariosComMfaMantidos,
        (SELECT COUNT(*) FROM dbo.Matches) AS PartidasMantidas,
        (SELECT COUNT(*) FROM sys.triggers WHERE is_disabled = 1) AS TriggersDesligados;

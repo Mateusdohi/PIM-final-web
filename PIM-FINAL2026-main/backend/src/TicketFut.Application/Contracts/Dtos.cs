@@ -1,14 +1,15 @@
 namespace TicketFut.Application.Contracts;
 
 public record RegisterRequest(string Name, string Cpf, string Email, string Password, string Team);
-public record LoginRequest(string Email, string Password);
+public record LoginRequest(string Email, string Password, string? CaptchaId = null, string? CaptchaAnswer = null);
+public record CaptchaDto(string CaptchaId, string Image);
 public record RefreshRequest(string RefreshToken);
 // [PIM-WEB Perfil] Edição do próprio perfil. Só nome e time; e-mail, CPF, plano e papel não mudam por aqui.
 public record UpdateProfileRequest(string Name, string Team);
 public record ChangePasswordRequest(string CurrentPassword, string NewPassword);
 
 // [PIM-WEB Cartão 3] Campo Role acrescentado: o site usa para mostrar ou esconder a área administrativa.
-public record UserDto(Guid Id, string Name, string Email, string Team, int PlanPercent, string PlanName, string? MemberCode, bool HasFace, string Role);
+public record UserDto(Guid Id, string Name, string Email, string Team, int PlanPercent, string PlanName, string? MemberCode, bool MfaEnabled, string Role);
 public record AuthResponse(string AccessToken, string RefreshToken, int ExpiresInSeconds, UserDto User);
 
 public record SubscribeRequest(int Plan, string Method, string? CardToken);
@@ -25,7 +26,7 @@ public record SeatDto(int Row, int Number, string Status);
 // [PIM-WEB Visual] RowSizes: cadeiras de cada fileira (fileira 1 primeiro). Campo novo e opcional: o app mobile ignora.
 public record SeatMapDto(string Sector, int Rows, int SeatsPerRow, bool Available, string? Reason, List<SeatDto> Taken, List<int>? RowSizes = null);// [PIM-WEB Cartão 4] SeatRow e SeatNumber são opcionais: o app mobile continua comprando só por setor.
 public record CreateIntentRequest(int MatchId, string Sector, string Method, string? MemberCode, int? SeatRow = null, int? SeatNumber = null);
-public record IntentDto(Guid IntentId, string Nonce, decimal Amount, decimal OriginalAmount, int DiscountPercent, DateTime ExpiresAt, string Method, string? Challenge = null);
+public record IntentDto(Guid IntentId, string Nonce, decimal Amount, decimal OriginalAmount, int DiscountPercent, DateTime ExpiresAt, string Method);
 
 // [PIM-WEB Cartão 4] O ingresso passa a informar o assento (quando houver).
 public record TicketDto(Guid Id, int MatchId, string MatchName, string Sector, string Code, decimal Amount, DateTime KickoffAt, DateTime IssuedAt, int? SeatRow = null, int? SeatNumber = null);
@@ -35,7 +36,16 @@ public record TicketDto(Guid Id, int MatchId, string MatchName, string Sector, s
 public record AdminTicketDto(Guid Id, Guid UserId, int MatchId, string MatchName, string Sector, string Code, decimal Amount, DateTime IssuedAt, int? SeatRow = null, int? SeatNumber = null);
 
 public record ConfirmResponse(TicketDto Ticket, string? PixPayload);
-// [PIM-WEB Cartão 5] Confirmação pela web: nonce da compra, senha (reautenticação) e token do cartão. O número do cartão nunca chega ao servidor.
-public record ConfirmWebRequest(string Nonce, string Password, string? CardToken);
+// Confirmação da compra: nonce da intenção + código de 6 dígitos do autenticador (ou um código de recuperação) + token do cartão.
+// O número do cartão nunca chega ao servidor.
+public record ConfirmRequest(string Nonce, string Code, string? CardToken);
+
+// ---- MFA (aplicativo autenticador) ----
+public record MfaStatusDto(bool Enabled, int RecoveryCodesLeft);
+/// <summary>Início da ativação: o mesmo segredo em três formas (texto, otpauth:// e QR Code em SVG).</summary>
+public record MfaSetupDto(string Secret, string OtpAuthUri, string QrSvg);
+public record MfaCodeRequest(string Code);
+public record MfaPasswordRequest(string Password);
+public record MfaRecoveryCodesDto(List<string> RecoveryCodes);
 
 public record MatchQuery(string? Team, string? Status, string? Search);

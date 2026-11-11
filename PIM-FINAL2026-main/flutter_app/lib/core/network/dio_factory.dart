@@ -11,7 +11,7 @@ class DioFactory {
         baseUrl: Env.apiBaseUrl,
         connectTimeout: const Duration(seconds: 10),
         sendTimeout: const Duration(seconds: 30),
-        receiveTimeout: const Duration(seconds: 40), // verificação facial pode demorar
+        receiveTimeout: const Duration(seconds: 40), // folga para o servidor responder
         headers: {'Accept': 'application/json'},
       );
 

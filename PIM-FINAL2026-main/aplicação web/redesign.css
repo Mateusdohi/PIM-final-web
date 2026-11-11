@@ -837,3 +837,18 @@ body:has(#screen-partidas.active) .logo-container {
   align-self: flex-start; background: none; border: none; padding: 0; cursor: pointer;
   color: #16803f; text-decoration: underline; font-size: 0.82rem; font-weight: 600;
 }
+
+
+/* ===== Captcha no login e autenticador (MFA) no perfil ===== */
+.captcha-linha { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.captcha-img { border-radius: 8px; border: 1px solid #d0d7e2; background: #f1f5f9; max-width: 100%; height: auto; min-width: 190px; min-height: 64px; }
+.mfa-setup { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; align-items: flex-start; }
+.mfa-qr { background: #fff; border: 1px solid #d0d7e2; border-radius: 10px; padding: 8px; }
+.mfa-chave-linha { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.mfa-chave { font-family: ui-monospace, Consolas, monospace; font-size: 1.05rem; letter-spacing: 0.08em; background: #f1f5f9; border: 1px dashed #98a2b3; border-radius: 8px; padding: 8px 12px; color: #14213d; word-break: break-all; }
+.mfa-codigo { max-width: 180px; text-align: center; letter-spacing: 0.3em; font-size: 1.2rem; }
+.mfa-acoes { display: flex; gap: 10px; flex-wrap: wrap; }
+.mfa-perigo { color: #b42318; border-color: #b42318; }
+.mfa-recuperacao { margin-top: 14px; padding: 12px; border-radius: 10px; background: #fff8e6; border: 1px solid #f2c94c; }
+.mfa-lista { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin: 8px 0 0; padding: 0; }
+.mfa-lista li { font-family: ui-monospace, Consolas, monospace; font-weight: 700; letter-spacing: 0.08em; background: #fff; border: 1px solid #e0c36a; border-radius: 6px; padding: 6px 8px; text-align: center; color: #14213d; }

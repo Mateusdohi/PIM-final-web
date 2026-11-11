@@ -5,59 +5,53 @@ import 'package:ticketfut/domain/entities/payment.dart';
 import 'package:ticketfut/domain/repositories/repositories.dart';
 import 'package:ticketfut/domain/usecases/checkout/checkout_usecases.dart';
 
-class _MockBiometric extends Mock implements BiometricAuthenticator {}
-
 class _MockRepo extends Mock implements PaymentRepository {}
 
 class _MockTokenizer extends Mock implements CardTokenizer {}
 
 void main() {
-  group('RequireBiometricUseCase', () {
-    late _MockBiometric bio;
-    setUp(() => bio = _MockBiometric());
+  PaymentIntent intentFor(PaymentMethod m, {Duration validFor = const Duration(minutes: 5)}) => PaymentIntent(
+        id: 'i1', nonce: 'n', amount: 100, originalAmount: 100, discountPercent: 0,
+        expiresAt: DateTime.now().toUtc().add(validFor), method: m,
+      );
 
-    test('falha se o usuário cancelar', () async {
-      when(() => bio.isAvailable).thenAnswer((_) async => true);
-      when(() => bio.authenticate(any())).thenAnswer((_) async => false);
-      final r = await RequireBiometricUseCase(bio)();
-      expect(r.failureOrNull, Failure.biometricCancelled);
-    });
-
-    test('passa se autenticar', () async {
-      when(() => bio.isAvailable).thenAnswer((_) async => true);
-      when(() => bio.authenticate(any())).thenAnswer((_) async => true);
-      expect((await RequireBiometricUseCase(bio)()).isOk, isTrue);
-    });
-
-    test('bloqueia quando não há biometria no aparelho (padrão do app)', () async {
-      when(() => bio.isAvailable).thenAnswer((_) async => false);
-      final r = await RequireBiometricUseCase(bio)();
-      expect(r.failureOrNull, Failure.biometricUnavailable);
-      verifyNever(() => bio.authenticate(any()));
-    });
-  });
-
-  group('ConfirmPaymentUseCase', () {
-    final intent = PaymentIntent(
-      id: 'i1', nonce: 'n', amount: 100, originalAmount: 100, discountPercent: 0,
-      expiresAt: DateTime.now().toUtc().add(const Duration(minutes: 5)), method: PaymentMethod.credit,
-    );
-
+  group('ConfirmPaymentUseCase (código do autenticador)', () {
     test('exige cartão quando o método é cartão', () async {
       final uc = ConfirmPaymentUseCase(_MockRepo(), _MockTokenizer());
-      final r = await uc(intent: intent, selfiePath: '/tmp/s.jpg');
+      final r = await uc(intent: intentFor(PaymentMethod.credit), code: '123456');
       expect(r.failureOrNull?.code, 'card_required');
     });
 
     test('recusa intenção expirada sem chamar o backend', () async {
       final repo = _MockRepo();
-      final expired = PaymentIntent(
-        id: 'i2', nonce: 'n', amount: 1, originalAmount: 1, discountPercent: 0,
-        expiresAt: DateTime.now().toUtc().subtract(const Duration(seconds: 1)), method: PaymentMethod.pix,
-      );
-      final r = await ConfirmPaymentUseCase(repo, _MockTokenizer())(intent: expired, selfiePath: 'x');
+      final r = await ConfirmPaymentUseCase(repo, _MockTokenizer())(
+          intent: intentFor(PaymentMethod.pix, validFor: const Duration(seconds: -1)), code: '123456');
       expect(r.failureOrNull?.code, 'intent_expired');
       verifyZeroInteractions(repo);
+    });
+
+    test('exige o código do autenticador e não chama o backend sem ele', () async {
+      final repo = _MockRepo();
+      final r = await ConfirmPaymentUseCase(repo, _MockTokenizer())(intent: intentFor(PaymentMethod.pix), code: '  ');
+      expect(r.failureOrNull?.code, 'mfa_code_required');
+      verifyZeroInteractions(repo);
+    });
+
+    test('envia o código (sem espaços nas pontas) ao repositório', () async {
+      final repo = _MockRepo();
+      final intent = intentFor(PaymentMethod.pix);
+      when(() => repo.confirm(intent: intent, code: '123456', cardToken: null))
+          .thenAnswer((_) async => const Err(Failure('invalid_mfa_code', 'x')));
+      final r = await ConfirmPaymentUseCase(repo, _MockTokenizer())(intent: intent, code: ' 123456 ');
+      expect(r.failureOrNull?.code, 'invalid_mfa_code');
+      verify(() => repo.confirm(intent: intent, code: '123456', cardToken: null)).called(1);
+    });
+  });
+
+  group('Failure', () {
+    test('reconhece o bloqueio por falta de MFA', () {
+      expect(const Failure('mfa_required', 'x').isMfaRequired, isTrue);
+      expect(const Failure('other', 'x').isMfaRequired, isFalse);
     });
   });
 }

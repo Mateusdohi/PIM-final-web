@@ -7,8 +7,19 @@ class LoginUseCase {
   LoginUseCase(this._repo);
   final AuthRepository _repo;
 
-  Future<Result<User>> call({required String email, required String password, bool enableBiometric = false}) =>
-      _repo.login(email: email.trim(), password: password, enableBiometric: enableBiometric);
+  Future<Result<User>> call({
+    required String email,
+    required String password,
+    required String captchaId,
+    required String captchaAnswer,
+    bool enableBiometric = false,
+  }) =>
+      _repo.login(
+          email: email.trim(),
+          password: password,
+          captchaId: captchaId,
+          captchaAnswer: captchaAnswer.trim(),
+          enableBiometric: enableBiometric);
 }
 
 class RegisterUseCase {
@@ -17,14 +28,8 @@ class RegisterUseCase {
   Future<Result<User>> call(RegisterData data) => _repo.register(data);
 }
 
-class EnrollFaceUseCase {
-  EnrollFaceUseCase(this._repo);
-  final AuthRepository _repo;
-  Future<Result<User>> call(String imagePath) => _repo.enrollFace(imagePath);
-}
-
 /// Login rápido: biometria nativa DESBLOQUEIA a sessão guardada (refresh token).
-/// Não é prova de identidade para o servidor — para compras há a verificação facial no backend.
+/// Não é prova de identidade para o servidor — para compras há o código do autenticador (MFA).
 class BiometricLoginUseCase {
   BiometricLoginUseCase(this._biometric, this._repo);
   final BiometricAuthenticator _biometric;

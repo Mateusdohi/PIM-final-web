@@ -84,8 +84,8 @@ class _MatchesViewState extends State<_MatchesView> {
                   showAccessibilitySheet(context);
                 case 'plans':
                   context.push('/plans', extra: const PlansArgs());
-                case 'face':
-                  context.push('/face-enroll', extra: const FaceEnrollArgs());
+                case 'mfa':
+                  context.push('/mfa');
                 case 'logout':
                   auth.add(const LogoutRequested());
                 case 'forget':
@@ -99,9 +99,9 @@ class _MatchesViewState extends State<_MatchesView> {
               if (user != null && user.isAdmin) const PopupMenuItem(value: 'admin', child: Text('Área Admin')),
               const PopupMenuItem(value: 'access', child: Text('Acessibilidade')),
               if (user != null && !user.isMember) const PopupMenuItem(value: 'plans', child: Text('Quero ser sócio')),
-              PopupMenuItem(value: 'face', child: Text(user?.hasFace == true ? 'Refazer cadastro facial' : 'Cadastrar rosto')),
+              PopupMenuItem(value: 'mfa', child: Text(user?.mfaEnabled == true ? 'Autenticador (MFA)' : 'Ativar autenticador (MFA)')),
               const PopupMenuItem(value: 'logout', child: Text('Sair')),
-              const PopupMenuItem(value: 'forget', child: Text('Sair e remover biometria')),
+              const PopupMenuItem(value: 'forget', child: Text('Sair e esquecer este aparelho')),
             ],
           ),
         ],
@@ -143,15 +143,15 @@ class _MatchesViewState extends State<_MatchesView> {
                 borderColor: AppColors.brand,
                 child: Text(team.news, style: const TextStyle(height: 1.4)),
               ),
-              if (user != null && !user.hasFace) ...[
+              if (user != null && !user.mfaEnabled) ...[
                 const SizedBox(height: 12),
                 AppCard(
                   borderColor: AppColors.warning,
                   child: Row(children: [
-                    const Icon(Icons.face_retouching_natural, color: AppColors.warning),
+                    const Icon(Icons.shield_outlined, color: AppColors.warning),
                     const SizedBox(width: 12),
-                    const Expanded(child: Text('Cadastre seu rosto para poder comprar ingressos.', style: TextStyle(fontSize: 13))),
-                    TextButton(onPressed: () => context.push('/face-enroll', extra: const FaceEnrollArgs()), child: const Text('CADASTRAR')),
+                    const Expanded(child: Text('Ative o autenticador (MFA) para poder comprar ingressos.', style: TextStyle(fontSize: 13))),
+                    TextButton(onPressed: () => context.push('/mfa'), child: const Text('ATIVAR')),
                   ]),
                 ),
               ],

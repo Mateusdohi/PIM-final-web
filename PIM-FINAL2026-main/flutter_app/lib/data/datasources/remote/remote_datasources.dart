@@ -6,14 +6,26 @@ import '../../models/seat_model.dart';
 import '../../../domain/entities/seat.dart';
 import '../../../domain/entities/match.dart';
 import '../../../domain/entities/user.dart';
+import '../../../domain/entities/mfa.dart';
 
 /// Falam com o backend C#. Lançam DioException; os repositórios convertem em Result.
 class AuthRemoteDataSource {
   AuthRemoteDataSource(this._dio);
   final Dio _dio;
 
-  Future<AuthResponseModel> login(String email, String password) async {
-    final r = await _dio.post('/api/auth/login', data: {'email': email, 'password': password});
+  Future<Captcha> captcha() async {
+    final r = await _dio.get('/api/auth/captcha');
+    final j = r.data as Map<String, dynamic>;
+    return Captcha.fromDataUri(id: j['captchaId'] as String, dataUri: j['image'] as String);
+  }
+
+  Future<AuthResponseModel> login(String email, String password, String captchaId, String captchaAnswer) async {
+    final r = await _dio.post('/api/auth/login', data: {
+      'email': email,
+      'password': password,
+      'captchaId': captchaId,
+      'captchaAnswer': captchaAnswer,
+    });
     return AuthResponseModel.fromJson(r.data as Map<String, dynamic>);
   }
 
@@ -40,18 +52,6 @@ class AuthRemoteDataSource {
     return UserModel.fromJson(r.data as Map<String, dynamic>);
   }
 
-  /// Envia a selfie (multipart). O backend repassa ao microsserviço Python.
-  Future<User> enrollFace(String imagePath) async {
-    final form = FormData.fromMap({
-      'consent': 'true',
-      'selfie': await MultipartFile.fromFile(imagePath, filename: 'selfie.jpg'),
-    });
-    final r = await _dio.post('/api/auth/face/enroll', data: form);
-    return UserModel.fromJson(r.data as Map<String, dynamic>);
-  }
-
-  Future<void> deleteFace() => _dio.delete('/api/auth/face');
-
   Future<User> updateProfile(String name, String team) async {
     final r = await _dio.put('/api/auth/me', data: {'name': name, 'team': team});
     return UserModel.fromJson(r.data as Map<String, dynamic>);
@@ -59,6 +59,27 @@ class AuthRemoteDataSource {
 
   Future<void> changePassword(String current, String next) =>
       _dio.post('/api/auth/change-password', data: {'currentPassword': current, 'newPassword': next});
+
+  // ---- Autenticador (MFA) ----
+  Future<MfaStatus> mfaStatus() async {
+    final j = (await _dio.get('/api/mfa/status')).data as Map<String, dynamic>;
+    return MfaStatus(enabled: j['enabled'] as bool, recoveryCodesLeft: j['recoveryCodesLeft'] as int);
+  }
+
+  Future<MfaSetup> mfaSetup() async {
+    final j = (await _dio.post('/api/mfa/setup')).data as Map<String, dynamic>;
+    return MfaSetup(secret: j['secret'] as String, otpAuthUri: j['otpAuthUri'] as String);
+  }
+
+  List<String> _codes(Object? data) =>
+      ((data as Map<String, dynamic>)['recoveryCodes'] as List).map((e) => e.toString()).toList();
+
+  Future<List<String>> mfaEnable(String code) async => _codes((await _dio.post('/api/mfa/enable', data: {'code': code})).data);
+
+  Future<void> mfaDisable(String password) => _dio.post('/api/mfa/disable', data: {'password': password});
+
+  Future<List<String>> mfaNewRecoveryCodes(String password) async =>
+      _codes((await _dio.post('/api/mfa/recovery-codes', data: {'password': password})).data);
 }
 
 class MatchRemoteDataSource {
@@ -110,18 +131,15 @@ class PaymentRemoteDataSource {
 
   Future<PurchaseResult> confirm({
     required PaymentIntent intent,
-    required String selfiePath,
-    String? livenessSelfiePath,
+    required String code,
     String? cardToken,
   }) async {
-    final form = FormData.fromMap({
+    // JSON: nonce da compra + código de 6 dígitos do autenticador (ou de recuperação) + token do cartão.
+    final r = await _dio.post('/api/payments/intents/${intent.id}/confirm', data: {
       'nonce': intent.nonce,
+      'code': code,
       if (cardToken != null) 'cardToken': cardToken,
-      'selfie': await MultipartFile.fromFile(selfiePath, filename: 'selfie.jpg'),
-      if (livenessSelfiePath != null)
-        'livenessSelfie': await MultipartFile.fromFile(livenessSelfiePath, filename: 'liveness.jpg'),
     });
-    final r = await _dio.post('/api/payments/intents/${intent.id}/confirm', data: form);
     final j = r.data as Map<String, dynamic>;
     return PurchaseResult(
       ticket: PaymentModel.ticketFromJson(j['ticket'] as Map<String, dynamic>),

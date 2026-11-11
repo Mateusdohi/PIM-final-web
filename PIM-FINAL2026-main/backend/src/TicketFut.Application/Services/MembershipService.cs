@@ -9,13 +9,12 @@ namespace TicketFut.Application.Services;
 public class MembershipService
 {
     private readonly IUserRepository _users;
-    private readonly IFaceTemplateRepository _faces;
     private readonly IPaymentGateway _gateway;
     private readonly IUnitOfWork _uow;
 
-    public MembershipService(IUserRepository users, IFaceTemplateRepository faces, IPaymentGateway gateway, IUnitOfWork uow)
+    public MembershipService(IUserRepository users, IPaymentGateway gateway, IUnitOfWork uow)
     {
-        _users = users; _faces = faces; _gateway = gateway; _uow = uow;
+        _users = users; _gateway = gateway; _uow = uow;
     }
 
     public async Task<SubscribeResponse> SubscribeAsync(Guid userId, SubscribeRequest req, CancellationToken ct)
@@ -47,7 +46,6 @@ public class MembershipService
         user.MemberCode = code;
         await _uow.SaveChangesAsync(ct);
 
-        var hasFace = await _faces.GetByUserAsync(userId, ct) is not null;
-        return new SubscribeResponse(Mapping.ToDto(user, hasFace), code, charge.PixPayload);
+        return new SubscribeResponse(Mapping.ToDto(user), code, charge.PixPayload);
     }
 }

@@ -56,27 +56,10 @@ public class PaymentsController : ControllerBase
     public async Task<ActionResult<IntentDto>> CreateIntent(CreateIntentRequest req, CancellationToken ct) =>
         Ok(await _svc.CreateIntentAsync(User.GetUserId(), req, ct));
 
-    /// <summary>multipart/form-data: selfie (arquivo), nonce, cardToken (opcional para Pix).</summary>
-    [HttpPost("intents/{id:guid}/confirm"), EnableRateLimiting("face"), RequestSizeLimit(6 * 1024 * 1024)]
-    public async Task<ActionResult<ConfirmResponse>> Confirm(Guid id, [FromForm] ConfirmForm form, CancellationToken ct)
-    {
-        await using var ms = new MemoryStream();
-        await form.Selfie.CopyToAsync(ms, ct);
-        byte[]? liveness = null;
-        if (form.LivenessSelfie is not null)
-        {
-            await using var ms2 = new MemoryStream();
-            await form.LivenessSelfie.CopyToAsync(ms2, ct);
-            liveness = ms2.ToArray();
-        }
-        return Ok(await _svc.ConfirmAsync(User.GetUserId(), id, form.Nonce, ms.ToArray(), form.CardToken, liveness, ct));
-    }
-    
-    /// <summary>Confirmação para a WEB (sem biometria). JSON: nonce, password (reautenticação) e cardToken (opcional para Pix).</summary>
-    // [PIM-WEB Cartão 5] Confirmação de pagamento para a web (sem biometria), com limite de requisições por usuário.
-    [HttpPost("intents/{id:guid}/confirm-web"), EnableRateLimiting("face")]
-    public async Task<ActionResult<ConfirmResponse>> ConfirmWeb(Guid id, ConfirmWebRequest req, CancellationToken ct) =>
-        Ok(await _svc.ConfirmWithPasswordAsync(User.GetUserId(), id, req.Nonce, req.Password, req.CardToken, ct));
+    /// <summary>JSON: nonce da compra, code (6 dígitos do autenticador ou código de recuperação) e cardToken (opcional para Pix).</summary>
+    [HttpPost("intents/{id:guid}/confirm"), EnableRateLimiting("confirm")]
+    public async Task<ActionResult<ConfirmResponse>> Confirm(Guid id, ConfirmRequest req, CancellationToken ct) =>
+        Ok(await _svc.ConfirmAsync(User.GetUserId(), id, req, ct));
 }
 
 [ApiController, Authorize, Route("api/tickets")]

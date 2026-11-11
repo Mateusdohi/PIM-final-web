@@ -58,6 +58,15 @@
             <label for="login-senha">Senha</label>
             <input type="password" id="login-senha" class="input-field" placeholder="Sua senha" />
           </div>
+          <!-- Captcha próprio: imagem gerada pela API. Vale uma única tentativa; erro troca a imagem. -->
+          <div class="rd-campo">
+            <label for="login-captcha">Verificação de segurança</label>
+            <div class="captcha-linha">
+              <img id="login-captcha-img" class="captcha-img" alt="Captcha: caracteres da imagem" width="190" height="64" />
+              <button type="button" class="pf-link" onclick="carregarCaptcha()" aria-label="Trocar imagem do captcha">Trocar imagem</button>
+            </div>
+            <input type="text" id="login-captcha" class="input-field" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Digite os caracteres da imagem" />
+          </div>
 
           <button class="btn-primary" onclick="fazerLogin()">FAZER LOGIN</button>
           <p class="link-text">Não tenho login: <a href="javascript:void(0)" class="link-destaque" onclick="irPara('screen-cadastro')">FAZER CADASTRO</a></p>
@@ -407,7 +416,7 @@
           <p class="pix-chave">CHAVE PIX: ingressos@ticketfut.com.br</p>
         </div>
 
-        <input type="password" id="car-senha" class="input-field" placeholder="SUA SENHA (CONFIRMAÇÃO)" autocomplete="current-password" />
+        <input type="text" id="car-codigo-mfa" class="input-field" inputmode="numeric" autocomplete="one-time-code" maxlength="14" placeholder="CÓDIGO DE 6 DÍGITOS DO AUTENTICADOR" />
         <button id="car-finalizar" class="btn-primary" onclick="finalizarCarrinho()">FINALIZAR COMPRA</button>
       </div>
 
@@ -531,7 +540,7 @@
       <p class="qs-nota">Versão de demonstração: o pagamento é simulado.</p>
     </div>
   </div>
-  <!-- [PIM-WEB Perfil] Tela do perfil do usuário. Nome e time editáveis; troca de senha; biometria. Sem CPF na tela. -->
+  <!-- [PIM-WEB Perfil] Tela do perfil do usuário. Nome e time editáveis; troca de senha; autenticador (MFA). Sem CPF na tela. -->
   <div class="screen" id="screen-perfil">
     <div class="rd-app">
       <header class="rd-topbar">
@@ -617,11 +626,43 @@
             <button type="button" class="btn-primary pf-btn" onclick="trocarSenhaPerfil()">TROCAR SENHA</button>
           </section>
 
-          <section class="rd-painel">
-            <h2 class="rd-titulo">Biometria facial</h2>
-            <p id="pf-face" class="pf-texto"></p>
-            <p id="pf-msg-face" class="pf-msg" role="status"></p>
-            <button type="button" id="pf-btn-face" class="btn-secundario" style="display:none;" onclick="removerBiometriaPerfil()">REMOVER BIOMETRIA</button>
+          <section class="rd-painel" id="pf-mfa">
+            <h2 class="rd-titulo">Autenticador (MFA)</h2>
+            <p id="pf-mfa-texto" class="pf-texto"></p>
+
+            <!-- Desativado: ativação em dois passos (QR Code + chave, depois o código de 6 dígitos) -->
+            <div id="pf-mfa-ativar" style="display:none;">
+              <button type="button" id="pf-mfa-btn-iniciar" class="btn-primary pf-btn" onclick="iniciarMfaPerfil()">ATIVAR AUTENTICADOR</button>
+              <div id="pf-mfa-setup" class="mfa-setup" style="display:none;">
+                <p class="pf-texto"><b>1.</b> Abra o Microsoft Authenticator, Google Authenticator ou outro app e escaneie o QR Code. Se preferir, digite a chave abaixo no app (tipo de conta: baseada em tempo).</p>
+                <img id="pf-mfa-qr" class="mfa-qr" alt="QR Code para o aplicativo autenticador" width="200" height="200" />
+                <div class="mfa-chave-linha">
+                  <code id="pf-mfa-chave" class="mfa-chave"></code>
+                  <button type="button" class="pf-link" onclick="copiarChaveMfa()">Copiar chave</button>
+                </div>
+                <p class="pf-texto"><b>2.</b> Digite o código de 6 dígitos que o app está mostrando agora.</p>
+                <input type="text" id="pf-mfa-codigo" class="input-field mfa-codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="000000" />
+                <button type="button" class="btn-primary pf-btn" onclick="confirmarMfaPerfil()">CONFIRMAR E ATIVAR</button>
+              </div>
+            </div>
+
+            <!-- Ativado: códigos de recuperação, novos códigos e desativar (pedem a senha atual) -->
+            <div id="pf-mfa-ativo" style="display:none;">
+              <div class="pf-campo">
+                <label for="pf-mfa-senha">Senha atual (para gerar novos códigos ou desativar)</label>
+                <input type="password" id="pf-mfa-senha" class="input-field" autocomplete="current-password" />
+              </div>
+              <div class="mfa-acoes">
+                <button type="button" class="btn-secundario" onclick="novosCodigosMfaPerfil()">GERAR NOVOS CÓDIGOS</button>
+                <button type="button" class="btn-secundario mfa-perigo" onclick="desativarMfaPerfil()">DESATIVAR</button>
+              </div>
+            </div>
+
+            <div id="pf-mfa-recuperacao" class="mfa-recuperacao" style="display:none;">
+              <p class="pf-texto"><b>Códigos de recuperação.</b> Guarde em local seguro: aparecem só agora e cada um vale uma vez (servem se você perder o celular).</p>
+              <ul id="pf-mfa-lista" class="mfa-lista"></ul>
+            </div>
+            <p id="pf-msg-mfa" class="pf-msg" role="status"></p>
           </section>
 
         </div>
@@ -753,6 +794,7 @@
       cvIniciar('car-campos-cartao', 'car-metodos');
       inicializarLogoHover();
       irPara('screen-login', false);
+      carregarCaptcha(); // imagem do captcha da tela de login
     });
   </script>
 

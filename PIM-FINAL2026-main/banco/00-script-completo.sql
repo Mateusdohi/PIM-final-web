@@ -54,6 +54,11 @@ CREATE TABLE Users (
     Role nvarchar(20) NOT NULL,
     MemberCode nvarchar(6) NULL,
     CreatedAt datetime2 NOT NULL,
+    -- MFA (aplicativo autenticador, TOTP). O segredo fica criptografado (AES-GCM) pela API; nunca em texto puro.
+    MfaEnabled bit NOT NULL CONSTRAINT DF_Users_MfaEnabled DEFAULT 0,
+    MfaSecretProtected varbinary(max) NULL,
+    MfaLastStep bigint NOT NULL CONSTRAINT DF_Users_MfaLastStep DEFAULT 0,
+    MfaEnabledAt datetime2 NULL,
     CONSTRAINT PK_Users PRIMARY KEY (Id)
 );
 CREATE UNIQUE INDEX IX_Users_Cpf ON Users (Cpf);
@@ -61,30 +66,16 @@ CREATE UNIQUE INDEX IX_Users_Email ON Users (Email);
 CREATE UNIQUE INDEX IX_Users_MemberCode ON Users (MemberCode) WHERE MemberCode IS NOT NULL;
 GO
 
-CREATE TABLE FaceTemplates (
+CREATE TABLE MfaRecoveryCodes (
     Id uniqueidentifier NOT NULL,
     UserId uniqueidentifier NOT NULL,
-    EncryptedEmbedding varbinary(max) NOT NULL,
-    ModelVersion nvarchar(60) NOT NULL,
-    ConsentAt datetime2 NOT NULL,
+    CodeHash nvarchar(64) NOT NULL,
+    UsedAt datetime2 NULL,
     CreatedAt datetime2 NOT NULL,
-    CONSTRAINT PK_FaceTemplates PRIMARY KEY (Id),
-    CONSTRAINT FK_FaceTemplates_Users_UserId FOREIGN KEY (UserId) REFERENCES Users (Id) ON DELETE CASCADE
+    CONSTRAINT PK_MfaRecoveryCodes PRIMARY KEY (Id),
+    CONSTRAINT FK_MfaRecoveryCodes_Users_UserId FOREIGN KEY (UserId) REFERENCES Users (Id) ON DELETE CASCADE
 );
-CREATE UNIQUE INDEX IX_FaceTemplates_UserId ON FaceTemplates (UserId);
-GO
-
-CREATE TABLE FaceVerificationLogs (
-    Id uniqueidentifier NOT NULL,
-    UserId uniqueidentifier NOT NULL,
-    PaymentIntentId uniqueidentifier NULL,
-    Purpose nvarchar(20) NOT NULL,
-    Similarity float NOT NULL,
-    IsMatch bit NOT NULL,
-    CreatedAt datetime2 NOT NULL,
-    CONSTRAINT PK_FaceVerificationLogs PRIMARY KEY (Id)
-);
-CREATE INDEX IX_FaceVerificationLogs_UserId ON FaceVerificationLogs (UserId);
+CREATE INDEX IX_MfaRecoveryCodes_UserId ON MfaRecoveryCodes (UserId);
 GO
 CREATE TABLE PaymentIntents (
     Id uniqueidentifier NOT NULL,
@@ -100,7 +91,7 @@ CREATE TABLE PaymentIntents (
     Status nvarchar(10) NOT NULL,
     Nonce nvarchar(64) NOT NULL,
     ExpiresAt datetime2 NOT NULL,
-    FaceAttempts int NOT NULL,
+    ConfirmAttempts int NOT NULL,
     GatewayReference nvarchar(100) NULL,
     CreatedAt datetime2 NOT NULL,
     PaidAt datetime2 NULL,
@@ -238,8 +229,6 @@ IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_Tickets_Users_Us
     ALTER TABLE dbo.Tickets ADD CONSTRAINT FK_Tickets_Users_UserId FOREIGN KEY (UserId) REFERENCES dbo.Users (Id);
 IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_RefreshTokens_Users_UserId')
     ALTER TABLE dbo.RefreshTokens ADD CONSTRAINT FK_RefreshTokens_Users_UserId FOREIGN KEY (UserId) REFERENCES dbo.Users (Id) ON DELETE CASCADE;
-IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_FaceVerificationLogs_Users_UserId')
-    ALTER TABLE dbo.FaceVerificationLogs ADD CONSTRAINT FK_FaceVerificationLogs_Users_UserId FOREIGN KEY (UserId) REFERENCES dbo.Users (Id);
 GO
 
 -- =====================================================================

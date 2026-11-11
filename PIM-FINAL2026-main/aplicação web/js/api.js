@@ -1,5 +1,9 @@
 // [PIM-WEB Cartão 8] Cliente da API. Token só em memória (sem localStorage).
-const API_URL = 'http://localhost:5080';
+// Endereço da API. Para testar contra outra porta: abra o site com ?api=http://localhost:5081
+const API_URL = (() => {
+  const p = new URLSearchParams(location.search).get('api');
+  return p && /^http:\/\/(localhost|127\.0\.0\.1):\d{2,5}$/.test(p) ? p : 'http://localhost:5080';
+})();
 let _accessToken = null;
 
 class ApiErro extends Error {
@@ -50,7 +54,16 @@ function gerarTokenCartao(numero) {
 }
 
 const Api = {
-  login:     (email, password) => apiFetch('/api/auth/login', { metodo: 'POST', corpo: { email, password } }),
+  // Captcha próprio: a API gera a imagem (SVG) e guarda a resposta; cada captcha vale uma única tentativa.
+  captcha:   () => apiFetch('/api/auth/captcha'),
+  login:     (email, password, captchaId, captchaAnswer) =>
+             apiFetch('/api/auth/login', { metodo: 'POST', corpo: { email, password, captchaId, captchaAnswer } }),
+  // MFA por aplicativo autenticador (TOTP)
+  mfaStatus:   () => apiFetch('/api/mfa/status'),
+  mfaSetup:    () => apiFetch('/api/mfa/setup', { metodo: 'POST' }),
+  mfaAtivar:   (code) => apiFetch('/api/mfa/enable', { metodo: 'POST', corpo: { code } }),
+  mfaDesativar:(password) => apiFetch('/api/mfa/disable', { metodo: 'POST', corpo: { password } }),
+  mfaCodigos:  (password) => apiFetch('/api/mfa/recovery-codes', { metodo: 'POST', corpo: { password } }),
   registrar: (name, cpf, email, password, team) =>
              apiFetch('/api/auth/register', { metodo: 'POST', corpo: { name, cpf, email, password, team } }),
   assinar:   (plan, method, cardToken) =>
@@ -75,6 +88,7 @@ function usuarioDaApi(u) {
     nomePlano: u.planName,
     codigoSocio: u.memberCode,
     role: u.role,
+    mfaAtivo: !!u.mfaEnabled,      // autenticador ativado: exigido para comprar
   };
 }
 

@@ -1,4 +1,3 @@
-import '../../../core/config/env.dart';
 import '../../../core/error/failures.dart';
 import '../../entities/payment.dart';
 import '../../repositories/repositories.dart';
@@ -19,20 +18,7 @@ class CreatePaymentIntentUseCase {
           matchId: matchId, sector: sector, method: method, memberCode: memberCode, seatRow: seatRow, seatNumber: seatNumber);
 }
 
-/// Camada extra obrigatória ANTES de finalizar a compra: biometria nativa do aparelho.
-class RequireBiometricUseCase {
-  RequireBiometricUseCase(this._biometric);
-  final BiometricAuthenticator _biometric;
-
-  Future<Result<void>> call({String reason = 'Confirme sua compra'}) async {
-    if (!await _biometric.isAvailable) {
-      return Env.requireLocalBiometricForPurchase ? const Err(Failure.biometricUnavailable) : const Ok(null);
-    }
-    return await _biometric.authenticate(reason) ? const Ok(null) : const Err(Failure.biometricCancelled);
-  }
-}
-
-/// Tokeniza o cartão (se houver) e envia a selfie ao backend, que decide a aprovação.
+/// Tokeniza o cartão (se houver) e envia o código do autenticador ao backend, que confere e decide a aprovação.
 class ConfirmPaymentUseCase {
   ConfirmPaymentUseCase(this._repo, this._tokenizer);
   final PaymentRepository _repo;
@@ -40,8 +26,7 @@ class ConfirmPaymentUseCase {
 
   Future<Result<PurchaseResult>> call({
     required PaymentIntent intent,
-    required String selfiePath,
-    String? livenessSelfiePath,
+    required String code,
     CardInput? card,
   }) async {
     if (intent.isExpired) {
@@ -52,7 +37,10 @@ class ConfirmPaymentUseCase {
       if (card == null) return const Err(Failure('card_required', 'Informe os dados do cartão.'));
       token = await _tokenizer.tokenize(card);
     }
-    return _repo.confirm(intent: intent, selfiePath: selfiePath, livenessSelfiePath: livenessSelfiePath, cardToken: token);
+    if (code.replaceAll(RegExp(r'\s'), '').isEmpty) {
+      return const Err(Failure('mfa_code_required', 'Digite o código de 6 dígitos do seu autenticador.'));
+    }
+    return _repo.confirm(intent: intent, code: code.trim(), cardToken: token);
   }
 }
 
