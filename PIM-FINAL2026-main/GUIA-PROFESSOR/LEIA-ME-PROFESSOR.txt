@@ -20,8 +20,9 @@ O QUE VOCÊ PRECISA (só isto)
 COMO PEGAR O PROJETO
   1. Abra https://github.com/Mateusdohi/PIM-final-web
   2. Botão verde "Code" > "Download ZIP" e extraia (ou use git clone).
-  3. Entre na pasta  PIM-FINAL2026-main  (a que tem o docker-compose.yml).
-     Os quatro arquivos .bat numerados ficam nessa pasta.
+  3. Entre na pasta  PIM-FINAL2026-main  (a que tem o docker-compose.yml)
+     e depois na subpasta  GUIA-PROFESSOR.  Os quatro arquivos .bat
+     numerados e este guia ficam nela.
 
 PASSO A PASSO (dê DUPLO CLIQUE, um de cada vez, na ordem)
   0. Abra o Docker Desktop e espere ficar verde.

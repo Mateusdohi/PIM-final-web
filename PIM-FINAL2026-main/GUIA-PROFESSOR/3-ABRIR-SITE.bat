@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 title 3 - SITE (deixe esta janela aberta)
-cd /d "%~dp0"
+cd /d "%~dp0.."
 
 echo.
 echo ==============================================================
@@ -11,9 +11,9 @@ echo.
 
 rem A pasta do site tem acento no nome ("aplicacao web"): procura por padrao.
 set "SITE="
-for /d %%D in ("%~dp0aplica*web") do set "SITE=%%~fD"
+for /d %%D in ("%~dp0..plica*web") do set "SITE=%%~fD"
 if not defined SITE (
-  echo ERRO: nao achei a pasta do site ao lado deste arquivo.
+  echo ERRO: nao achei a pasta do site, aplicacao web, dentro da pasta do projeto.
   echo.
   pause
   exit /b 1

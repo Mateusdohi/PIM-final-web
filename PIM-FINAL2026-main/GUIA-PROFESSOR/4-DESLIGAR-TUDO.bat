@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 title 4 - DESLIGAR TUDO
-cd /d "%~dp0"
+cd /d "%~dp0.."
 
 echo.
 echo ==============================================================

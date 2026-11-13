@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 title 1 - PREPARAR (conferir Docker, portas e arquivo .env)
-cd /d "%~dp0"
+cd /d "%~dp0.."
 
 echo.
 echo ==============================================================
@@ -10,7 +10,7 @@ echo ==============================================================
 echo.
 
 if not exist "docker-compose.yml" (
-  echo ERRO: este arquivo precisa ficar na pasta do projeto, ao lado do docker-compose.yml.
+  echo ERRO: este arquivo precisa ficar na pasta GUIA-PROFESSOR, dentro da pasta do projeto, onde esta o docker-compose.yml.
   echo Pasta atual: %cd%
   echo.
   pause
