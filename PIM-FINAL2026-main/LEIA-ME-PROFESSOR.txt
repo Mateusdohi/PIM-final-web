@@ -1,0 +1,100 @@
+﻿==========================================================================
+ TicketFut / Champions Card: COMO RODAR (guia para o professor)
+ Venda de ingressos de futebol, com captcha no login e autenticador (MFA)
+==========================================================================
+
+O QUE É
+  Site de venda de ingressos. O servidor (API .NET 8 + banco SQL Server)
+  roda em Docker no seu computador, e o site abre no navegador.
+  Na tela de login há um captcha, e para comprar é preciso informar o
+  código de 6 dígitos de um aplicativo autenticador (MFA).
+
+O QUE VOCÊ PRECISA (só isto)
+  - Windows 10 ou 11 (8 GB de memória ou mais é o ideal)
+  - Docker Desktop instalado e LIGADO (ícone verde, "Engine running")
+      https://www.docker.com/products/docker-desktop
+  - Internet na primeira vez (o Docker baixa o SQL Server e o .NET)
+  - Um navegador
+  Não precisa instalar VS Code, .NET, SQL Server nem Python.
+
+COMO PEGAR O PROJETO
+  1. Abra https://github.com/Mateusdohi/PIM-final-web
+  2. Botão verde "Code" > "Download ZIP" e extraia (ou use git clone).
+  3. Entre na pasta  PIM-FINAL2026-main  (a que tem o docker-compose.yml).
+     Os quatro arquivos .bat numerados ficam nessa pasta.
+
+PASSO A PASSO (dê DUPLO CLIQUE, um de cada vez, na ordem)
+  0. Abra o Docker Desktop e espere ficar verde.
+
+  1. 1-PREPARAR.bat ................. confere o Docker, as portas e cria o
+                                      arquivo .env (senhas de exemplo).
+                                      Leva 10 segundos.
+
+  2. 2-LIGAR-SERVIDOR.bat ........... liga banco e API.
+                                      1ª vez: 5 a 15 minutos.
+                                      Depois: cerca de 1 minuto.
+                                      Espere aparecer "API NO AR".
+
+  3. 3-ABRIR-SITE.bat ............... abre o site no navegador
+                                      (http://localhost:5500).
+                                      DEIXE A JANELA PRETA ABERTA.
+
+  4. 4-DESLIGAR-TUDO.bat ............ no fim, desliga o servidor.
+                                      Os dados do banco ficam guardados.
+
+ROTEIRO DE TESTE (uns 5 minutos)
+  1. Na tela de login, clique em "Fazer cadastro" e crie uma conta
+     (os dados são fictícios; o CPF precisa ser válido).
+  2. Entre com e-mail e senha. Digite os caracteres da imagem do captcha.
+     (Teste também um captcha errado: o sistema recusa.)
+  3. Vá em Perfil > Autenticador (MFA) > Ativar. Aparecem o QR Code e a
+     chave em texto. Leia o QR com um aplicativo autenticador, digite o
+     código de 6 dígitos e guarde os códigos de recuperação.
+  4. Em Partidas, escolha um jogo, o setor e a cadeira.
+  5. No pagamento, informe o código de 6 dígitos do autenticador e
+     confirme. O ingresso aparece em "Meus ingressos".
+  6. Área administrativa: entre com  admin@ticketfut.com  /  Admin@1234
+     (login de teste do ambiente de desenvolvimento).
+
+  Pagamento simulado: cartão terminado em 0000 simula recusa.
+  Os jogos de demonstração estão em dezembro de 2026.
+
+NÃO TEM APLICATIVO AUTENTICADOR NO CELULAR?
+  - Instale Microsoft Authenticator, Google Authenticator ou Authy.
+  - Sem celular: digite a "chave em texto" que aparece abaixo do QR Code
+    em uma extensão de navegador de autenticador (por exemplo
+    "Authenticator", que funciona no Chrome e no Edge).
+
+VER O BANCO DE DADOS (opcional)
+  - Programa: SQL Server Management Studio (SSMS).
+  - Servidor: localhost,1433     Usuário: sa
+  - Senha: a que está na linha SQL_PASSWORD do arquivo .env
+  - Banco: TicketFut
+
+APLICATIVO ANDROID (opcional)
+  Para rodar o aplicativo é preciso Flutter e Android Studio com um
+  celular virtual, o que é bem mais pesado. As telas do aplicativo estão
+  no capítulo 9 do documento do PIM (9.9 Telas principais). O passo a
+  passo técnico está no arquivo README.md do projeto.
+
+PROBLEMAS COMUNS
+  "O Docker não está ligado"
+      -> Abra o Docker Desktop e espere ficar verde. Rode o 1 de novo.
+  "Porta em uso" (1433, 5080, 8080 ou 5500)
+      -> Outro programa usa a porta. Feche-o (por exemplo, um SQL Server
+         instalado no computador) e rode o 2 de novo.
+  Captcha aparece como imagem quebrada / "Sem conexão com o servidor"
+      -> A API não está ligada. Rode o 2-LIGAR-SERVIDOR.bat e espere
+         "API NO AR".
+  O site pede login de novo
+      -> É normal: por segurança o site guarda a sessão só na memória do
+         navegador; atualizar a página (F5) sai da conta.
+  Quero recomeçar do zero (apagar os dados)
+      -> Abra um terminal na pasta do projeto e rode:
+         docker compose down -v
+
+OBSERVAÇÕES
+  - É um ambiente de demonstração: os dados são fictícios e o gateway de
+    pagamento é simulado.
+  - O código-fonte, o banco (pasta banco\) e os testes estão no mesmo
+    repositório. Testes automáticos: cd backend e dotnet test TicketFut.sln
